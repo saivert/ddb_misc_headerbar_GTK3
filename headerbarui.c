@@ -41,7 +41,7 @@ static ddb_gtkui_t *gtkui_plugin;
 
 GtkWidget *headerbar;
 GtkWidget *volbutton;
-
+GtkMenu *headerbarui_menu;
 
 static gboolean
 headerbarui_action_gtk (void *data)
@@ -190,6 +190,28 @@ on_nextbtn_clicked                     (GtkButton       *button,
     deadbeef->sendmessage (DB_EV_NEXT, 0, 0, 0);
 }
 
+static gint
+on_menubtn_clicked (GtkButton *button, GdkEvent *event)
+{
+    GdkEventButton *event_button;
+
+    g_return_val_if_fail (headerbarui_menu != NULL, FALSE);
+    g_return_val_if_fail (GTK_IS_MENU (headerbarui_menu), FALSE);
+
+    if (event->type == GDK_BUTTON_PRESS)
+    {
+      event_button = (GdkEventButton *) event;
+      if (event_button->button == GDK_BUTTON_PRIMARY)
+      {
+          gtk_menu_popup (headerbarui_menu, NULL, NULL, NULL, NULL, 
+              event_button->button, event_button->time);
+          return TRUE;
+      }
+  }
+
+  return FALSE;
+}
+
 void
 gtkui_create_playback_controls_in_headerbar(GtkWidget* headerbar)
 {
@@ -203,12 +225,14 @@ gtkui_create_playback_controls_in_headerbar(GtkWidget* headerbar)
     GtkWidget *image4;
     GtkWidget *nextbtn;
     GtkWidget *image5;
+    GtkWidget *menubtn;
+    GtkWidget *image6;
 
     nextbtn = gtk_button_new ();
     gtk_widget_show (nextbtn);
     gtk_header_bar_pack_end(headerbar, nextbtn);
     gtk_widget_set_can_focus(nextbtn, FALSE);
-    gtk_button_set_relief (GTK_BUTTON (nextbtn), GTK_RELIEF_NONE);
+    // gtk_button_set_relief (GTK_BUTTON (nextbtn), GTK_RELIEF_NONE);
 
     image5 = gtk_image_new_from_icon_name ("media-skip-forward-symbolic", GTK_ICON_SIZE_MENU);
     gtk_widget_show (image5);
@@ -218,7 +242,7 @@ gtkui_create_playback_controls_in_headerbar(GtkWidget* headerbar)
     gtk_widget_show (prevbtn);
     gtk_header_bar_pack_end(headerbar, prevbtn);
     gtk_widget_set_can_focus(prevbtn, FALSE);
-    gtk_button_set_relief (GTK_BUTTON (prevbtn), GTK_RELIEF_NONE);
+    // gtk_button_set_relief (GTK_BUTTON (prevbtn), GTK_RELIEF_NONE);
 
     image4 = gtk_image_new_from_icon_name ("media-skip-backward-symbolic", GTK_ICON_SIZE_MENU);
     gtk_widget_show (image4);
@@ -228,7 +252,7 @@ gtkui_create_playback_controls_in_headerbar(GtkWidget* headerbar)
     gtk_widget_show (pausebtn);
     gtk_header_bar_pack_end(headerbar, pausebtn);
     gtk_widget_set_can_focus(pausebtn, FALSE);
-    gtk_button_set_relief (GTK_BUTTON (pausebtn), GTK_RELIEF_NONE);
+    // gtk_button_set_relief (GTK_BUTTON (pausebtn), GTK_RELIEF_NONE);
 
     image3 = gtk_image_new_from_icon_name ("media-playback-pause-symbolic", GTK_ICON_SIZE_MENU);
     gtk_widget_show (image3);
@@ -238,7 +262,7 @@ gtkui_create_playback_controls_in_headerbar(GtkWidget* headerbar)
     gtk_widget_show (playbtn);
     gtk_header_bar_pack_end(headerbar, playbtn);
     gtk_widget_set_can_focus(playbtn, FALSE);
-    gtk_button_set_relief (GTK_BUTTON (playbtn), GTK_RELIEF_NONE);
+    // gtk_button_set_relief (GTK_BUTTON (playbtn), GTK_RELIEF_NONE);
 
     image2 = gtk_image_new_from_icon_name ("media-playback-start-symbolic", GTK_ICON_SIZE_MENU);
     gtk_widget_show (image2);
@@ -248,12 +272,22 @@ gtkui_create_playback_controls_in_headerbar(GtkWidget* headerbar)
     gtk_widget_show (stopbtn);
     gtk_header_bar_pack_end(headerbar, stopbtn);
     gtk_widget_set_can_focus(stopbtn, FALSE);
-    gtk_button_set_relief (GTK_BUTTON (stopbtn), GTK_RELIEF_NONE);
+    // gtk_button_set_relief (GTK_BUTTON (stopbtn), GTK_RELIEF_NONE);
 
     image128 = gtk_image_new_from_icon_name ("media-playback-stop-symbolic", GTK_ICON_SIZE_MENU);
     gtk_widget_show (image128);
     gtk_container_add (GTK_CONTAINER (stopbtn), image128);
 
+    menubtn = gtk_menu_button_new ();
+    gtk_menu_button_set_popup(menubtn, headerbarui_menu);
+    gtk_widget_show (menubtn);
+    gtk_header_bar_pack_start(headerbar, menubtn);
+    gtk_widget_set_can_focus(menubtn, FALSE);
+    // gtk_button_set_relief (GTK_BUTTON (menubtn), GTK_RELIEF_NONE);
+
+    image6 = gtk_image_new_from_icon_name ("open-menu-symbolic", GTK_ICON_SIZE_MENU);
+    gtk_widget_show (image6);
+    gtk_container_add (GTK_CONTAINER (menubtn), image6);
 
     g_signal_connect ((gpointer) stopbtn, "clicked",
             G_CALLBACK (on_stopbtn_clicked),
@@ -270,33 +304,46 @@ gtkui_create_playback_controls_in_headerbar(GtkWidget* headerbar)
     g_signal_connect ((gpointer) nextbtn, "clicked",
             G_CALLBACK (on_nextbtn_clicked),
             NULL);
+    // g_signal_connect ((gpointer) menubtn, "button_press_event",
+    //         G_CALLBACK (on_menubtn_clicked),
+    //         NULL);
+
 }
 
 static gboolean
 headerbarui_init () {
     GtkWidget *mainwin = gtkui_plugin->get_mainwin ();
+    GtkWidget *menubar = lookup_widget (mainwin, "menubar");
+
+    gtk_widget_hide(menubar);
+
+    headerbarui_menu = gtk_menu_new ();
+    GList *l;
+    for (l = gtk_container_get_children(menubar); l != NULL; l = l->next)
+    {
+        gtk_widget_reparent(GTK_MENU_ITEM (l->data), headerbarui_menu);
+    }
+
     headerbar = gtk_header_bar_new();
     volbutton = gtk_volume_button_new();
     gtk_header_bar_set_title(headerbar, "DeaDBeeF");
     gtk_header_bar_set_show_close_button(headerbar, TRUE);
-    gtk_window_set_titlebar(mainwin, headerbar);
     gtk_header_bar_pack_end(headerbar, volbutton);
-    gtk_widget_show(volbutton);
-    gtk_widget_show(headerbar);
 
     gtkui_create_playback_controls_in_headerbar(headerbar);
 
     int curvol=-(deadbeef->volume_get_min_db()-deadbeef->volume_get_db());
     gtk_scale_button_set_adjustment(volbutton, gtk_adjustment_new (curvol, 0, (int)-deadbeef->volume_get_min_db (), 5, 5, 0));
-
-    GtkWidget *menubar = lookup_widget (mainwin, "menubar");
-    if (menubar) {
-        gtk_widget_reparent (menubar, headerbar);
-    }
+    gtk_widget_show(volbutton);
 
     g_signal_connect ((gpointer) volbutton, "value-changed",
                     G_CALLBACK (on_volbutton_value_changed),
                     NULL);
+
+    gtk_widget_show(headerbar);
+
+    gtk_window_set_titlebar(mainwin, headerbar);
+
     return FALSE;
 }
 
