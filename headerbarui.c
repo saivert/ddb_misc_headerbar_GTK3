@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gtk/gtk.h>
+#include <gdk/gdkx.h>
 #include <deadbeef/deadbeef.h>
 #include <deadbeef/gtkui_api.h>
 #if ENABLE_NLS
@@ -141,7 +142,7 @@ on_seekbar_button_release_event (GtkScale *widget,
     }    
 
     seekbar_ismoving = FALSE;
-    return TRUE;
+    return FALSE;
 }
 
 static gchar*
@@ -232,80 +233,55 @@ on_nextbtn_clicked                     (GtkButton       *button,
     deadbeef->sendmessage (DB_EV_NEXT, 0, 0, 0);
 }
 
+struct headerbarui_button_struct {
+    GCallback callback;
+    const gchar *iconname;
+} ;
+
+struct headerbarui_button_struct playbackbuttons[] = {
+    {G_CALLBACK (on_nextbtn_clicked), "media-skip-forward-symbolic"},
+    {G_CALLBACK (on_prevbtn_clicked), "media-skip-backward-symbolic"},
+    {G_CALLBACK (on_pausebtn_clicked), "media-playback-pause-symbolic"},
+    {G_CALLBACK (on_playbtn_clicked), "media-playback-start-symbolic"},
+    {G_CALLBACK (on_stopbtn_clicked), "media-playback-stop-symbolic"}
+};
+
 void
 gtkui_create_playback_controls_in_headerbar(GtkWidget* headerbar)
 {
-    GtkWidget *stopbtn;
-    GtkWidget *image128;
-    GtkWidget *playbtn;
-    GtkWidget *image2;
-    GtkWidget *pausebtn;
-    GtkWidget *image3;
-    GtkWidget *prevbtn;
-    GtkWidget *image4;
-    GtkWidget *nextbtn;
-    GtkWidget *image5;
+    GtkWidget *btn;
+    GtkWidget *img;
 
-    nextbtn = gtk_button_new ();
-    gtk_widget_show (nextbtn);
-    gtk_header_bar_pack_end(GTK_HEADER_BAR (headerbar), nextbtn);
-    gtk_widget_set_can_focus(nextbtn, FALSE);
+    for (guint i=0; i<=G_N_ELEMENTS (playbackbuttons); i++)
+    {
+        btn = gtk_button_new ();
+        gtk_widget_show (btn);
+        gtk_header_bar_pack_end(GTK_HEADER_BAR (headerbar), btn);
+        gtk_widget_set_can_focus(btn, FALSE);
+        g_signal_connect ((gpointer) btn, "clicked",
+                G_CALLBACK (playbackbuttons[i].callback),
+                NULL);
 
-    image5 = gtk_image_new_from_icon_name ("media-skip-forward-symbolic", GTK_ICON_SIZE_MENU);
-    gtk_widget_show (image5);
-    gtk_container_add (GTK_CONTAINER (nextbtn), image5);
+        img = gtk_image_new_from_icon_name (playbackbuttons[i].iconname, GTK_ICON_SIZE_MENU);
+        gtk_widget_show (img);
+        gtk_container_add (GTK_CONTAINER (btn), img);
+    }
+}
 
-    prevbtn = gtk_button_new ();
-    gtk_widget_show (prevbtn);
-    gtk_header_bar_pack_end(GTK_HEADER_BAR (headerbar), prevbtn);
-    gtk_widget_set_can_focus(prevbtn, FALSE);
-
-    image4 = gtk_image_new_from_icon_name ("media-skip-backward-symbolic", GTK_ICON_SIZE_MENU);
-    gtk_widget_show (image4);
-    gtk_container_add (GTK_CONTAINER (prevbtn), image4);
-
-    pausebtn = gtk_button_new ();
-    gtk_widget_show (pausebtn);
-    gtk_header_bar_pack_end(GTK_HEADER_BAR (headerbar), pausebtn);
-    gtk_widget_set_can_focus(pausebtn, FALSE);
-
-    image3 = gtk_image_new_from_icon_name ("media-playback-pause-symbolic", GTK_ICON_SIZE_MENU);
-    gtk_widget_show (image3);
-    gtk_container_add (GTK_CONTAINER (pausebtn), image3);
-
-    playbtn = gtk_button_new ();
-    gtk_widget_show (playbtn);
-    gtk_header_bar_pack_end(GTK_HEADER_BAR (headerbar), playbtn);
-    gtk_widget_set_can_focus(playbtn, FALSE);
-
-    image2 = gtk_image_new_from_icon_name ("media-playback-start-symbolic", GTK_ICON_SIZE_MENU);
-    gtk_widget_show (image2);
-    gtk_container_add (GTK_CONTAINER (playbtn), image2);
-
-    stopbtn = gtk_button_new ();
-    gtk_widget_show (stopbtn);
-    gtk_header_bar_pack_end(GTK_HEADER_BAR (headerbar), stopbtn);
-    gtk_widget_set_can_focus(stopbtn, FALSE);
-
-    image128 = gtk_image_new_from_icon_name ("media-playback-stop-symbolic", GTK_ICON_SIZE_MENU);
-    gtk_widget_show (image128);
-    gtk_container_add (GTK_CONTAINER (stopbtn), image128);
-
-    g_signal_connect ((gpointer) stopbtn, "clicked",
-            G_CALLBACK (on_stopbtn_clicked),
-            NULL);
-    g_signal_connect ((gpointer) playbtn, "clicked",
-            G_CALLBACK (on_playbtn_clicked),
-            NULL);
-    g_signal_connect ((gpointer) pausebtn, "clicked",
-            G_CALLBACK (on_pausebtn_clicked),
-            NULL);
-    g_signal_connect ((gpointer) prevbtn, "clicked",
-            G_CALLBACK (on_prevbtn_clicked),
-            NULL);
-    g_signal_connect ((gpointer) nextbtn, "clicked",
-            G_CALLBACK (on_nextbtn_clicked),
-            NULL);
+gboolean
+headerbarui_reset_cb(gpointer user_data)
+{
+    GtkAdjustment * adjustment = gtk_range_get_adjustment(GTK_RANGE (headerbar_seekbar));
+    gtk_adjustment_configure(adjustment,
+    deadbeef->streamer_get_playpos (), //value
+    0, // lower
+    0, // upper
+    0, // step_increment
+    0, // page_increment
+    0); // page_size
+    gtk_range_set_value(GTK_RANGE (headerbar_seekbar), 0);
+    gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), FALSE);
+    return FALSE;
 }
 
 gboolean
@@ -317,6 +293,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
         if (trk) {
             deadbeef->pl_item_unref (trk);
         }
+        headerbarui_reset_cb(NULL);
         return TRUE;
     }
     if (deadbeef->pl_get_item_duration (trk) > 0) {
@@ -328,6 +305,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
             1, // step_increment
             1, // page_increment
             0); // page_size
+        gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), TRUE);
     }
     if (trk) {
         deadbeef->pl_item_unref (trk);
@@ -335,12 +313,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
     return TRUE;
 }
 
-gboolean
-headerbarui_reset_cb(gpointer user_data)
-{
-    gtk_range_set_value(GTK_RANGE (headerbar_seekbar), 0);
-    return FALSE;
-}
+
 
 int
 gtkui_get_gui_refresh_rate () {
@@ -354,10 +327,93 @@ gtkui_get_gui_refresh_rate () {
     return fps;
 }
 
+void activate_uno(GSimpleAction *action, GVariant* a, gpointer b)
+{
+    gchar *strval = NULL;
+    g_object_get(action, "name", &strval, NULL);
+    if (!strval)
+        return;
+
+    GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
+    GtkWidget *dialog = gtk_message_dialog_new (NULL,
+                                     flags,
+                                     GTK_MESSAGE_INFO,
+                                     GTK_BUTTONS_OK,
+                                     "Appmenu action called “%s”",
+                                     strval);
+    gtk_dialog_run (GTK_DIALOG (dialog));
+    gtk_widget_destroy (dialog);
+
+}
+
+static const GActionEntry app_entries[] = {
+  { "Preferences", activate_uno, NULL, NULL, NULL, {0} },
+  { "About", activate_uno, NULL, NULL, NULL, {0} },
+  { "Quit", activate_uno, NULL, NULL, NULL, {0} },
+};
+
+void
+headerbarui_add_app_menu(GtkWindow *mainwin)
+{
+    GdkWindow* gdkWindow = gtk_widget_get_window( GTK_WIDGET(mainwin) );
+    GMenu *menu = g_menu_new ();
+    GMenuItem* item;
+    GError *error=NULL;
+    GDBusConnection *pSessionBus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
+    if (error != NULL)
+    {
+        trace("ERROR: headerbar dbus setup fail: %s", error->message);
+        g_clear_error(&error);
+        goto errexit;
+    }
+    g_assert (pSessionBus != NULL);
+
+    gdk_x11_window_set_utf8_property( gdkWindow, "_GTK_APPLICATION_ID", "org.deadbeef" );
+    gdk_x11_window_set_utf8_property( gdkWindow, "_GTK_UNIQUE_BUS_NAME", g_dbus_connection_get_unique_name( pSessionBus ) );
+    gdk_x11_window_set_utf8_property( gdkWindow, "_GTK_APPLICATION_OBJECT_PATH", "/org/deadbeef" );
+    Window windowId = GDK_WINDOW_XID( gdkWindow );
+    gchar* aDBusWindowPath = g_strdup_printf( "/org/deadbeef/window/%lu", windowId );
+    gdk_x11_window_set_utf8_property( gdkWindow, "_GTK_WINDOW_OBJECT_PATH", aDBusWindowPath );
+    g_free(aDBusWindowPath);
+
+    item = g_menu_item_new(_("Preferences"), "app.Preferences");
+    g_menu_append_item( menu, item );
+    g_object_unref(item);
+
+    item = g_menu_item_new(_("About"), "app.Preferences");
+    g_menu_append_item( menu, item );
+    g_object_unref(item);
+
+    item = g_menu_item_new(_("Quit"), "app.Preferences");
+    g_menu_append_item( menu, item );
+    g_object_unref(item);
+
+    GSimpleActionGroup *group = g_simple_action_group_new ();
+    g_action_map_add_action_entries (G_ACTION_MAP (group), app_entries, G_N_ELEMENTS (app_entries), NULL);
+    GActionGroup* pAppActionGroup = G_ACTION_GROUP(group);
+    if (!g_dbus_connection_export_action_group( pSessionBus, "/org/deadbeef", pAppActionGroup, NULL))
+    {
+        trace("ERROR: g_dbus_connection_export_action_group call fail");
+        goto errexit;
+    }
+    g_dbus_connection_export_action_group( pSessionBus, "/org/deadbeef", pAppActionGroup, NULL);
+    g_object_unref(pAppActionGroup);
+    if (!g_dbus_connection_export_menu_model (pSessionBus, "/org/deadbeef/menus/appmenu", G_MENU_MODEL (menu), NULL))
+    {
+        trace("ERROR: g_dbus_connection_export_menu_model call fail");
+        goto errexit;
+    }
+
+    errexit:
+    g_object_unref(menu);
+
+}
+
 static gboolean
 headerbarui_init () {
-    GtkWidget *mainwin = gtkui_plugin->get_mainwin ();
-    GtkWidget *menubar = lookup_widget (mainwin, "menubar");
+    GtkWindow *mainwin = GTK_WINDOW (gtkui_plugin->get_mainwin ());
+    headerbarui_add_app_menu(mainwin);
+    GtkWidget *menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
     GtkWidget *menubtn;
     GtkWidget *menubtn_image;
     int embed_menubar = deadbeef->conf_get_int ("headerbarui.embed_menubar", 0);
@@ -423,7 +479,7 @@ headerbarui_init () {
 
     gtk_widget_show(headerbar);
 
-    gtk_window_set_titlebar(GTK_WINDOW (mainwin), GTK_WIDGET(headerbar));
+    gtk_window_set_titlebar(mainwin, GTK_WIDGET(headerbar));
 
     return FALSE;
 }
@@ -469,7 +525,7 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
 
 static const char settings_dlg[] =
     "property \"Show seekbar\" checkbox headerbarui.show_seek_bar 1;\n"
-    "property \"Embed menubar instead of showing hamburger button\" checkbox headerbarui.embed_menubar 1;\n"
+    "property \"Embed menubar instead of showing hamburger button\" checkbox headerbarui.embed_menubar 0;\n"
 ;
 
 static DB_misc_t plugin = {

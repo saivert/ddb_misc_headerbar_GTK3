@@ -31,7 +31,8 @@ LDFLAGS+=-shared
 
 GTK3_DIR?=gtk3
 
-SOURCES?=$(wildcard *.c)
+#SOURCES?=$(wildcard *.c)
+SOURCES=headerbarui.c
 OBJ_GTK3?=$(patsubst %.c, $(GTK3_DIR)/%.o, $(SOURCES))
 
 define compile
