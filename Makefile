@@ -1,4 +1,3 @@
-
 # Headerbar UI plugin for the DeaDBeeF audio player
 #
 # Copyright (C) 2015 Nicolai Syvertsen <saivert@gmail.com>
@@ -19,21 +18,20 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-OUT_GTK3?=ddb_misc_headerbar_GTK3.so
+OUT?=ddb_misc_headerbar_GTK3.so
 
-GTK3_CFLAGS?=`pkg-config --cflags gtk+-3.0`
+OUTDIR?=out
 
-GTK3_LIBS?=`pkg-config --libs gtk+-3.0`
+CFLAGS?=`pkg-config --cflags gtk+-3.0`
+
+LIBS?=`pkg-config --libs gtk+-3.0`
 
 CC?=gcc
 CFLAGS+=-Wall -O2 -fPIC -std=c99 -D_GNU_SOURCE
 LDFLAGS+=-shared
 
-GTK3_DIR?=gtk3
-
-#SOURCES?=$(wildcard *.c)
 SOURCES=headerbarui.c
-OBJ_GTK3?=$(patsubst %.c, $(GTK3_DIR)/%.o, $(SOURCES))
+OBJ?=$(patsubst %.c, $(OUTDIR)/%.o, $(SOURCES))
 
 define compile
 	echo $(CC) $(CFLAGS) $1 $2 $< -c -o $@
@@ -45,25 +43,26 @@ define link
 	$(CC) $(LDFLAGS) $1 $2 $3 -o $@
 endef
 
-# Builds GTK+3 versions of the plugin.
-all: gtk3
+all: plugin
 
-# Builds GTK+3 version of the plugin.
-gtk3: mkdir_gtk3 $(SOURCES) $(GTK3_DIR)/$(OUT_GTK3)
+plugin: mkdir $(SOURCES) $(OUTDIR)/$(OUT)
 
-mkdir_gtk3:
+mkdir:
 	@echo "Creating build directory for GTK+3 version"
-	@mkdir -p $(GTK3_DIR)
+	@mkdir -p $(OUTDIR)
 
-$(GTK3_DIR)/$(OUT_GTK3): $(OBJ_GTK3)
+$(OUTDIR)/$(OUT): $(OBJ)
 	@echo "Linking GTK+3 version"
-	@$(call link, $(OBJ_GTK3), $(GTK3_LIBS), $(SQLITE_LIBS))
+	@$(call link, $(OBJ), $(LIBS))
 	@echo "Done!"
 
-$(GTK3_DIR)/%.o: %.c
-	@echo "Compiling $(subst $(GTK3_DIR)/,,$@)"
-	@$(call compile, $(GTK3_CFLAGS))
+$(OUTDIR)/%.o: %.c
+	@echo "Compiling $(subst $(OUTDIR)/,,$@)"
+	@$(call compile, $(CFLAGS))
 
 clean:
 	@echo "Cleaning files from previous build..."
-	@rm -r -f $(GTK2_DIR) $(GTK3_DIR)
+	@rm -r -f $(OUTDIR)
+
+install:
+	@install $(OUTDIR)/$(OUT) $(HOME)/.local/lib64/deadbeef/
