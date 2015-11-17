@@ -259,7 +259,7 @@ gtkui_create_playback_controls_in_headerbar(GtkWidget* headerbar)
         gtk_header_bar_pack_end(GTK_HEADER_BAR (headerbar), btn);
         gtk_widget_set_can_focus(btn, FALSE);
         g_signal_connect ((gpointer) btn, "clicked",
-                G_CALLBACK (playbackbuttons[i].callback),
+                playbackbuttons[i].callback,
                 NULL);
 
         img = gtk_image_new_from_icon_name (playbackbuttons[i].iconname, GTK_ICON_SIZE_MENU);
