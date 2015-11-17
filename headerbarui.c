@@ -355,18 +355,23 @@ static const GActionEntry app_entries[] = {
 void
 headerbarui_add_app_menu(GtkWindow *mainwin)
 {
-    GdkWindow* gdkWindow = gtk_widget_get_window( GTK_WIDGET(mainwin) );
-    GMenu *menu = g_menu_new ();
+    GdkWindow* gdkWindow;
+    GMenu *menu;
     GMenuItem* item;
     GError *error=NULL;
+
     GDBusConnection *pSessionBus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
     if (error != NULL)
     {
         trace("ERROR: headerbar dbus setup fail: %s", error->message);
         g_clear_error(&error);
-        goto errexit;
+        return;
     }
     g_assert (pSessionBus != NULL);
+
+    gdkWindow = gtk_widget_get_window( GTK_WIDGET(mainwin) );
+    if (!GDK_IS_X11_WINDOW (gdkWindow))
+        return;
 
     gdk_x11_window_set_utf8_property( gdkWindow, "_GTK_APPLICATION_ID", "org.deadbeef" );
     gdk_x11_window_set_utf8_property( gdkWindow, "_GTK_UNIQUE_BUS_NAME", g_dbus_connection_get_unique_name( pSessionBus ) );
@@ -375,6 +380,9 @@ headerbarui_add_app_menu(GtkWindow *mainwin)
     gchar* aDBusWindowPath = g_strdup_printf( "/org/deadbeef/window/%lu", windowId );
     gdk_x11_window_set_utf8_property( gdkWindow, "_GTK_WINDOW_OBJECT_PATH", aDBusWindowPath );
     g_free(aDBusWindowPath);
+
+
+    menu = g_menu_new ();
 
     item = g_menu_item_new(_("Preferences"), "app.Preferences");
     g_menu_append_item( menu, item );
@@ -398,7 +406,7 @@ headerbarui_add_app_menu(GtkWindow *mainwin)
     }
     g_dbus_connection_export_action_group( pSessionBus, "/org/deadbeef", pAppActionGroup, NULL);
     g_object_unref(pAppActionGroup);
-    if (!g_dbus_connection_export_menu_model (pSessionBus, "/org/deadbeef/menus/appmenu", G_MENU_MODEL (menu), NULL))
+    if (!g_dbus_connection_export_menu_model (pSessionBus, "/org/deadbeef/menus/appmenu1", G_MENU_MODEL (menu), NULL))
     {
         trace("ERROR: g_dbus_connection_export_menu_model call fail");
         goto errexit;
