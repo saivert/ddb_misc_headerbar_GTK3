@@ -252,7 +252,7 @@ gtkui_create_playback_controls_in_headerbar(GtkWidget* headerbar)
     GtkWidget *btn;
     GtkWidget *img;
 
-    for (guint i=0; i<=G_N_ELEMENTS (playbackbuttons); i++)
+    for (guint i=0; i<G_N_ELEMENTS (playbackbuttons); i++)
     {
         btn = gtk_button_new ();
         gtk_widget_show (btn);
