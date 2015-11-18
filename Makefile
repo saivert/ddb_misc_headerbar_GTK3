@@ -30,7 +30,7 @@ CC?=gcc
 CFLAGS+=-Wall -O2 -fPIC -std=c99 -D_GNU_SOURCE
 LDFLAGS+=-shared
 
-SOURCES=headerbarui.c resources.c
+SOURCES=headerbarui.c appmenu.c resources.c
 OBJ?=$(patsubst %.c, $(OUTDIR)/%.o, $(SOURCES))
 
 define compile
