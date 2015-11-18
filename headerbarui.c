@@ -446,7 +446,7 @@ int headerbarui_connect() {
 }
 
 gboolean
-gtkui_volume_changed(gpointer user_data)
+headerbarui_volume_changed(gpointer user_data)
 {
     float volume = deadbeef->volume_get_min_db()-deadbeef->volume_get_db();
     g_assert_false((volume>0));
@@ -489,10 +489,10 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
         break;
     case DB_EV_CONFIGCHANGED:
         headerbarui_getconfig();
-        g_idle_add (gtkui_volume_changed, NULL);
+        g_idle_add (headerbarui_volume_changed, NULL);
         break;
     case DB_EV_VOLUMECHANGED:
-        g_idle_add (gtkui_volume_changed, NULL);
+        g_idle_add (headerbarui_volume_changed, NULL);
         break;
     }
     return 0;
