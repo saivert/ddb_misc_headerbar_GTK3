@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/deadbeef/headerbarui">
+    <file compressed="true">headerbar.ui</file>
+  </gresource>
+</gresources>

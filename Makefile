@@ -30,7 +30,7 @@ CC?=gcc
 CFLAGS+=-Wall -O2 -fPIC -std=c99 -D_GNU_SOURCE
 LDFLAGS+=-shared
 
-SOURCES=headerbarui.c
+SOURCES=headerbarui.c resources.c
 OBJ?=$(patsubst %.c, $(OUTDIR)/%.o, $(SOURCES))
 
 define compile
@@ -45,11 +45,17 @@ endef
 
 all: plugin
 
-plugin: mkdir $(SOURCES) $(OUTDIR)/$(OUT)
+plugin: mkdir $(SOURCES) $(OUTDIR)/$(OUT) resources.h
 
 mkdir:
 	@echo "Creating build directory for GTK+3 version"
 	@mkdir -p $(OUTDIR)
+
+resources.c: headerbarui.gresource.xml headerbar.ui
+	glib-compile-resources --target=resources.c --sourcedir=. --generate-source headerbarui.gresource.xml
+
+resources.h: headerbarui.gresource.xml headerbar.ui
+	glib-compile-resources --target=resources.h --sourcedir=. --generate-header headerbarui.gresource.xml
 
 $(OUTDIR)/$(OUT): $(OBJ)
 	@echo "Linking GTK+3 version"
