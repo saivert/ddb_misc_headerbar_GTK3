@@ -54,32 +54,6 @@ gboolean seekbar_ismoving=FALSE;
 gboolean headerbarui_flag_embed_menubar;
 gboolean headerbarui_flag_show_seek_bar;
 
-static gboolean
-headerbarui_action_gtk (void *data)
-{
-    return FALSE;
-}
-
-static int
-headerbarui_action_callback(DB_plugin_action_t *action, int ctx) {
-    headerbarui_action_gtk(NULL);
-    //g_idle_add (headerbarui_action_gtk, NULL);
-    return 0;
-}
-
-static DB_plugin_action_t headerbarui_action = {
-    .title = "Edit/Configure Headerbar",
-    .name = "headerbar_conf",
-    .flags = DB_ACTION_COMMON | DB_ACTION_ADD_MENU,
-    .callback2 = headerbarui_action_callback,
-    .next = NULL,
-};
-
-static DB_plugin_action_t *
-headerbarui_getactions(DB_playItem_t *it) {
-    return &headerbarui_action;
-}
-
 GtkWidget*
 lookup_widget                          (GtkWidget       *widget,
                                         const gchar     *widget_name)
@@ -113,16 +87,6 @@ on_volbutton_value_changed (GtkScaleButton *button,
 {
         deadbeef->volume_set_db (deadbeef->volume_get_min_db()-(double)-value);
 }
-
-#if 0
-gboolean
-seek_cb (gpointer data)
-{
-    int *value = data;
-    deadbeef->sendmessage (DB_EV_SEEK, 0, (*value) * 1000, 0);
-    return 0;
-}
-#endif
 
 gboolean
 on_seekbar_button_press_event (GtkScale *widget,
@@ -161,9 +125,6 @@ on_seekbar_format_value (GtkScale *scale,
     int sc = time-hr*3600-mn*60;
     return g_strdup_printf ("%02d:%02d:%02d", hr, mn, sc);
 }
-
-gboolean
-playpause_update(gpointer user_data);
 
 void
 on_stopbtn_clicked                     (GtkButton       *button,
@@ -216,7 +177,6 @@ on_playbtn_clicked                     (GtkButton       *button,
         }
         deadbeef->sendmessage (DB_EV_PLAY_NUM, 0, cur, 0);
     }
-    //playpause_update(TRUE);
 }
 
 
@@ -225,7 +185,6 @@ on_pausebtn_clicked                    (GtkButton       *button,
                                         gpointer         user_data)
 {
     deadbeef->sendmessage (DB_EV_TOGGLE_PAUSE, 0, 0, 0);
-    //playpause_update(FALSE);
 }
 
 
@@ -392,10 +351,6 @@ headerbarui_add_app_menu(GtkWindow *mainwin)
     g_object_unref(menu);
 
 }
-
-gboolean
-gtkui_volume_changed(gpointer user_data);
-
 
 static gboolean
 headerbarui_init () {
