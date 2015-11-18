@@ -45,6 +45,9 @@ static const char settings_dlg[];
 GtkWidget *headerbar;
 GtkWidget *volbutton;
 GtkWidget *headerbar_seekbar;
+GtkWidget *headerbar_playbtn;
+GtkWidget *headerbar_pausebtn;
+
 guint headerbar_timer;
 
 gboolean seekbar_ismoving=FALSE;
@@ -159,6 +162,9 @@ on_seekbar_format_value (GtkScale *scale,
     return g_strdup_printf ("%02d:%02d:%02d", hr, mn, sc);
 }
 
+gboolean
+playpause_update(gpointer user_data);
+
 void
 on_stopbtn_clicked                     (GtkButton       *button,
                                         gpointer         user_data)
@@ -210,6 +216,7 @@ on_playbtn_clicked                     (GtkButton       *button,
         }
         deadbeef->sendmessage (DB_EV_PLAY_NUM, 0, cur, 0);
     }
+    //playpause_update(TRUE);
 }
 
 
@@ -218,6 +225,7 @@ on_pausebtn_clicked                    (GtkButton       *button,
                                         gpointer         user_data)
 {
     deadbeef->sendmessage (DB_EV_TOGGLE_PAUSE, 0, 0, 0);
+    //playpause_update(FALSE);
 }
 
 
@@ -407,6 +415,8 @@ headerbarui_init () {
     volbutton = gtk_builder_get_object(builder, "volumebutton1");
     menubtn =  gtk_builder_get_object(builder, "menubutton1");
     headerbar_seekbar = gtk_builder_get_object(builder, "scale1");
+    headerbar_playbtn = gtk_builder_get_object(builder, "playbtn");
+    headerbar_pausebtn = gtk_builder_get_object(builder, "pausebtn");
 
     gtk_widget_show(headerbar);
 
@@ -486,19 +496,41 @@ gtkui_volume_changed(gpointer user_data)
     float volume = deadbeef->volume_get_min_db()-deadbeef->volume_get_db();
     g_assert_false((volume>0));
     gtk_scale_button_set_value( GTK_SCALE_BUTTON (volbutton), (int)-volume );
-    return 0;
+    return FALSE;
 }
 
+
+gboolean
+playpause_update(gpointer user_data)
+{
+    gboolean isPlaying = (gboolean)user_data;
+    if (isPlaying)
+        {
+            gtk_widget_hide(headerbar_playbtn);
+            gtk_widget_show(headerbar_pausebtn);
+        }
+    else
+        {
+            gtk_widget_show(headerbar_playbtn);
+            gtk_widget_hide(headerbar_pausebtn);
+        }
+    return FALSE;
+}
 
 static int
 headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     switch (id) {
     case DB_EV_SONGSTARTED:
         headerbar_timer = g_timeout_add (1000/gtkui_get_gui_refresh_rate (), headerbarui_update_seekbar_cb, NULL);
+        g_idle_add(playpause_update, TRUE);
         break;
     case DB_EV_SONGFINISHED:
         g_source_remove(headerbar_timer);
         g_idle_add(headerbarui_reset_cb, NULL);
+        g_idle_add(playpause_update, FALSE);
+        break;
+    case DB_EV_PAUSED:
+        g_idle_add(playpause_update, !p1);
         break;
     case DB_EV_CONFIGCHANGED:
         headerbarui_getconfig();

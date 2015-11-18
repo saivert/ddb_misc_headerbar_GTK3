@@ -61,7 +61,6 @@ Author: Nicolai Syvertsen
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="use_popover">False</property>
         <child>
           <object class="GtkImage" id="menubtnimage">
             <property name="visible">True</property>
@@ -138,21 +137,7 @@ audio-volume-medium-symbolic</property>
       </packing>
     </child>
     <child>
-      <object class="GtkButton" id="prevbtn">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-        <property name="image">image2</property>
-        <signal name="clicked" handler="on_prevbtn_clicked" swapped="no"/>
-      </object>
-      <packing>
-        <property name="pack_type">end</property>
-        <property name="position">3</property>
-      </packing>
-    </child>
-    <child>
       <object class="GtkButton" id="pausebtn">
-        <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
         <property name="image">image3</property>
@@ -161,7 +146,7 @@ audio-volume-medium-symbolic</property>
       </object>
       <packing>
         <property name="pack_type">end</property>
-        <property name="position">4</property>
+        <property name="position">3</property>
       </packing>
     </child>
     <child>
@@ -174,16 +159,28 @@ audio-volume-medium-symbolic</property>
       </object>
       <packing>
         <property name="pack_type">end</property>
-        <property name="position">5</property>
+        <property name="position">3</property>
       </packing>
     </child>
     <child>
       <object class="GtkButton" id="stopbtn">
-        <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
         <property name="image">image4</property>
         <signal name="clicked" handler="on_stopbtn_clicked" swapped="no"/>
+      </object>
+      <packing>
+        <property name="pack_type">end</property>
+        <property name="position">5</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkButton" id="prevbtn">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <property name="image">image2</property>
+        <signal name="clicked" handler="on_prevbtn_clicked" swapped="no"/>
       </object>
       <packing>
         <property name="pack_type">end</property>
