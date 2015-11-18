@@ -45,7 +45,7 @@ endef
 
 all: plugin
 
-plugin: mkdir $(SOURCES) $(OUTDIR)/$(OUT) resources.h
+plugin: mkdir $(SOURCES) $(OUTDIR)/$(OUT)
 
 mkdir:
 	@echo "Creating build directory for GTK+3 version"
@@ -53,8 +53,6 @@ mkdir:
 
 resources.c: headerbarui.gresource.xml headerbar.ui
 	glib-compile-resources --target=resources.c --sourcedir=. --generate-source headerbarui.gresource.xml
-
-resources.h: headerbarui.gresource.xml headerbar.ui
 	glib-compile-resources --target=resources.h --sourcedir=. --generate-header headerbarui.gresource.xml
 
 $(OUTDIR)/$(OUT): $(OBJ)
