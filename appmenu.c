@@ -1,4 +1,5 @@
 #include "appmenu.h"
+#include "headerbarui.h"
 
 void activate_uno(GSimpleAction *action, GVariant* a, gpointer b)
 {

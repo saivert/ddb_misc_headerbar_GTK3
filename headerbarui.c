@@ -25,24 +25,11 @@
 #include <deadbeef/gtkui_api.h>
 #include "appmenu.h"
 #include "resources.h"
-
-#if ENABLE_NLS
-
-# include <libintl.h>
-#define _(s) gettext(s)
-
-#else
-
-#define _(s) (s)
-
-#endif
-
-#define trace(...) { fprintf(stderr, __VA_ARGS__); }
+#include "headerbarui.h"
 
 DB_functions_t *deadbeef;
-static DB_misc_t plugin;
+
 static ddb_gtkui_t *gtkui_plugin;
-static const char settings_dlg[];
 
 GtkWidget *headerbar;
 GtkWidget *volbutton;
@@ -52,13 +39,12 @@ GtkWidget *headerbar_pausebtn;
 
 guint headerbar_timer;
 
-gboolean seekbar_ismoving=FALSE;
+gboolean seekbar_ismoving = FALSE;
 gboolean headerbarui_flag_embed_menubar;
 gboolean headerbarui_flag_show_seek_bar;
 
 GtkWidget*
-lookup_widget                          (GtkWidget       *widget,
-                                        const gchar     *widget_name)
+lookup_widget (GtkWidget *widget, const gchar *widget_name)
 {
   GtkWidget *parent, *found_widget;
 
@@ -355,7 +341,7 @@ int headerbarui_connect() {
             return 0;
         }
     }
-    return -1;  
+    return -1;
 }
 
 gboolean
@@ -371,8 +357,7 @@ headerbarui_volume_changed(gpointer user_data)
 gboolean
 playpause_update(gpointer user_data)
 {
-    gboolean isPlaying = (gboolean)user_data;
-    if (isPlaying)
+    if (user_data)
         {
             gtk_widget_hide(headerbar_playbtn);
             gtk_widget_show(headerbar_pausebtn);
