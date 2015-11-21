@@ -291,11 +291,13 @@ headerbarui_update_menubutton()
 
     menu = GTK_MENU (gtk_menu_new ());
 
-    GList *l;
-    for (l = gtk_container_get_children(GTK_CONTAINER (menubar)); l != NULL; l = l->next)
+    GList *l, *children;
+    children = gtk_container_get_children(GTK_CONTAINER (menubar));
+    for (l = children; l; l = l->next)
     {
         gtk_container_add(GTK_CONTAINER(menu), g_object_clone(l->data));
     }
+    g_list_free(children);
     gtk_menu_button_set_popup(GTK_MENU_BUTTON (headerbar_menubtn), GTK_WIDGET(menu));
 }
 
