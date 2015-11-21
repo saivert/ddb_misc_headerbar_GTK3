@@ -36,6 +36,7 @@ GtkWidget *volbutton;
 GtkWidget *headerbar_seekbar;
 GtkWidget *headerbar_playbtn;
 GtkWidget *headerbar_pausebtn;
+GtkWidget *headerbar_menubtn;
 
 guint headerbar_timer;
 
@@ -250,12 +251,58 @@ gtkui_get_gui_refresh_rate () {
     return fps;
 }
 
+GObject *
+g_object_clone(GObject *src)
+{
+    GObject *dst;
+    GParameter *params;
+    GParamSpec **specs;
+    guint n, n_specs, n_params;
+
+    specs = g_object_class_list_properties(G_OBJECT_GET_CLASS(src), &n_specs);
+    params = g_new0(GParameter, n_specs);
+    n_params = 0;
+
+    for (n = 0; n < n_specs; ++n)
+        if (strcmp(specs[n]->name, "parent") &&
+            (specs[n]->flags & G_PARAM_READWRITE) == G_PARAM_READWRITE) {
+            params[n_params].name = g_intern_string(specs[n]->name);
+            g_value_init(&params[n_params].value, specs[n]->value_type);
+            g_object_get_property(src, specs[n]->name, &params[n_params].value);
+            ++ n_params;
+        }
+
+    dst = g_object_newv(G_TYPE_FROM_INSTANCE(src), n_params, params);
+    g_free(specs);
+    g_free(params);
+
+    return dst;
+}
+
+void
+headerbarui_update_menubutton()
+{
+    GtkWindow *mainwin;
+    GtkWidget *menubar;
+    static GtkMenu *menu;
+
+    mainwin = GTK_WINDOW (gtkui_plugin->get_mainwin ());
+    menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
+
+    menu = GTK_MENU (gtk_menu_new ());
+
+    GList *l;
+    for (l = gtk_container_get_children(GTK_CONTAINER (menubar)); l != NULL; l = l->next)
+    {
+        gtk_container_add(GTK_CONTAINER(menu), g_object_clone(l->data));
+    }
+    gtk_menu_button_set_popup(GTK_MENU_BUTTON (headerbar_menubtn), GTK_WIDGET(menu));
+}
 
 static gboolean
 headerbarui_init () {
     GtkWindow *mainwin;
     GtkWidget *menubar;
-    GtkWidget *menubtn;
     GtkWidget *menubtn_image;
     GtkBuilder *builder;
 
@@ -268,7 +315,7 @@ headerbarui_init () {
     builder = gtk_builder_new_from_resource("/org/deadbeef/headerbarui/headerbar.ui");
     headerbar = gtk_builder_get_object(builder, "headerbar1");
     volbutton = gtk_builder_get_object(builder, "volumebutton1");
-    menubtn =  gtk_builder_get_object(builder, "menubutton1");
+    headerbar_menubtn =  gtk_builder_get_object(builder, "menubutton1");
     headerbar_seekbar = gtk_builder_get_object(builder, "scale1");
     headerbar_playbtn = gtk_builder_get_object(builder, "playbtn");
     headerbar_pausebtn = gtk_builder_get_object(builder, "pausebtn");
@@ -282,18 +329,12 @@ headerbarui_init () {
         GtkMenu *menu;
         gtk_widget_hide(menubar);
 
-        menu = GTK_MENU (gtk_menu_new ());
-        GList *l;
-        for (l = gtk_container_get_children(GTK_CONTAINER (menubar)); l != NULL; l = l->next)
-        {
-            gtk_widget_reparent(GTK_WIDGET (l->data), GTK_WIDGET (menu));
-        }
-        gtk_menu_button_set_popup(GTK_MENU_BUTTON (menubtn), GTK_WIDGET(menu));
+        headerbarui_update_menubutton();
 
-        gtk_widget_set_can_focus(menubtn, FALSE);
-        gtk_widget_show (menubtn);
+        gtk_widget_set_can_focus(headerbar_menubtn, FALSE);
+        gtk_widget_show (headerbar_menubtn);
     } else {
-        gtk_widget_destroy(menubtn);
+        gtk_widget_destroy(headerbar_menubtn);
         gtk_widget_reparent(menubar, headerbar);
     }
 
