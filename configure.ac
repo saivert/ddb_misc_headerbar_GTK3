@@ -6,7 +6,7 @@ AC_CONFIG_SRCDIR([headerbarui.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE([foreign -Wall -Werror subdir-objects dist-xz no-dist-gzip])
+AM_INIT_AUTOMAKE([foreign -Wall subdir-objects dist-xz no-dist-gzip])
 AM_SILENT_RULES([yes])
 
 dnl Override $PACKAGE to make $pkglibdir use deadbeef search path
@@ -18,10 +18,12 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 PKG_PROG_PKG_CONFIG
 
+AC_PATH_PROG([GLIB_COMPILE_RESOURCES], [glib-compile-resources])
+
 LT_INIT
 
 PKG_CHECK_MODULES([GTK_DEPS], [gtk+-3.0], , AC_MSG_ERROR([gtk+-3.0 is required for this package]))
-dnl PKG_CHECK_MODULES([GLIB_DEPS], [glib-2.0], , AC_MSG_ERROR([glibc-2 is required for this package]))
+PKG_CHECK_MODULES([GLIB_DEPS], [glib-2.0], , AC_MSG_ERROR([glibc-2 is required for this package]))
 dnl PKG_CHECK_MODULES([GIO_DEPS], [gio-2.0], , AC_MSG_ERROR([gio-2 is required for this package]))
 dnl PKG_CHECK_MODULES([GTHREAD_DEPS], [gthread-2.0], , AC_MSG_ERROR([gthread-2 is required for this package]))
 
