@@ -309,7 +309,7 @@ headerbarui_init () {
     GtkBuilder *builder;
 
     mainwin = GTK_WINDOW (gtkui_plugin->get_mainwin ());
-    headerbarui_add_app_menu(mainwin);
+
     menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
     g_assert_nonnull(mainwin);
     g_assert_nonnull(menubar);
