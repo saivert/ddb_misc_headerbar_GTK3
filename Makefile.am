@@ -1,17 +1,11 @@
-pkglib_LTLIBRARIES = ddb_misc_headerbar_GTK3.la
+ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = headerbar.ui
+AUTOMAKE_OPTIONS = foreign
+EXTRA_DIST = INSTALL LICENSE
 
-ACLOCAL_AMFLAGS= -I m4
+SUBDIRS = src
 
-resource_files = $(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir) --generate-dependencies $(builddir)/headerbarui.gresource.xml)
-
-resources.c: headerbarui.gresource.xml $(resource_files)
-	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(srcdir) --generate-source $(srcdir)/headerbarui.gresource.xml
-
-ddb_misc_headerbar_GTK3_la_SOURCES=headerbarui.c resources.c headerbarui.h resources.h
-ddb_misc_headerbar_GTK3_la_CFLAGS=${GTK_DEPS_CFLAGS}
-ddb_misc_headerbar_GTK3_la_LDFLAGS=${GTK_DEPS_LIBS} -module -avoid-version -shared
-
-localinstall:
-	install .libs/ddb_misc_headerbar_GTK3.so ~/.local/lib64/deadbeef
+realclean: distclean
+	@rm -fr *~ autom4te.cache/ m4/ config.h.in configure config.sub ltmain.sh
+	@rm -f aclocal.m4 install-sh missing depcomp config.guess
+	@find $(top_srcdir) -name Makefile.in -exec rm -f {} \;
