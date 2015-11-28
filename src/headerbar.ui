@@ -71,10 +71,10 @@ Author: Nicolai Syvertsen
         </child>
       </object>
     </child>
-    <child type="title">
+    <child>
       <object class="GtkScale" id="scale1">
         <property name="name">seekbar</property>
-        <property name="width_request">200</property>
+        <property name="width_request">400</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="events">GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>

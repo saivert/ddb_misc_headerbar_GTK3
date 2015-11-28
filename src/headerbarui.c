@@ -342,7 +342,6 @@ headerbarui_init () {
 
     if (!headerbarui_flag_show_seek_bar)
     {
-        gtk_header_bar_set_custom_title(GTK_HEADER_BAR (headerbar), NULL);
         gtk_widget_hide(headerbar_seekbar);
     }
 
