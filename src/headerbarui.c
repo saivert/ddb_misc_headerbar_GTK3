@@ -30,6 +30,7 @@
 DB_functions_t *deadbeef;
 
 static ddb_gtkui_t *gtkui_plugin;
+static gint mainwin_width;
 
 GtkWidget *headerbar;
 GtkWidget *volbutton;
@@ -301,6 +302,24 @@ headerbarui_update_menubutton()
     gtk_menu_button_set_popup(GTK_MENU_BUTTON (headerbar_menubtn), GTK_WIDGET(menu));
 }
 
+static gint
+seekbar_width () {
+    return MIN((mainwin_width / 2) - 150, 420);
+}
+
+static gboolean
+mainwindow_resize (GtkWindow *mainwindow,
+                   GdkEventConfigure *event,
+                   gpointer pointer) {
+    if (headerbarui_flag_show_seek_bar && event->width != mainwin_width) {
+        mainwin_width = event->width;
+        gtk_widget_set_size_request (headerbar_seekbar,
+            seekbar_width (),
+            -1);
+    }
+    return FALSE;
+}
+
 static gboolean
 headerbarui_init () {
     GtkWindow *mainwin;
@@ -364,6 +383,13 @@ headerbarui_init () {
         "on_seekbar_button_release_event", on_seekbar_button_release_event,
         NULL);
     gtk_builder_connect_signals(builder, NULL);
+
+    gtk_window_get_size (mainwin, &mainwin_width, NULL);
+    gtk_widget_set_size_request (headerbar_seekbar, seekbar_width (), -1);
+    g_signal_connect (G_OBJECT(mainwin),
+        "configure-event",
+        G_CALLBACK(mainwindow_resize),
+        NULL);
 
     return FALSE;
 }
