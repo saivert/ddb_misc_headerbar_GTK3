@@ -198,7 +198,7 @@ on_nextbtn_clicked                     (GtkButton       *button,
 }
 
 gboolean
-headerbarui_reset_cb(gpointer user_data)
+headerbarui_reset_seekbar_cb(gpointer user_data)
 {
     GtkAdjustment * adjustment = gtk_range_get_adjustment(GTK_RANGE (headerbar_seekbar));
     gtk_adjustment_configure(adjustment,
@@ -225,7 +225,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
         if (headerbarui_flags.hide_seekbar_on_streaming)
             gtk_widget_hide(headerbar_seekbar);
         else
-            headerbarui_reset_cb(NULL);
+            headerbarui_reset_seekbar_cb(NULL);
         return TRUE;
     }
     if (deadbeef->pl_get_item_duration (trk) > 0) {
@@ -467,7 +467,7 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
         break;
     case DB_EV_SONGFINISHED:
         g_source_remove(headerbar_timer);
-        g_idle_add(headerbarui_reset_cb, NULL);
+        g_idle_add(headerbarui_reset_seekbar_cb, NULL);
         g_idle_add(playpause_update, FALSE);
         break;
     case DB_EV_PAUSED:
