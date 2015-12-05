@@ -360,7 +360,6 @@ headerbarui_init () {
 
     if (!headerbarui_flags.embed_menubar)
     {
-        GtkMenu *menu;
         gtk_widget_hide(menubar);
 
         headerbarui_update_menubutton();
