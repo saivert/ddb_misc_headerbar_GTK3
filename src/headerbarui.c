@@ -451,6 +451,12 @@ playpause_update(gpointer user_data)
     return FALSE;
 }
 
+gboolean
+headerbarui_configchanged_cb(gpointer user_data)
+{
+    gtk_widget_set_visible(headerbar_seekbar, headerbarui_flags.show_seek_bar);
+}
+
 static int
 headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     switch (id) {
@@ -468,6 +474,7 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
         break;
     case DB_EV_CONFIGCHANGED:
         headerbarui_getconfig();
+        g_idle_add (headerbarui_configchanged_cb, NULL);
         g_idle_add (headerbarui_volume_changed, NULL);
         break;
     case DB_EV_VOLUMECHANGED:
