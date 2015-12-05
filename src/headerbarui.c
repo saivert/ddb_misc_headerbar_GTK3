@@ -117,7 +117,10 @@ on_seekbar_format_value (GtkScale *scale,
     int hr = time/3600;
     int mn = (time-hr*3600)/60;
     int sc = time-hr*3600-mn*60;
-    return g_strdup_printf ("%02d:%02d:%02d", hr, mn, sc);
+    if (hr==0)
+        return g_strdup_printf ("%02d:%02d", mn, sc);
+    else
+        return g_strdup_printf ("%02d:%02d:%02d", hr, mn, sc);
 }
 
 void
