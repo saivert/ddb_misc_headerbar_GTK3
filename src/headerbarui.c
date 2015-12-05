@@ -200,6 +200,7 @@ on_nextbtn_clicked                     (GtkButton       *button,
 gboolean
 headerbarui_reset_seekbar_cb(gpointer user_data)
 {
+    if (!headerbarui_flags.show_seek_bar) return FALSE;
     GtkAdjustment * adjustment = gtk_range_get_adjustment(GTK_RANGE (headerbar_seekbar));
     gtk_adjustment_configure(adjustment,
     deadbeef->streamer_get_playpos (), //value
