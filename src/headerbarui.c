@@ -455,6 +455,7 @@ gboolean
 headerbarui_configchanged_cb(gpointer user_data)
 {
     gtk_widget_set_visible(headerbar_seekbar, headerbarui_flags.show_seek_bar);
+    return FALSE;
 }
 
 static int
