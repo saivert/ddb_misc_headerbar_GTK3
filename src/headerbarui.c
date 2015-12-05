@@ -46,6 +46,7 @@ gboolean seekbar_ismoving = FALSE;
 static struct headerbarui_flag_s {
     gboolean embed_menubar;
     gboolean show_seek_bar;
+    gboolean hide_seekbar_on_streaming;
 } headerbarui_flags;
 
 GtkWidget*
@@ -221,7 +222,10 @@ headerbarui_update_seekbar_cb(gpointer user_data)
         if (trk) {
             deadbeef->pl_item_unref (trk);
         }
-        headerbarui_reset_cb(NULL);
+        if (headerbarui_flags.hide_seekbar_on_streaming)
+            gtk_widget_hide(headerbar_seekbar);
+        else
+            headerbarui_reset_cb(NULL);
         return TRUE;
     }
     if (deadbeef->pl_get_item_duration (trk) > 0) {
@@ -234,6 +238,8 @@ headerbarui_update_seekbar_cb(gpointer user_data)
             1, // page_increment
             0); // page_size
         gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), TRUE);
+        if (headerbarui_flags.hide_seekbar_on_streaming)
+            gtk_widget_show(headerbar_seekbar);
     }
     if (trk) {
         deadbeef->pl_item_unref (trk);
@@ -401,6 +407,10 @@ void headerbarui_getconfig()
 {
     headerbarui_flags.embed_menubar = deadbeef->conf_get_int ("headerbarui.embed_menubar", 0);
     headerbarui_flags.show_seek_bar = deadbeef->conf_get_int ("headerbarui.show_seek_bar", 1);
+    if (headerbarui_flags.show_seek_bar)
+        headerbarui_flags.hide_seekbar_on_streaming = deadbeef->conf_get_int ("headerbarui.hide_seekbar_on_streaming", 0);
+    else
+        headerbarui_flags.hide_seekbar_on_streaming = FALSE;
 }
 
 int headerbarui_connect() {
@@ -470,6 +480,7 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
 static const char settings_dlg[] =
     "property \"Show seekbar\" checkbox headerbarui.show_seek_bar 1;\n"
     "property \"Embed menubar instead of showing hamburger button\" checkbox headerbarui.embed_menubar 0;\n"
+    "property \"Hide seekbar on streaming\" checkbox headerbarui.hide_seekbar_on_streaming 0;\n"
 ;
 
 static DB_misc_t plugin = {
