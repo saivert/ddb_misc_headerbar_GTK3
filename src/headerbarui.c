@@ -42,8 +42,11 @@ GtkWidget *headerbar_menubtn;
 guint headerbar_timer;
 
 gboolean seekbar_ismoving = FALSE;
-gboolean headerbarui_flag_embed_menubar;
-gboolean headerbarui_flag_show_seek_bar;
+
+static struct headerbarui_flag_s {
+    gboolean embed_menubar;
+    gboolean show_seek_bar;
+} headerbarui_flags;
 
 GtkWidget*
 lookup_widget (GtkWidget *widget, const gchar *widget_name)
@@ -311,7 +314,7 @@ static gboolean
 mainwindow_resize (GtkWindow *mainwindow,
                    GdkEventConfigure *event,
                    gpointer pointer) {
-    if (headerbarui_flag_show_seek_bar && event->width != mainwin_width) {
+    if (headerbarui_flags.show_seek_bar && event->width != mainwin_width) {
         mainwin_width = event->width;
         gtk_widget_set_size_request (headerbar_seekbar,
             seekbar_width (),
@@ -345,7 +348,7 @@ headerbarui_init () {
 
     gtk_window_set_titlebar(mainwin, GTK_WIDGET(headerbar));
 
-    if (!headerbarui_flag_embed_menubar)
+    if (!headerbarui_flags.embed_menubar)
     {
         GtkMenu *menu;
         gtk_widget_hide(menubar);
@@ -359,7 +362,7 @@ headerbarui_init () {
         gtk_widget_reparent(menubar, headerbar);
     }
 
-    if (!headerbarui_flag_show_seek_bar)
+    if (!headerbarui_flags.show_seek_bar)
     {
         gtk_widget_hide(headerbar_seekbar);
     }
@@ -396,8 +399,8 @@ headerbarui_init () {
 
 void headerbarui_getconfig()
 {
-    headerbarui_flag_embed_menubar = deadbeef->conf_get_int ("headerbarui.embed_menubar", 0);
-    headerbarui_flag_show_seek_bar = deadbeef->conf_get_int ("headerbarui.show_seek_bar", 1);
+    headerbarui_flags.embed_menubar = deadbeef->conf_get_int ("headerbarui.embed_menubar", 0);
+    headerbarui_flags.show_seek_bar = deadbeef->conf_get_int ("headerbarui.show_seek_bar", 1);
 }
 
 int headerbarui_connect() {
