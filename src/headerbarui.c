@@ -432,7 +432,7 @@ gboolean
 headerbarui_volume_changed(gpointer user_data)
 {
     float volume = deadbeef->volume_get_min_db()-deadbeef->volume_get_db();
-    g_assert_false((volume>0));
+    if (volume > 0) volume = 0;
     gtk_scale_button_set_value( GTK_SCALE_BUTTON (volbutton), (int)-volume );
     return FALSE;
 }
