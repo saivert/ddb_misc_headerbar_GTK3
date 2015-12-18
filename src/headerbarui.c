@@ -488,7 +488,7 @@ headerbarui_volume_changed(gpointer user_data)
 gboolean
 playpause_update(gpointer user_data)
 {
-    int *play=user_data;
+    int* play = user_data;
     if (*play)
         {
             gtk_widget_hide(headerbar_playbtn);
@@ -511,7 +511,7 @@ headerbarui_configchanged_cb(gpointer user_data)
 
 static int
 headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
-    int play;
+    static int play;
     switch (id) {
     case DB_EV_SONGSTARTED:
         headerbar_timer = g_timeout_add (1000/gtkui_get_gui_refresh_rate (), headerbarui_update_seekbar_cb, NULL);
