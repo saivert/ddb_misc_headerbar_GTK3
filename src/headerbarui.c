@@ -378,7 +378,6 @@ static gboolean
 headerbarui_init () {
     GtkWindow *mainwin;
     GtkWidget *menubar;
-    GtkWidget *menubtn_image;
     GtkBuilder *builder;
 
     mainwin = GTK_WINDOW (gtkui_plugin->get_mainwin ());
