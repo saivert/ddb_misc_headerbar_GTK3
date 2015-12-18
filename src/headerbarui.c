@@ -213,26 +213,44 @@ on_nextbtn_clicked                     (GtkButton       *button,
     deadbeef->sendmessage (DB_EV_NEXT, 0, 0, 0);
 }
 
+void
+headerbarui_adjust_range(GtkRange *range,
+                          gdouble value,
+                          gdouble lower,
+                          gdouble upper,
+                          gdouble step_increment,
+                          gdouble page_increment,
+                          gdouble page_size)
+{
+    GtkAdjustment * adjustment = gtk_range_get_adjustment(range);
+
+    GSignalMatchType mask = G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA;
+    GQuark detail = g_quark_from_static_string("value_changed");
+    g_signal_handlers_block_matched ((gpointer)range, mask, detail, 0, NULL, NULL, NULL);
+
+    gtk_adjustment_configure(adjustment,
+    value, //value
+    lower, // lower
+    upper, // upper
+    step_increment, // step_increment
+    page_increment, // page_increment
+    page_size); // page_size
+
+    g_signal_handlers_unblock_matched ((gpointer)range, mask, detail, 0, NULL, NULL, NULL);
+}
+
 gboolean
 headerbarui_reset_seekbar_cb(gpointer user_data)
 {
     if (!headerbarui_flags.show_seek_bar) return FALSE;
-    GtkAdjustment * adjustment = gtk_range_get_adjustment(GTK_RANGE (headerbar_seekbar));
 
-    GSignalMatchType mask = G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA;
-    GQuark detail = g_quark_from_static_string("value_changed");
-    g_signal_handlers_block_matched ((gpointer)headerbar_seekbar, mask, detail, 0, NULL, NULL, NULL);
-
-    gtk_adjustment_configure(adjustment,
-    0, //value
-    0, // lower
-    0, // upper
-    0, // step_increment
-    0, // page_increment
-    0); // page_size
-    //gtk_range_set_value(GTK_RANGE (headerbar_seekbar), 0);
-
-    g_signal_handlers_unblock_matched ((gpointer)headerbar_seekbar, mask, detail, 0, NULL, NULL, NULL);
+    headerbarui_adjust_range(GTK_RANGE (headerbar_seekbar),
+        0, //value
+        0, // lower
+        0, // upper
+        0, // step_increment
+        0, // page_increment
+        0); // page_size
 
     gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), FALSE);
     return FALSE;
@@ -254,20 +272,13 @@ headerbarui_update_seekbar_cb(gpointer user_data)
         return TRUE;
     }
     if (deadbeef->pl_get_item_duration (trk) > 0) {
-        GtkAdjustment * adjustment = gtk_range_get_adjustment(GTK_RANGE (headerbar_seekbar));
-
-        GSignalMatchType mask = G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA;
-        GQuark detail = g_quark_from_static_string("value_changed");
-        g_signal_handlers_block_matched ((gpointer)headerbar_seekbar, mask, detail, 0, NULL, NULL, NULL);
-
-        gtk_adjustment_configure(adjustment,
+        headerbarui_adjust_range(GTK_RANGE (headerbar_seekbar),
             deadbeef->streamer_get_playpos (), //value
             0, // lower
             deadbeef->pl_get_item_duration (trk), // upper
             1, // step_increment
             1, // page_increment
             0); // page_size
-        g_signal_handlers_unblock_matched ((gpointer)headerbar_seekbar, mask, detail, 0, NULL, NULL, NULL);
 
         gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), TRUE);
         if (headerbarui_flags.hide_seekbar_on_streaming)
