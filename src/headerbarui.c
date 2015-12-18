@@ -51,6 +51,7 @@ static struct headerbarui_flag_s {
     gboolean hide_seekbar_on_streaming;
 } headerbarui_flags;
 
+static
 GtkWidget*
 lookup_widget (GtkWidget *widget, const gchar *widget_name)
 {
@@ -76,6 +77,7 @@ lookup_widget (GtkWidget *widget, const gchar *widget_name)
   return found_widget;
 }
 
+static
 void
 on_volbutton_value_changed (GtkScaleButton *button,
                gdouble         value,
@@ -85,6 +87,7 @@ on_volbutton_value_changed (GtkScaleButton *button,
 }
 
 
+static
 void
 deadbeef_seek(int value)
 {
@@ -97,6 +100,7 @@ deadbeef_seek(int value)
     }
 }
 
+static
 void
 on_seekbar_value_changed (GtkRange *range,
                gpointer  user_data)
@@ -105,6 +109,7 @@ on_seekbar_value_changed (GtkRange *range,
     deadbeef_seek((int)gtk_range_get_value(range));
 }
 
+static
 gboolean
 on_seekbar_button_press_event (GtkScale *widget,
                GdkEvent  *event,
@@ -114,6 +119,7 @@ on_seekbar_button_press_event (GtkScale *widget,
     return FALSE;
 }
 
+static
 gboolean
 on_seekbar_button_release_event (GtkScale *widget,
                GdkEvent  *event,
@@ -138,6 +144,7 @@ on_seekbar_format_value (GtkScale *scale,
         return g_strdup_printf ("%02d:%02d:%02d", hr, mn, sc);
 }
 
+static
 void
 on_stopbtn_clicked                     (GtkButton       *button,
                                         gpointer         user_data)
@@ -146,6 +153,7 @@ on_stopbtn_clicked                     (GtkButton       *button,
 }
 
 
+static
 void
 on_playbtn_clicked                     (GtkButton       *button,
                                         gpointer         user_data)
@@ -191,7 +199,7 @@ on_playbtn_clicked                     (GtkButton       *button,
     }
 }
 
-
+static
 void
 on_pausebtn_clicked                    (GtkButton       *button,
                                         gpointer         user_data)
@@ -199,7 +207,7 @@ on_pausebtn_clicked                    (GtkButton       *button,
     deadbeef->sendmessage (DB_EV_TOGGLE_PAUSE, 0, 0, 0);
 }
 
-
+static
 void
 on_prevbtn_clicked                     (GtkButton       *button,
                                         gpointer         user_data)
@@ -207,7 +215,7 @@ on_prevbtn_clicked                     (GtkButton       *button,
     deadbeef->sendmessage (DB_EV_PREV, 0, 0, 0);
 }
 
-
+static
 void
 on_nextbtn_clicked                     (GtkButton       *button,
                                         gpointer         user_data)
@@ -215,6 +223,7 @@ on_nextbtn_clicked                     (GtkButton       *button,
     deadbeef->sendmessage (DB_EV_NEXT, 0, 0, 0);
 }
 
+static
 void
 headerbarui_adjust_range(GtkRange *range,
                           gdouble value,
@@ -241,6 +250,7 @@ headerbarui_adjust_range(GtkRange *range,
     g_signal_handlers_unblock_matched ((gpointer)range, mask, detail, 0, NULL, NULL, NULL);
 }
 
+static
 gboolean
 headerbarui_reset_seekbar_cb(gpointer user_data)
 {
@@ -258,6 +268,7 @@ headerbarui_reset_seekbar_cb(gpointer user_data)
     return FALSE;
 }
 
+static
 gboolean
 headerbarui_update_seekbar_cb(gpointer user_data)
 {
@@ -293,7 +304,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
 }
 
 
-
+static
 int
 gtkui_get_gui_refresh_rate () {
     int fps = deadbeef->conf_get_int ("gtkui.refresh_rate", 10);
@@ -306,6 +317,7 @@ gtkui_get_gui_refresh_rate () {
     return fps;
 }
 
+static
 GObject *
 g_object_clone(GObject *src)
 {
@@ -334,6 +346,7 @@ g_object_clone(GObject *src)
     return dst;
 }
 
+static
 void
 headerbarui_update_menubutton()
 {
@@ -447,6 +460,7 @@ headerbarui_init () {
     return FALSE;
 }
 
+static
 void headerbarui_getconfig()
 {
     headerbarui_flags.embed_menubar = deadbeef->conf_get_int ("headerbarui.embed_menubar", 0);
@@ -457,6 +471,7 @@ void headerbarui_getconfig()
         headerbarui_flags.hide_seekbar_on_streaming = FALSE;
 }
 
+static
 int headerbarui_connect() {
     headerbarui_getconfig();
     gtkui_plugin = (ddb_gtkui_t *) deadbeef->plug_get_for_id (DDB_GTKUI_PLUGIN_ID);
@@ -469,6 +484,7 @@ int headerbarui_connect() {
     return -1;
 }
 
+static
 gboolean
 headerbarui_volume_changed(gpointer user_data)
 {
@@ -484,7 +500,7 @@ headerbarui_volume_changed(gpointer user_data)
     return FALSE;
 }
 
-
+static
 gboolean
 playpause_update(gpointer user_data)
 {
@@ -502,6 +518,7 @@ playpause_update(gpointer user_data)
     return FALSE;
 }
 
+static
 gboolean
 headerbarui_configchanged_cb(gpointer user_data)
 {
