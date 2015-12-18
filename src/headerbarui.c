@@ -82,6 +82,27 @@ on_volbutton_value_changed (GtkScaleButton *button,
         deadbeef->volume_set_db (deadbeef->volume_get_min_db()-(double)-value);
 }
 
+
+void
+deadbeef_seek(int value)
+{
+    DB_playItem_t *trk = deadbeef->streamer_get_playing_track ();
+    if (trk) {
+        if (deadbeef->pl_get_item_duration (trk) >= 0) {
+            deadbeef->sendmessage (DB_EV_SEEK, 0, (int)value * 1000, 0);
+        }
+        deadbeef->pl_item_unref (trk);
+    }
+}
+
+void
+on_seekbar_value_changed (GtkRange *range,
+               gpointer  user_data)
+{
+    if (seekbar_ismoving) return;
+    deadbeef_seek((int)gtk_range_get_value(range));
+}
+
 gboolean
 on_seekbar_button_press_event (GtkScale *widget,
                GdkEvent  *event,
@@ -96,15 +117,7 @@ on_seekbar_button_release_event (GtkScale *widget,
                GdkEvent  *event,
                gpointer   user_data)
 {
-    DB_playItem_t *trk = deadbeef->streamer_get_playing_track ();
-    if (trk) {
-        if (deadbeef->pl_get_item_duration (trk) >= 0) {
-            int value = (int)gtk_range_get_value(GTK_RANGE (widget));
-            deadbeef->sendmessage (DB_EV_SEEK, 0, (int)value * 1000, 0);
-        }
-        deadbeef->pl_item_unref (trk);
-    }    
-
+    deadbeef_seek((int)gtk_range_get_value(GTK_RANGE(widget)));
     seekbar_ismoving = FALSE;
     return FALSE;
 }
@@ -205,14 +218,22 @@ headerbarui_reset_seekbar_cb(gpointer user_data)
 {
     if (!headerbarui_flags.show_seek_bar) return FALSE;
     GtkAdjustment * adjustment = gtk_range_get_adjustment(GTK_RANGE (headerbar_seekbar));
+
+    GSignalMatchType mask = G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA;
+    GQuark detail = g_quark_from_static_string("value_changed");
+    g_signal_handlers_block_matched ((gpointer)headerbar_seekbar, mask, detail, 0, NULL, NULL, NULL);
+
     gtk_adjustment_configure(adjustment,
-    deadbeef->streamer_get_playpos (), //value
+    0, //value
     0, // lower
     0, // upper
     0, // step_increment
     0, // page_increment
     0); // page_size
-    gtk_range_set_value(GTK_RANGE (headerbar_seekbar), 0);
+    //gtk_range_set_value(GTK_RANGE (headerbar_seekbar), 0);
+
+    g_signal_handlers_unblock_matched ((gpointer)headerbar_seekbar, mask, detail, 0, NULL, NULL, NULL);
+
     gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), FALSE);
     return FALSE;
 }
@@ -234,6 +255,11 @@ headerbarui_update_seekbar_cb(gpointer user_data)
     }
     if (deadbeef->pl_get_item_duration (trk) > 0) {
         GtkAdjustment * adjustment = gtk_range_get_adjustment(GTK_RANGE (headerbar_seekbar));
+
+        GSignalMatchType mask = G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA;
+        GQuark detail = g_quark_from_static_string("value_changed");
+        g_signal_handlers_block_matched ((gpointer)headerbar_seekbar, mask, detail, 0, NULL, NULL, NULL);
+
         gtk_adjustment_configure(adjustment,
             deadbeef->streamer_get_playpos (), //value
             0, // lower
@@ -241,6 +267,8 @@ headerbarui_update_seekbar_cb(gpointer user_data)
             1, // step_increment
             1, // page_increment
             0); // page_size
+        g_signal_handlers_unblock_matched ((gpointer)headerbar_seekbar, mask, detail, 0, NULL, NULL, NULL);
+
         gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), TRUE);
         if (headerbarui_flags.hide_seekbar_on_streaming)
             gtk_widget_show(headerbar_seekbar);
@@ -393,6 +421,7 @@ headerbarui_init () {
         "on_seekbar_format_value", on_seekbar_format_value,
         "on_seekbar_button_press_event", on_seekbar_button_press_event,
         "on_seekbar_button_release_event", on_seekbar_button_release_event,
+        "on_seekbar_value_changed", on_seekbar_value_changed,
         NULL);
     gtk_builder_connect_signals(builder, NULL);
 
@@ -433,7 +462,13 @@ headerbarui_volume_changed(gpointer user_data)
 {
     float volume = deadbeef->volume_get_min_db()-deadbeef->volume_get_db();
     if (volume > 0) volume = 0;
+
+    GSignalMatchType mask = G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA;
+    GQuark detail = g_quark_from_static_string("value_changed");
+    g_signal_handlers_block_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, NULL);
     gtk_scale_button_set_value( GTK_SCALE_BUTTON (volbutton), (int)-volume );
+    g_signal_handlers_unblock_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, NULL);
+
     return FALSE;
 }
 

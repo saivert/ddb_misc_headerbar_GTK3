@@ -82,6 +82,7 @@ Author: Nicolai Syvertsen
         <signal name="button-press-event" handler="on_seekbar_button_press_event" swapped="no"/>
         <signal name="button-release-event" handler="on_seekbar_button_release_event" swapped="no"/>
         <signal name="format-value" handler="on_seekbar_format_value" swapped="no"/>
+        <signal name="value-changed" handler="on_seekbar_value_changed" swapped="no"/>
       </object>
       <packing>
         <property name="position">1</property>
@@ -139,12 +140,12 @@ audio-volume-medium-symbolic</property>
       </packing>
     </child>
     <child>
-      <object class="GtkButton" id="pausebtn">
+      <object class="GtkButton" id="playbtn">
+        <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">image3</property>
-        <property name="image_position">bottom</property>
-        <signal name="clicked" handler="on_pausebtn_clicked" swapped="no"/>
+        <property name="image">image5</property>
+        <signal name="clicked" handler="on_playbtn_clicked" swapped="no"/>
       </object>
       <packing>
         <property name="pack_type">end</property>
@@ -152,12 +153,12 @@ audio-volume-medium-symbolic</property>
       </packing>
     </child>
     <child>
-      <object class="GtkButton" id="playbtn">
-        <property name="visible">True</property>
+      <object class="GtkButton" id="pausebtn">
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">image5</property>
-        <signal name="clicked" handler="on_playbtn_clicked" swapped="no"/>
+        <property name="image">image3</property>
+        <property name="image_position">bottom</property>
+        <signal name="clicked" handler="on_pausebtn_clicked" swapped="no"/>
       </object>
       <packing>
         <property name="pack_type">end</property>
