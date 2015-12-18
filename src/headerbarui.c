@@ -39,6 +39,8 @@ GtkWidget *headerbar_playbtn;
 GtkWidget *headerbar_pausebtn;
 GtkWidget *headerbar_menubtn;
 
+#define GTK_BUILDER_GET_WIDGET(builder, name) (GtkWidget *)gtk_builder_get_object(builder, name)
+
 guint headerbar_timer;
 
 gboolean seekbar_ismoving = FALSE;
@@ -348,7 +350,7 @@ headerbarui_update_menubutton()
     children = gtk_container_get_children(GTK_CONTAINER (menubar));
     for (l = children; l; l = l->next)
     {
-        gtk_container_add(GTK_CONTAINER(menu), g_object_clone(l->data));
+        gtk_container_add(GTK_CONTAINER(menu), GTK_WIDGET(g_object_clone(l->data)));
     }
     g_list_free(children);
     gtk_menu_button_set_popup(GTK_MENU_BUTTON (headerbar_menubtn), GTK_WIDGET(menu));
@@ -386,12 +388,12 @@ headerbarui_init () {
     g_assert_nonnull(menubar);
 
     builder = gtk_builder_new_from_resource("/org/deadbeef/headerbarui/headerbar.ui");
-    headerbar = gtk_builder_get_object(builder, "headerbar1");
-    volbutton = gtk_builder_get_object(builder, "volumebutton1");
-    headerbar_menubtn =  gtk_builder_get_object(builder, "menubutton1");
-    headerbar_seekbar = gtk_builder_get_object(builder, "scale1");
-    headerbar_playbtn = gtk_builder_get_object(builder, "playbtn");
-    headerbar_pausebtn = gtk_builder_get_object(builder, "pausebtn");
+    headerbar = GTK_BUILDER_GET_WIDGET(builder, "headerbar1");
+    volbutton = GTK_BUILDER_GET_WIDGET(builder, "volumebutton1");
+    headerbar_menubtn =  GTK_BUILDER_GET_WIDGET(builder, "menubutton1");
+    headerbar_seekbar = GTK_BUILDER_GET_WIDGET(builder, "scale1");
+    headerbar_playbtn = GTK_BUILDER_GET_WIDGET(builder, "playbtn");
+    headerbar_pausebtn = GTK_BUILDER_GET_WIDGET(builder, "pausebtn");
 
     gtk_widget_show(headerbar);
 
@@ -423,7 +425,7 @@ headerbarui_init () {
     gtk_widget_show(volbutton);
 
     gtk_builder_add_callback_symbols(builder,
-        "on_volbutton_value_changed", on_volbutton_value_changed,
+        "on_volbutton_value_changed", (GCallback)on_volbutton_value_changed,
         "on_nextbtn_clicked", on_nextbtn_clicked,
         "on_prevbtn_clicked", on_prevbtn_clicked,
         "on_pausebtn_clicked", on_pausebtn_clicked,
@@ -487,7 +489,8 @@ headerbarui_volume_changed(gpointer user_data)
 gboolean
 playpause_update(gpointer user_data)
 {
-    if (user_data)
+    int *play=user_data;
+    if (*play)
         {
             gtk_widget_hide(headerbar_playbtn);
             gtk_widget_show(headerbar_pausebtn);
@@ -509,18 +512,22 @@ headerbarui_configchanged_cb(gpointer user_data)
 
 static int
 headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
+    int play;
     switch (id) {
     case DB_EV_SONGSTARTED:
         headerbar_timer = g_timeout_add (1000/gtkui_get_gui_refresh_rate (), headerbarui_update_seekbar_cb, NULL);
-        g_idle_add(playpause_update, TRUE);
+        play=TRUE;
+        g_idle_add(playpause_update, &play);
         break;
     case DB_EV_SONGFINISHED:
         g_source_remove(headerbar_timer);
         g_idle_add(headerbarui_reset_seekbar_cb, NULL);
-        g_idle_add(playpause_update, FALSE);
+        play=FALSE;
+        g_idle_add(playpause_update, &play);
         break;
     case DB_EV_PAUSED:
-        g_idle_add(playpause_update, !p1);
+        play=!p1;
+        g_idle_add(playpause_update, &play);
         break;
     case DB_EV_CONFIGCHANGED:
         headerbarui_getconfig();
