@@ -37,6 +37,7 @@ GtkWidget *volbutton;
 GtkWidget *headerbar_seekbar;
 GtkWidget *headerbar_playbtn;
 GtkWidget *headerbar_pausebtn;
+GtkWidget *headerbar_stopbtn;
 GtkWidget *headerbar_menubtn;
 
 #define GTK_BUILDER_GET_WIDGET(builder, name) (GtkWidget *)gtk_builder_get_object(builder, name)
@@ -46,6 +47,7 @@ guint headerbar_timer;
 gboolean seekbar_ismoving = FALSE;
 
 static struct headerbarui_flag_s {
+    gboolean disable;
     gboolean embed_menubar;
     gboolean show_seek_bar;
     gboolean hide_seekbar_on_streaming;
@@ -406,6 +408,7 @@ headerbarui_init () {
     headerbar_seekbar = GTK_BUILDER_GET_WIDGET(builder, "scale1");
     headerbar_playbtn = GTK_BUILDER_GET_WIDGET(builder, "playbtn");
     headerbar_pausebtn = GTK_BUILDER_GET_WIDGET(builder, "pausebtn");
+    headerbar_stopbtn = GTK_BUILDER_GET_WIDGET(builder, "stopbtn");
 
     gtk_widget_show(headerbar);
 
@@ -463,6 +466,7 @@ headerbarui_init () {
 static
 void headerbarui_getconfig()
 {
+    headerbarui_flags.disable = deadbeef->conf_get_int ("headerbarui.disable", 0);
     headerbarui_flags.embed_menubar = deadbeef->conf_get_int ("headerbarui.embed_menubar", 0);
     headerbarui_flags.show_seek_bar = deadbeef->conf_get_int ("headerbarui.show_seek_bar", 1);
     if (headerbarui_flags.show_seek_bar)
@@ -474,6 +478,7 @@ void headerbarui_getconfig()
 static
 int headerbarui_connect() {
     headerbarui_getconfig();
+    if (headerbarui_flags.disable) return 1;
     gtkui_plugin = (ddb_gtkui_t *) deadbeef->plug_get_for_id (DDB_GTKUI_PLUGIN_ID);
     if (gtkui_plugin) {
         if (gtkui_plugin->gui.plugin.version_major == 2) {
@@ -505,17 +510,34 @@ gboolean
 playpause_update(gpointer user_data)
 {
     int* play = user_data;
-    if (*play)
-        {
-            gtk_widget_hide(headerbar_playbtn);
-            gtk_widget_show(headerbar_pausebtn);
-        }
-    else
-        {
-            gtk_widget_show(headerbar_playbtn);
+    gboolean is_streaming;
+    DB_playItem_t *trk = deadbeef->streamer_get_playing_track ();
+    if (trk) {
+        is_streaming = !deadbeef->is_local_file (deadbeef->pl_find_meta_raw (trk, ":URI"));
+        deadbeef->pl_item_unref (trk);
+    } else is_streaming = FALSE;
+
+    switch (*play) {
+    case 0:
+        gtk_widget_show(headerbar_playbtn);
+        if (is_streaming)
+            gtk_widget_hide(headerbar_stopbtn);
+        else
             gtk_widget_hide(headerbar_pausebtn);
-        }
-    return FALSE;
+        break;
+    case 1:
+        gtk_widget_hide(headerbar_playbtn);
+        if (is_streaming)
+            gtk_widget_show(headerbar_stopbtn);
+        else
+            gtk_widget_show(headerbar_pausebtn);
+       break;
+    case 2:
+        gtk_widget_hide(headerbar_stopbtn);
+        gtk_widget_hide(headerbar_pausebtn);
+        gtk_widget_show(headerbar_playbtn);
+        break;
+    }
 }
 
 static
@@ -529,24 +551,32 @@ headerbarui_configchanged_cb(gpointer user_data)
 static int
 headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     static int play;
+    if (id != DB_EV_CONFIGCHANGED && headerbarui_flags.disable) return 0;
     switch (id) {
     case DB_EV_SONGSTARTED:
         headerbar_timer = g_timeout_add (1000/gtkui_get_gui_refresh_rate (), headerbarui_update_seekbar_cb, NULL);
-        play=TRUE;
+        play=1;
         g_idle_add(playpause_update, &play);
         break;
     case DB_EV_SONGFINISHED:
         g_source_remove(headerbar_timer);
         g_idle_add(headerbarui_reset_seekbar_cb, NULL);
-        play=FALSE;
+        play=0;
+        g_idle_add(playpause_update, &play);
+        break;
+    case DB_EV_SONGCHANGED:
+        play=2;
         g_idle_add(playpause_update, &play);
         break;
     case DB_EV_PAUSED:
-        play=!p1;
+        play=p1?0:1;
         g_idle_add(playpause_update, &play);
         break;
     case DB_EV_CONFIGCHANGED:
         headerbarui_getconfig();
+        if (!headerbarui_flags.disable) {
+            headerbarui_connect();
+        }
         g_idle_add (headerbarui_configchanged_cb, NULL);
         g_idle_add (headerbarui_volume_changed, NULL);
         break;
@@ -558,6 +588,7 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
 }
 
 static const char settings_dlg[] =
+    "property \"Disable plugin (requires restart if disabling)\" checkbox headerbarui.disable 0;\n"
     "property \"Show seekbar\" checkbox headerbarui.show_seek_bar 1;\n"
     "property \"Embed menubar instead of showing hamburger button (requires restart)\" checkbox headerbarui.embed_menubar 0;\n"
     "property \"Hide seekbar on streaming\" checkbox headerbarui.hide_seekbar_on_streaming 0;\n"
