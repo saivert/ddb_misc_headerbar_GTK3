@@ -517,26 +517,16 @@ playpause_update(gpointer user_data)
         deadbeef->pl_item_unref (trk);
     } else is_streaming = FALSE;
 
-    switch (*play) {
-    case 0:
-        gtk_widget_show(headerbar_playbtn);
-        if (is_streaming)
-            gtk_widget_hide(headerbar_stopbtn);
-        else
-            gtk_widget_hide(headerbar_pausebtn);
-        break;
-    case 1:
+    if (*play) {
         gtk_widget_hide(headerbar_playbtn);
         if (is_streaming)
             gtk_widget_show(headerbar_stopbtn);
         else
             gtk_widget_show(headerbar_pausebtn);
-       break;
-    case 2:
+    } else {
+        gtk_widget_show(headerbar_playbtn);
         gtk_widget_hide(headerbar_stopbtn);
         gtk_widget_hide(headerbar_pausebtn);
-        gtk_widget_show(headerbar_playbtn);
-        break;
     }
 }
 
@@ -562,10 +552,6 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
         g_source_remove(headerbar_timer);
         g_idle_add(headerbarui_reset_seekbar_cb, NULL);
         play=0;
-        g_idle_add(playpause_update, &play);
-        break;
-    case DB_EV_SONGCHANGED:
-        play=2;
         g_idle_add(playpause_update, &play);
         break;
     case DB_EV_PAUSED:
