@@ -320,35 +320,6 @@ gtkui_get_gui_refresh_rate () {
 }
 
 static
-GObject *
-g_object_clone(GObject *src)
-{
-    GObject *dst;
-    GParameter *params;
-    GParamSpec **specs;
-    guint n, n_specs, n_params;
-
-    specs = g_object_class_list_properties(G_OBJECT_GET_CLASS(src), &n_specs);
-    params = g_new0(GParameter, n_specs);
-    n_params = 0;
-
-    for (n = 0; n < n_specs; ++n)
-        if (strcmp(specs[n]->name, "parent") &&
-            (specs[n]->flags & G_PARAM_READWRITE) == G_PARAM_READWRITE) {
-            params[n_params].name = g_intern_string(specs[n]->name);
-            g_value_init(&params[n_params].value, specs[n]->value_type);
-            g_object_get_property(src, specs[n]->name, &params[n_params].value);
-            ++ n_params;
-        }
-
-    dst = g_object_newv(G_TYPE_FROM_INSTANCE(src), n_params, params);
-    g_free(specs);
-    g_free(params);
-
-    return dst;
-}
-
-static
 void
 headerbarui_update_menubutton()
 {
@@ -365,7 +336,11 @@ headerbarui_update_menubutton()
     children = gtk_container_get_children(GTK_CONTAINER (menubar));
     for (l = children; l; l = l->next)
     {
-        gtk_container_add(GTK_CONTAINER(menu), GTK_WIDGET(g_object_clone(l->data)));
+        GtkWidget *menuitem;
+        menuitem = gtk_menu_item_new_with_mnemonic(gtk_menu_item_get_label(GTK_MENU_ITEM(l->data)));
+        gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), gtk_menu_item_get_submenu(GTK_MENU_ITEM(l->data)));
+        gtk_widget_show(menuitem);
+        gtk_container_add(GTK_CONTAINER(menu), GTK_WIDGET(menuitem));
     }
     g_list_free(children);
     gtk_menu_button_set_popup(GTK_MENU_BUTTON (headerbar_menubtn), GTK_WIDGET(menu));
@@ -390,7 +365,7 @@ mainwindow_resize (GtkWindow *mainwindow,
 }
 
 static gboolean
-headerbarui_init () {
+headerbarui_init (gpointer user_data) {
     GtkWindow *mainwin;
     GtkWidget *menubar;
     GtkBuilder *builder;
@@ -496,7 +471,7 @@ headerbarui_volume_changed(gpointer user_data)
     float volume = deadbeef->volume_get_min_db()-deadbeef->volume_get_db();
     if (volume > 0) volume = 0;
 
-    GSignalMatchType mask = G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA;
+    GSignalMatchType mask = (GSignalMatchType)(G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA);
     GQuark detail = g_quark_from_static_string("value_changed");
     g_signal_handlers_block_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, NULL);
     gtk_scale_button_set_value( GTK_SCALE_BUTTON (volbutton), (int)-volume );
@@ -555,7 +530,7 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
         g_idle_add(playpause_update, &play);
         break;
     case DB_EV_PAUSED:
-        play=p1?0:1;
+        play=!p1;
         g_idle_add(playpause_update, &play);
         break;
     case DB_EV_CONFIGCHANGED:
