@@ -237,7 +237,7 @@ headerbarui_adjust_range(GtkRange *range,
 {
     GtkAdjustment * adjustment = gtk_range_get_adjustment(range);
 
-    GSignalMatchType mask = G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA;
+    GSignalMatchType mask = (GSignalMatchType)(G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA);
     GQuark detail = g_quark_from_static_string("value_changed");
     g_signal_handlers_block_matched ((gpointer)range, mask, detail, 0, NULL, NULL, NULL);
 
@@ -484,7 +484,7 @@ static
 gboolean
 playpause_update(gpointer user_data)
 {
-    int* play = user_data;
+    int* play = (int*)user_data;
     gboolean is_streaming;
     DB_playItem_t *trk = deadbeef->streamer_get_playing_track ();
     if (trk) {
@@ -503,6 +503,7 @@ playpause_update(gpointer user_data)
         gtk_widget_hide(headerbar_stopbtn);
         gtk_widget_hide(headerbar_pausebtn);
     }
+    return FALSE;
 }
 
 static
