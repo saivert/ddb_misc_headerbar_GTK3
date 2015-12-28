@@ -140,12 +140,12 @@ audio-volume-medium-symbolic</property>
       </packing>
     </child>
     <child>
-      <object class="GtkButton" id="playbtn">
+      <object class="GtkButton" id="stopbtn">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">image5</property>
-        <signal name="clicked" handler="on_playbtn_clicked" swapped="no"/>
+        <property name="image">image4</property>
+        <signal name="clicked" handler="on_stopbtn_clicked" swapped="no"/>
       </object>
       <packing>
         <property name="pack_type">end</property>
@@ -162,15 +162,16 @@ audio-volume-medium-symbolic</property>
       </object>
       <packing>
         <property name="pack_type">end</property>
-        <property name="position">3</property>
+        <property name="position">4</property>
       </packing>
     </child>
     <child>
-      <object class="GtkButton" id="stopbtn">
+      <object class="GtkButton" id="playbtn">
+        <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">image4</property>
-        <signal name="clicked" handler="on_stopbtn_clicked" swapped="no"/>
+        <property name="image">image5</property>
+        <signal name="clicked" handler="on_playbtn_clicked" swapped="no"/>
       </object>
       <packing>
         <property name="pack_type">end</property>

@@ -51,6 +51,7 @@ static struct headerbarui_flag_s {
     gboolean embed_menubar;
     gboolean show_seek_bar;
     gboolean hide_seekbar_on_streaming;
+    gboolean combined_playpause;
 } headerbarui_flags;
 
 static
@@ -436,6 +437,11 @@ headerbarui_init (gpointer user_data) {
         gtk_widget_hide(headerbar_seekbar);
     }
 
+    if (!headerbarui_flags.combined_playpause) {
+        gtk_widget_show(headerbar_playbtn);
+        gtk_widget_show(headerbar_pausebtn);
+    }
+
     float volume = deadbeef->volume_get_min_db()-deadbeef->volume_get_db();
     g_assert_false((volume>0));
     gtk_scale_button_set_adjustment(GTK_SCALE_BUTTON (volbutton),
@@ -477,6 +483,7 @@ void headerbarui_getconfig()
         headerbarui_flags.hide_seekbar_on_streaming = deadbeef->conf_get_int ("headerbarui.hide_seekbar_on_streaming", 0);
     else
         headerbarui_flags.hide_seekbar_on_streaming = FALSE;
+    headerbarui_flags.combined_playpause = deadbeef->conf_get_int ("headerbarui.combined_playpause", 1);
 }
 
 static
@@ -514,22 +521,12 @@ gboolean
 playpause_update(gpointer user_data)
 {
     unsigned long play = (unsigned long)user_data;
-    gboolean is_streaming;
-    DB_playItem_t *trk = deadbeef->streamer_get_playing_track ();
-    if (trk) {
-        is_streaming = !deadbeef->is_local_file (deadbeef->pl_find_meta_raw (trk, ":URI"));
-        deadbeef->pl_item_unref (trk);
-    } else is_streaming = FALSE;
 
     if (play) {
         gtk_widget_hide(headerbar_playbtn);
-        if (is_streaming)
-            gtk_widget_show(headerbar_stopbtn);
-        else
-            gtk_widget_show(headerbar_pausebtn);
+        gtk_widget_show(headerbar_pausebtn);
     } else {
         gtk_widget_show(headerbar_playbtn);
-        gtk_widget_hide(headerbar_stopbtn);
         gtk_widget_hide(headerbar_pausebtn);
     }
     return FALSE;
@@ -540,6 +537,8 @@ gboolean
 headerbarui_configchanged_cb(gpointer user_data)
 {
     gtk_widget_set_visible(headerbar_seekbar, headerbarui_flags.show_seek_bar);
+    //gtk_widget_set_visible(headerbar_playbtn, headerbarui_flags.combined_playpause);
+    gtk_widget_set_visible(headerbar_pausebtn, !headerbarui_flags.combined_playpause);
     return FALSE;
 }
 
@@ -549,15 +548,15 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     switch (id) {
     case DB_EV_SONGSTARTED:
         headerbar_timer = g_timeout_add (1000/gtkui_get_gui_refresh_rate (), headerbarui_update_seekbar_cb, NULL);
-        g_idle_add(playpause_update, (gpointer)1);
+        if (headerbarui_flags.combined_playpause) g_idle_add(playpause_update, (gpointer)1);
         break;
     case DB_EV_SONGFINISHED:
         g_source_remove(headerbar_timer);
         g_idle_add(headerbarui_reset_seekbar_cb, NULL);
-        g_idle_add(playpause_update, 0);
+        if (headerbarui_flags.combined_playpause) g_idle_add(playpause_update, 0);
         break;
     case DB_EV_PAUSED:
-        g_idle_add(playpause_update, p1?0:(gpointer)1);
+        if (headerbarui_flags.combined_playpause) g_idle_add(playpause_update, p1?0:(gpointer)1);
         break;
     case DB_EV_CONFIGCHANGED:
         headerbarui_getconfig();
@@ -573,6 +572,7 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
 
 static const char settings_dlg[] =
     "property \"Disable plugin (requires restart)\" checkbox headerbarui.disable 0;\n"
+    "property \"Use combined play/pause button\" checkbox headerbarui.combined_playpause 1;\n"
     "property \"Show seekbar\" checkbox headerbarui.show_seek_bar 1;\n"
     "property \"Embed menubar instead of showing hamburger button (requires restart)\" checkbox headerbarui.embed_menubar 0;\n"
     "property \"Hide seekbar on streaming\" checkbox headerbarui.hide_seekbar_on_streaming 0;\n"
