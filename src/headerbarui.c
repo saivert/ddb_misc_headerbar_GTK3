@@ -45,6 +45,7 @@ GtkWidget *headerbar_menubtn;
 guint headerbar_timer;
 
 gboolean seekbar_ismoving = FALSE;
+gboolean headerbar_stoptimer = FALSE;
 
 static struct headerbarui_flag_s {
     gboolean disable;
@@ -271,12 +272,24 @@ headerbarui_reset_seekbar_cb(gpointer user_data)
     return FALSE;
 }
 
+void
+playpause_update(int state);
+
 static
 gboolean
 headerbarui_update_seekbar_cb(gpointer user_data)
 {
-    if (seekbar_ismoving) return TRUE;
-    DB_playItem_t *trk = deadbeef->streamer_get_playing_track ();
+    DB_playItem_t *trk;
+    DB_output_t *out;
+
+    out = deadbeef->get_output();
+    if (out) {
+        playpause_update(out->state());
+        if (out->state() == OUTPUT_STATE_STOPPED) headerbarui_reset_seekbar_cb(NULL);
+    }
+
+    if (seekbar_ismoving) goto END;
+    trk = deadbeef->streamer_get_playing_track ();
     if (!trk || deadbeef->pl_get_item_duration (trk) < 0) {
         if (trk) {
             deadbeef->pl_item_unref (trk);
@@ -285,7 +298,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
             gtk_widget_hide(headerbar_seekbar);
         else
             headerbarui_reset_seekbar_cb(NULL);
-        return TRUE;
+        goto END;
     }
     if (deadbeef->pl_get_item_duration (trk) > 0) {
         headerbarui_adjust_range(GTK_RANGE (headerbar_seekbar),
@@ -303,7 +316,8 @@ headerbarui_update_seekbar_cb(gpointer user_data)
     if (trk) {
         deadbeef->pl_item_unref (trk);
     }
-    return TRUE;
+END:
+    return !headerbar_stoptimer;
 }
 
 
@@ -539,26 +553,11 @@ playpause_update(int state) {
 
 static
 gboolean
-playpause_update_cb(gpointer user_data)
-{
-    playpause_update(user_data?OUTPUT_STATE_PLAYING:OUTPUT_STATE_PAUSED);
-
-    return FALSE;
-}
-
-static
-gboolean
 headerbarui_configchanged_cb(gpointer user_data)
 {
     gtk_widget_set_visible(headerbar_seekbar, headerbarui_flags.show_seek_bar);
 
-    DB_output_t *out = deadbeef->get_output();
-    if (out) {
-        playpause_update(out->state());
-    } else {
-        // Fallback to a stopped state
-        playpause_update(OUTPUT_STATE_STOPPED);
-    }
+    playpause_update(OUTPUT_STATE_STOPPED);
 
     return FALSE;
 }
@@ -568,16 +567,11 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     if (id != DB_EV_CONFIGCHANGED && headerbarui_flags.disable) return 0;
     switch (id) {
     case DB_EV_SONGSTARTED:
+        headerbar_stoptimer = 0;
         headerbar_timer = g_timeout_add (1000/gtkui_get_gui_refresh_rate (), headerbarui_update_seekbar_cb, NULL);
-        g_idle_add(playpause_update_cb, (gpointer)1);
         break;
     case DB_EV_SONGFINISHED:
-        g_source_remove(headerbar_timer);
-        g_idle_add(headerbarui_reset_seekbar_cb, NULL);
-        g_idle_add(playpause_update_cb, 0);
-        break;
-    case DB_EV_PAUSED:
-        g_idle_add(playpause_update_cb, p1?0:(gpointer)1);
+        headerbar_stoptimer = 1;
         break;
     case DB_EV_CONFIGCHANGED:
         headerbarui_getconfig();
