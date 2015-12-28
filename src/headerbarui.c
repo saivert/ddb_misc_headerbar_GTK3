@@ -561,9 +561,6 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
         break;
     case DB_EV_CONFIGCHANGED:
         headerbarui_getconfig();
-        if (!headerbarui_flags.disable) {
-            headerbarui_connect();
-        }
         g_idle_add (headerbarui_configchanged_cb, NULL);
         g_idle_add (headerbarui_volume_changed, NULL);
         break;
@@ -575,7 +572,7 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
 }
 
 static const char settings_dlg[] =
-    "property \"Disable plugin (requires restart if disabling)\" checkbox headerbarui.disable 0;\n"
+    "property \"Disable plugin (requires restart)\" checkbox headerbarui.disable 0;\n"
     "property \"Show seekbar\" checkbox headerbarui.show_seek_bar 1;\n"
     "property \"Embed menubar instead of showing hamburger button (requires restart)\" checkbox headerbarui.embed_menubar 0;\n"
     "property \"Hide seekbar on streaming\" checkbox headerbarui.hide_seekbar_on_streaming 0;\n"
