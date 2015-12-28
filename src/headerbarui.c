@@ -516,19 +516,33 @@ headerbarui_volume_changed(gpointer user_data)
     return FALSE;
 }
 
-static
-gboolean
-playpause_update(gpointer user_data)
-{
-    unsigned long play = (unsigned long)user_data;
 
-    if (play) {
-        gtk_widget_hide(headerbar_playbtn);
-        gtk_widget_show(headerbar_pausebtn);
+void
+playpause_update(int state) {
+    if (headerbarui_flags.combined_playpause) {
+        switch (state) {
+            case OUTPUT_STATE_PLAYING:
+            gtk_widget_show(headerbar_pausebtn);
+            gtk_widget_hide(headerbar_playbtn);
+            break;
+            case OUTPUT_STATE_STOPPED:
+            case OUTPUT_STATE_PAUSED:
+            gtk_widget_show(headerbar_playbtn);
+            gtk_widget_hide(headerbar_pausebtn);
+            break;
+        }
     } else {
         gtk_widget_show(headerbar_playbtn);
-        gtk_widget_hide(headerbar_pausebtn);
+        gtk_widget_show(headerbar_pausebtn);
     }
+}
+
+static
+gboolean
+playpause_update_cb(gpointer user_data)
+{
+    playpause_update(user_data?OUTPUT_STATE_PLAYING:OUTPUT_STATE_PAUSED);
+
     return FALSE;
 }
 
@@ -537,8 +551,15 @@ gboolean
 headerbarui_configchanged_cb(gpointer user_data)
 {
     gtk_widget_set_visible(headerbar_seekbar, headerbarui_flags.show_seek_bar);
-    //gtk_widget_set_visible(headerbar_playbtn, headerbarui_flags.combined_playpause);
-    gtk_widget_set_visible(headerbar_pausebtn, !headerbarui_flags.combined_playpause);
+
+    struct DB_output_s *out = deadbeef->get_output();
+    if (out) {
+        playpause_update(out->state());
+    } else {
+        // Fallback to a stopped state
+        playpause_update(OUTPUT_STATE_STOPPED);
+    }
+
     return FALSE;
 }
 
@@ -548,15 +569,15 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     switch (id) {
     case DB_EV_SONGSTARTED:
         headerbar_timer = g_timeout_add (1000/gtkui_get_gui_refresh_rate (), headerbarui_update_seekbar_cb, NULL);
-        if (headerbarui_flags.combined_playpause) g_idle_add(playpause_update, (gpointer)1);
+        g_idle_add(playpause_update_cb, (gpointer)1);
         break;
     case DB_EV_SONGFINISHED:
         g_source_remove(headerbar_timer);
         g_idle_add(headerbarui_reset_seekbar_cb, NULL);
-        if (headerbarui_flags.combined_playpause) g_idle_add(playpause_update, 0);
+        g_idle_add(playpause_update_cb, 0);
         break;
     case DB_EV_PAUSED:
-        if (headerbarui_flags.combined_playpause) g_idle_add(playpause_update, p1?0:(gpointer)1);
+        g_idle_add(playpause_update_cb, p1?0:(gpointer)1);
         break;
     case DB_EV_CONFIGCHANGED:
         headerbarui_getconfig();
