@@ -364,6 +364,30 @@ mainwindow_resize (GtkWindow *mainwindow,
     return FALSE;
 }
 
+void
+wingeom_restore (GtkWidget *win, const char *name, int dx, int dy, int dw, int dh, int dmax) {
+    char key[100];
+    snprintf (key, sizeof (key), "%s.geometry.x", name);
+    int x = deadbeef->conf_get_int (key, dx);
+    snprintf (key, sizeof (key), "%s.geometry.y", name);
+    int y = deadbeef->conf_get_int (key, dy);
+    snprintf (key, sizeof (key), "%s.geometry.w", name);
+    int w = deadbeef->conf_get_int (key, dw);
+    snprintf (key, sizeof (key), "%s.geometry.h", name);
+    int h = deadbeef->conf_get_int (key, dh);
+    if (x != -1 && y != -1) {
+        gtk_window_move (GTK_WINDOW (win), x, y);
+    }
+    if (w != -1 && h != -1) {
+        gtk_window_resize (GTK_WINDOW (win), w, h);
+    }
+    snprintf (key, sizeof (key), "%s.geometry.maximized", name);
+    if (deadbeef->conf_get_int (key, dmax)) {
+        gtk_window_maximize (GTK_WINDOW (win));
+    }
+}
+
+
 static gboolean
 headerbarui_init (gpointer user_data) {
     GtkWindow *mainwin;
@@ -371,6 +395,7 @@ headerbarui_init (gpointer user_data) {
     GtkBuilder *builder;
 
     mainwin = GTK_WINDOW (gtkui_plugin->get_mainwin ());
+    gtk_widget_hide(GTK_WIDGET(mainwin));
 
     menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
     g_assert_nonnull(mainwin);
@@ -388,6 +413,10 @@ headerbarui_init (gpointer user_data) {
     gtk_widget_show(headerbar);
 
     gtk_window_set_titlebar(mainwin, GTK_WIDGET(headerbar));
+
+    // WORKAROUND: gtk_window_set_titlebar() repositions the window so we have to call this again which has already been called by GTKUI
+    wingeom_restore (GTK_WIDGET(mainwin), "mainwin", 40, 40, 500, 300, 0);
+    gtk_widget_show(GTK_WIDGET(mainwin));
 
     if (!headerbarui_flags.embed_menubar)
     {
@@ -484,7 +513,7 @@ static
 gboolean
 playpause_update(gpointer user_data)
 {
-    int* play = (int*)user_data;
+    unsigned long play = (unsigned long)user_data;
     gboolean is_streaming;
     DB_playItem_t *trk = deadbeef->streamer_get_playing_track ();
     if (trk) {
@@ -492,7 +521,7 @@ playpause_update(gpointer user_data)
         deadbeef->pl_item_unref (trk);
     } else is_streaming = FALSE;
 
-    if (*play) {
+    if (play) {
         gtk_widget_hide(headerbar_playbtn);
         if (is_streaming)
             gtk_widget_show(headerbar_stopbtn);
@@ -516,23 +545,19 @@ headerbarui_configchanged_cb(gpointer user_data)
 
 static int
 headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
-    static int play;
     if (id != DB_EV_CONFIGCHANGED && headerbarui_flags.disable) return 0;
     switch (id) {
     case DB_EV_SONGSTARTED:
         headerbar_timer = g_timeout_add (1000/gtkui_get_gui_refresh_rate (), headerbarui_update_seekbar_cb, NULL);
-        play=1;
-        g_idle_add(playpause_update, &play);
+        g_idle_add(playpause_update, (gpointer)1);
         break;
     case DB_EV_SONGFINISHED:
         g_source_remove(headerbar_timer);
         g_idle_add(headerbarui_reset_seekbar_cb, NULL);
-        play=0;
-        g_idle_add(playpause_update, &play);
+        g_idle_add(playpause_update, 0);
         break;
     case DB_EV_PAUSED:
-        play=!p1;
-        g_idle_add(playpause_update, &play);
+        g_idle_add(playpause_update, p1?0:(gpointer)1);
         break;
     case DB_EV_CONFIGCHANGED:
         headerbarui_getconfig();
