@@ -444,7 +444,7 @@ headerbarui_init (gpointer user_data) {
     } else {
         gtk_widget_destroy(headerbar_menubtn);
         gtk_widget_reparent(menubar, headerbar);
-        gtk_container_child_set(GTK_CONTAINER(headerbar), menubar, "position", 0);
+        gtk_container_child_set(GTK_CONTAINER(headerbar), menubar, "position", 0, NULL);
     }
 
     if (!headerbarui_flags.show_seek_bar)
