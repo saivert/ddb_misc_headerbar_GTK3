@@ -6,7 +6,7 @@ Adds a headerbar to your DeaDBeeF.
 Binary builds
 -------------
 
-64 bit: https://saivert.com/files/ddb_misc_headerbar_GTK3-42ec541-x86_64.zip
+64 bit: https://saivert.com/files/ddb_misc_headerbar_GTK3-13d0480-x86_64.zip
 
-32 bit: https://saivert.com/files/ddb_misc_headerbar_GTK3-42ec541-i686.zip
+32 bit: https://saivert.com/files/ddb_misc_headerbar_GTK3-13d0480-i686.zip
 
