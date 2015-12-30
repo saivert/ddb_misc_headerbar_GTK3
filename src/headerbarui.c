@@ -402,15 +402,12 @@ wingeom_restore (GtkWidget *win, const char *name, int dx, int dy, int dw, int d
     }
 }
 
-
-static gboolean
-headerbarui_init (gpointer user_data) {
+void window_init_hook (void *userdata) {
     GtkWindow *mainwin;
     GtkWidget *menubar;
     GtkBuilder *builder;
 
     mainwin = GTK_WINDOW (gtkui_plugin->get_mainwin ());
-    gtk_widget_hide(GTK_WIDGET(mainwin));
 
     menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
     g_assert_nonnull(mainwin);
@@ -428,10 +425,6 @@ headerbarui_init (gpointer user_data) {
     gtk_widget_show(headerbar);
 
     gtk_window_set_titlebar(mainwin, GTK_WIDGET(headerbar));
-
-    // WORKAROUND: gtk_window_set_titlebar() repositions the window so we have to call this again which has already been called by GTKUI
-    wingeom_restore (GTK_WIDGET(mainwin), "mainwin", 40, 40, 500, 300, 0);
-    gtk_widget_show(GTK_WIDGET(mainwin));
 
     if (!headerbarui_flags.embed_menubar)
     {
@@ -484,9 +477,8 @@ headerbarui_init (gpointer user_data) {
         "configure-event",
         G_CALLBACK(mainwindow_resize),
         NULL);
-
-    return FALSE;
 }
+
 
 static
 void headerbarui_getconfig()
@@ -507,8 +499,8 @@ int headerbarui_connect() {
     if (headerbarui_flags.disable) return 1;
     gtkui_plugin = (ddb_gtkui_t *) deadbeef->plug_get_for_id (DDB_GTKUI_PLUGIN_ID);
     if (gtkui_plugin) {
-        if (gtkui_plugin->gui.plugin.version_major == 2) {
-            g_idle_add (headerbarui_init, NULL);
+        if (gtkui_plugin->gui.plugin.version_major >= 2) {
+            gtkui_plugin->add_window_init_hook (window_init_hook, NULL);
             return 0;
         }
     }
@@ -597,7 +589,7 @@ static const char settings_dlg[] =
 static DB_misc_t plugin = {
     .plugin.type = DB_PLUGIN_MISC,
     .plugin.api_vmajor = 1,
-    .plugin.api_vminor = 5,
+    .plugin.api_vminor = 8,
     .plugin.version_major = 1,
     .plugin.version_minor = 0,
     .plugin.id = "headerbarui_gtk3",
