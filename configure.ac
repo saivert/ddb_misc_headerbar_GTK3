@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.68])
 AC_INIT([ddb_misc_headerbar_GTK3], [1.0], [saivert@saivert.com])
 AC_CONFIG_SRCDIR([src/headerbarui.c])
 AC_CONFIG_AUX_DIR([build-aux])
