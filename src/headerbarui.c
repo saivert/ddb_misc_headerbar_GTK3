@@ -379,29 +379,6 @@ mainwindow_resize (GtkWindow *mainwindow,
     return FALSE;
 }
 
-void
-wingeom_restore (GtkWidget *win, const char *name, int dx, int dy, int dw, int dh, int dmax) {
-    char key[100];
-    snprintf (key, sizeof (key), "%s.geometry.x", name);
-    int x = deadbeef->conf_get_int (key, dx);
-    snprintf (key, sizeof (key), "%s.geometry.y", name);
-    int y = deadbeef->conf_get_int (key, dy);
-    snprintf (key, sizeof (key), "%s.geometry.w", name);
-    int w = deadbeef->conf_get_int (key, dw);
-    snprintf (key, sizeof (key), "%s.geometry.h", name);
-    int h = deadbeef->conf_get_int (key, dh);
-    if (x != -1 && y != -1) {
-        gtk_window_move (GTK_WINDOW (win), x, y);
-    }
-    if (w != -1 && h != -1) {
-        gtk_window_resize (GTK_WINDOW (win), w, h);
-    }
-    snprintf (key, sizeof (key), "%s.geometry.maximized", name);
-    if (deadbeef->conf_get_int (key, dmax)) {
-        gtk_window_maximize (GTK_WINDOW (win));
-    }
-}
-
 void window_init_hook (void *userdata) {
     GtkWindow *mainwin;
     GtkWidget *menubar;
