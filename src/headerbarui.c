@@ -23,7 +23,6 @@
 #include <gdk/gdkx.h>
 #include <deadbeef/deadbeef.h>
 #include <deadbeef/gtkui_api.h>
-#include "appmenu.h"
 #include "resources.h"
 #include "headerbarui.h"
 
