@@ -10,7 +10,7 @@ AM_INIT_AUTOMAKE([foreign -Wall subdir-objects dist-xz no-dist-gzip])
 AM_SILENT_RULES([yes])
 
 dnl Override $PACKAGE to make $pkglibdir use deadbeef search path
-PACKAGE=deadbeef
+dnl PACKAGE=deadbeef
 
 AC_PROG_CC
 AM_PROG_AR
@@ -19,12 +19,11 @@ AC_PROG_LIBTOOL
 PKG_PROG_PKG_CONFIG
 AC_PATH_PROG([GLIB_COMPILE_RESOURCES], [glib-compile-resources])
 
+LT_INIT
+
 AC_CHECK_HEADERS([libintl.h stdlib.h string.h])
 AC_TYPE_UINT32_T
 AC_CHECK_FUNCS([atexit])
-
-
-LT_INIT
 
 AC_CHECK_HEADERS([deadbeef/deadbeef.h],,
     [
