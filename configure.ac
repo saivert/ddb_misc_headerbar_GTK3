@@ -35,6 +35,5 @@ PKG_CHECK_MODULES([GTK_DEPS], [gtk+-3.0], , AC_MSG_ERROR([gtk+-3.0 is required f
 PKG_CHECK_MODULES([GLIB_DEPS], [glib-2.0], , AC_MSG_ERROR([glibc-2 is required for this package]))
 PKG_CHECK_MODULES([GIO_DEPS], [gio-2.0], , AC_MSG_ERROR([gio-2 is required for this package]))
 
-AC_CONFIG_FILES([Makefile
-                 src/Makefile])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
