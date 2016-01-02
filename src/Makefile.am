@@ -7,15 +7,15 @@ AUTOMAKE_OPTIONS = foreign
 
 BUILT_SOURCES=resources.c resources.h
 
-resource_files = $(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir) --generate-dependencies $(builddir)/headerbarui.gresource.xml)
+resource_files = $(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/headerbarui.gresource.xml)
 
 resources.h:
-	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(srcdir) --generate-header $(builddir)/headerbarui.gresource.xml
+	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(srcdir) --generate-header $(srcdir)/headerbarui.gresource.xml
 
 resources.c: headerbarui.gresource.xml $(resource_files) resources.h
-	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(srcdir) --generate-source $(builddir)/headerbarui.gresource.xml
+	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(srcdir) --generate-source $(srcdir)/headerbarui.gresource.xml
 
-ddb_misc_headerbar_GTK3_la_SOURCES=resources.c headerbarui.c headerbarui.h resources.h
+ddb_misc_headerbar_GTK3_la_SOURCES=resources.c headerbarui.c headerbarui.h resources.h headerbarui.gresource.xml
 ddb_misc_headerbar_GTK3_la_CFLAGS=${GTK_DEPS_CFLAGS}
 ddb_misc_headerbar_GTK3_la_LDFLAGS=${GTK_DEPS_LIBS} -module -avoid-version -shared
 
