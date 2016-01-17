@@ -38,6 +38,7 @@ GtkWidget *headerbar_playbtn;
 GtkWidget *headerbar_pausebtn;
 GtkWidget *headerbar_stopbtn;
 GtkWidget *headerbar_menubtn;
+GtkWidget *headerbar_prefsbtn;
 
 #define GTK_BUILDER_GET_WIDGET(builder, name) (GtkWidget *)gtk_builder_get_object(builder, name)
 
@@ -52,6 +53,7 @@ static struct headerbarui_flag_s {
     gboolean show_seek_bar;
     gboolean hide_seekbar_on_streaming;
     gboolean combined_playpause;
+    gboolean show_preferences_button;
 } headerbarui_flags;
 
 static
@@ -228,6 +230,23 @@ on_nextbtn_clicked                     (GtkButton       *button,
 
 static
 void
+on_prefsbtn_clicked                     (GtkButton       *button,
+                                        gpointer         user_data)
+{
+    DB_plugin_action_t *acts = gtkui_plugin->gui.plugin.get_actions(NULL);
+    while (acts) {
+        if (!strcmp (acts->name, "preferences")) {
+            if (acts->callback2) {
+                acts->callback2 (acts, NULL);
+            }
+            return;
+        }
+        acts = acts->next;
+    }
+}
+
+static
+void
 headerbarui_adjust_range(GtkRange *range,
                           gdouble value,
                           gdouble lower,
@@ -397,6 +416,7 @@ void window_init_hook (void *userdata) {
     headerbar_playbtn = GTK_BUILDER_GET_WIDGET(builder, "playbtn");
     headerbar_pausebtn = GTK_BUILDER_GET_WIDGET(builder, "pausebtn");
     headerbar_stopbtn = GTK_BUILDER_GET_WIDGET(builder, "stopbtn");
+    headerbar_prefsbtn = GTK_BUILDER_GET_WIDGET(builder, "prefsbtn");
 
     gtk_widget_show(headerbar);
 
@@ -426,6 +446,8 @@ void window_init_hook (void *userdata) {
         gtk_widget_show(headerbar_pausebtn);
     }
 
+    gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
+
     float volume = deadbeef->volume_get_min_db()-deadbeef->volume_get_db();
     g_assert_false((volume>0));
     gtk_scale_button_set_adjustment(GTK_SCALE_BUTTON (volbutton),
@@ -444,6 +466,7 @@ void window_init_hook (void *userdata) {
         "on_seekbar_button_press_event", on_seekbar_button_press_event,
         "on_seekbar_button_release_event", on_seekbar_button_release_event,
         "on_seekbar_value_changed", on_seekbar_value_changed,
+        "on_prefsbtn_clicked", on_prefsbtn_clicked,
         NULL);
     gtk_builder_connect_signals(builder, NULL);
 
@@ -467,6 +490,7 @@ void headerbarui_getconfig()
     else
         headerbarui_flags.hide_seekbar_on_streaming = FALSE;
     headerbarui_flags.combined_playpause = deadbeef->conf_get_int ("headerbarui.combined_playpause", 1);
+    headerbarui_flags.show_preferences_button = deadbeef->conf_get_int ("headerbarui.show_preferences_button", 0);
 }
 
 static
@@ -525,6 +549,7 @@ gboolean
 headerbarui_configchanged_cb(gpointer user_data)
 {
     gtk_widget_set_visible(headerbar_seekbar, headerbarui_flags.show_seek_bar);
+    gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
 
     playpause_update(OUTPUT_STATE_STOPPED);
 
@@ -560,6 +585,7 @@ static const char settings_dlg[] =
     "property \"Use combined play/pause button\" checkbox headerbarui.combined_playpause 1;\n"
     "property \"Show seekbar\" checkbox headerbarui.show_seek_bar 1;\n"
     "property \"Hide seekbar on streaming\" checkbox headerbarui.hide_seekbar_on_streaming 0;\n"
+    "property \"Show preferences button\" checkbox headerbarui.show_preferences_button 0;\n"
 ;
 
 static DB_misc_t plugin = {
