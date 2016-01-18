@@ -55,7 +55,7 @@ Author: Nicolai Syvertsen
   <object class="GtkImage" id="image6">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="icon_name">applications-system</property>
+    <property name="icon_name">applications-system-symbolic</property>
   </object>
   <object class="GtkHeaderBar" id="headerbar1">
     <property name="visible">True</property>
@@ -80,7 +80,6 @@ Author: Nicolai Syvertsen
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
         <property name="image">image6</property>
-        <property name="xalign">0.51999998092651367</property>
         <property name="always_show_image">True</property>
         <signal name="clicked" handler="on_prefsbtn_clicked" swapped="no"/>
       </object>

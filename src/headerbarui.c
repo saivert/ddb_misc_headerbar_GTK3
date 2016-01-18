@@ -54,6 +54,7 @@ static struct headerbarui_flag_s {
     gboolean hide_seekbar_on_streaming;
     gboolean combined_playpause;
     gboolean show_preferences_button;
+    int button_spacing;
 } headerbarui_flags;
 
 static
@@ -237,7 +238,7 @@ on_prefsbtn_clicked                     (GtkButton       *button,
     while (acts) {
         if (!strcmp (acts->name, "preferences")) {
             if (acts->callback2) {
-                acts->callback2 (acts, NULL);
+                acts->callback2 (acts, DDB_ACTION_CTX_MAIN);
             }
             return;
         }
@@ -418,6 +419,7 @@ void window_init_hook (void *userdata) {
     headerbar_stopbtn = GTK_BUILDER_GET_WIDGET(builder, "stopbtn");
     headerbar_prefsbtn = GTK_BUILDER_GET_WIDGET(builder, "prefsbtn");
 
+    g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     gtk_widget_show(headerbar);
 
     gtk_window_set_titlebar(mainwin, GTK_WIDGET(headerbar));
@@ -491,6 +493,7 @@ void headerbarui_getconfig()
         headerbarui_flags.hide_seekbar_on_streaming = FALSE;
     headerbarui_flags.combined_playpause = deadbeef->conf_get_int ("headerbarui.combined_playpause", 1);
     headerbarui_flags.show_preferences_button = deadbeef->conf_get_int ("headerbarui.show_preferences_button", 0);
+    headerbarui_flags.button_spacing = deadbeef->conf_get_int ("headerbarui.button_spacing", 6);
 }
 
 static
@@ -550,7 +553,7 @@ headerbarui_configchanged_cb(gpointer user_data)
 {
     gtk_widget_set_visible(headerbar_seekbar, headerbarui_flags.show_seek_bar);
     gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
-
+    g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     playpause_update(OUTPUT_STATE_STOPPED);
 
     return FALSE;
@@ -582,6 +585,7 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
 static const char settings_dlg[] =
     "property \"Disable plugin (requires restart)\" checkbox headerbarui.disable 0;\n"
     "property \"Embed menubar instead of showing hamburger button (requires restart)\" checkbox headerbarui.embed_menubar 0;\n"
+    "property \"Button spacing (pixels)\" entry headerbarui.button_spacing 6;\n"
     "property \"Use combined play/pause button\" checkbox headerbarui.combined_playpause 1;\n"
     "property \"Show seekbar\" checkbox headerbarui.show_seek_bar 1;\n"
     "property \"Hide seekbar on streaming\" checkbox headerbarui.hide_seekbar_on_streaming 0;\n"
