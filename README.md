@@ -10,7 +10,7 @@ Requirements
 
 Screenshot
 ----------
-![Screenshot](http://i.imgur.com/zl7ZMH8.png "Screenshot")
+![Screenshot](http://i.imgur.com/zYXzoSp.png "Screenshot")
 
 Installation
 ------------
