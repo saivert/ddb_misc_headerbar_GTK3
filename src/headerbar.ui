@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.19.0 
+<!-- Generated with glade 3.20.0 
 
 Copyright (C) 
 
@@ -94,7 +94,6 @@ Author: Nicolai Syvertsen
         <property name="can_focus">True</property>
         <property name="events">GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
         <property name="margin_right">8</property>
-        <property name="hexpand">True</property>
         <property name="restrict_to_fill_level">False</property>
         <property name="value_pos">right</property>
         <signal name="button-press-event" handler="on_seekbar_button_press_event" swapped="no"/>
@@ -110,9 +109,9 @@ Author: Nicolai Syvertsen
       <object class="GtkVolumeButton" id="volumebutton1">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
+        <property name="focus_on_click">False</property>
         <property name="receives_default">True</property>
         <property name="relief">none</property>
-        <property name="focus_on_click">False</property>
         <property name="orientation">vertical</property>
         <property name="size">button</property>
         <property name="icons">audio-volume-muted-symbolic

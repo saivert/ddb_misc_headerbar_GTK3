@@ -51,6 +51,7 @@ static struct headerbarui_flag_s {
     gboolean disable;
     gboolean embed_menubar;
     gboolean show_seek_bar;
+    gboolean seekbar_minimized;
     gboolean hide_seekbar_on_streaming;
     gboolean combined_playpause;
     gboolean show_preferences_button;
@@ -313,7 +314,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
         if (trk) {
             deadbeef->pl_item_unref (trk);
         }
-        if (headerbarui_flags.hide_seekbar_on_streaming)
+        if (headerbarui_flags.hide_seekbar_on_streaming && !headerbarui_flags.seekbar_minimized)
             gtk_widget_hide(headerbar_seekbar);
         else
             headerbarui_reset_seekbar_cb(NULL);
@@ -329,7 +330,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
             0); // page_size
 
         gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), TRUE);
-        if (headerbarui_flags.hide_seekbar_on_streaming)
+        if (headerbarui_flags.hide_seekbar_on_streaming && !headerbarui_flags.seekbar_minimized)
             gtk_widget_show(headerbar_seekbar);
     }
     if (trk) {
@@ -382,7 +383,7 @@ headerbarui_update_menubutton()
 
 static gint
 seekbar_width () {
-    return MIN((mainwin_width / 2) - 150, 420);
+    return MIN((mainwin_width / 2) - 210, 420);
 }
 
 static gboolean
@@ -391,9 +392,18 @@ mainwindow_resize (GtkWindow *mainwindow,
                    gpointer pointer) {
     if (headerbarui_flags.show_seek_bar && event->width != mainwin_width) {
         mainwin_width = event->width;
-        gtk_widget_set_size_request (headerbar_seekbar,
-            seekbar_width (),
-            -1);
+
+        if (seekbar_width () < 50) {
+            headerbarui_flags.seekbar_minimized = TRUE;
+            gtk_widget_hide (headerbar_seekbar);
+        } else {
+            headerbarui_flags.seekbar_minimized = FALSE;
+            gtk_widget_set_size_request (headerbar_seekbar,
+                seekbar_width (),
+                -1);
+            gtk_widget_show (headerbar_seekbar);
+        }
+
     }
     return FALSE;
 }
