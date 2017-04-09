@@ -27,6 +27,7 @@
 #include "headerbarui.h"
 
 DB_functions_t *deadbeef;
+static DB_misc_t plugin;
 
 static ddb_gtkui_t *gtkui_plugin;
 static gint mainwin_width;
@@ -488,6 +489,8 @@ void window_init_hook (void *userdata) {
         "configure-event",
         G_CALLBACK(mainwindow_resize),
         NULL);
+
+    deadbeef->log_detailed(&plugin.plugin, DDB_LOG_LAYER_INFO, "GTK3 Headerbar plugin loaded.");
 }
 
 
@@ -605,7 +608,8 @@ static const char settings_dlg[] =
 static DB_misc_t plugin = {
     .plugin.type = DB_PLUGIN_MISC,
     .plugin.api_vmajor = 1,
-    .plugin.api_vminor = 8,
+    .plugin.api_vminor = 10,
+    .plugin.flags = DDB_PLUGIN_FLAG_LOGGING,
     .plugin.version_major = 1,
     .plugin.version_minor = 0,
     .plugin.id = "headerbarui_gtk3",
