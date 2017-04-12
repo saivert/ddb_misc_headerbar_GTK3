@@ -154,29 +154,6 @@ on_seekbar_format_value (GtkScale *scale,
 
 static
 void
-headerbarui_slider_set_visible(gboolean visibility) {
-    if (visibility)
-        gtk_style_context_remove_class (gtk_widget_get_style_context (headerbar_seekbar), "no-slider");
-    else
-        gtk_style_context_add_class (gtk_widget_get_style_context (headerbar_seekbar), "no-slider");
-}
-
-gboolean
-on_seekbar_enter_notify_event (GtkWidget *widget,
-               GdkEvent  *event,
-               gpointer   user_data) {
-    headerbarui_slider_set_visible(TRUE);
-}
-
-gboolean
-on_seekbar_leave_notify_event (GtkWidget *widget,
-               GdkEvent  *event,
-               gpointer   user_data) {
-    headerbarui_slider_set_visible(FALSE);
-}
-
-static
-void
 on_stopbtn_clicked                     (GtkButton       *button,
                                         gpointer         user_data)
 {
@@ -436,17 +413,12 @@ void window_init_hook (void *userdata) {
     GtkWindow *mainwin;
     GtkWidget *menubar;
     GtkBuilder *builder;
-    GtkCssProvider *css_provider;
-    GtkStyleContext *style_context;
 
     mainwin = GTK_WINDOW (gtkui_plugin->get_mainwin ());
 
     menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
     g_assert_nonnull(mainwin);
     g_assert_nonnull(menubar);
-
-    css_provider = gtk_css_provider_new ();
-    gtk_css_provider_load_from_resource (css_provider, "/org/deadbeef/headerbarui/custom.css");
 
     builder = gtk_builder_new_from_resource("/org/deadbeef/headerbarui/headerbar.ui");
     headerbar = GTK_BUILDER_GET_WIDGET(builder, "headerbar1");
@@ -457,10 +429,6 @@ void window_init_hook (void *userdata) {
     headerbar_pausebtn = GTK_BUILDER_GET_WIDGET(builder, "pausebtn");
     headerbar_stopbtn = GTK_BUILDER_GET_WIDGET(builder, "stopbtn");
     headerbar_prefsbtn = GTK_BUILDER_GET_WIDGET(builder, "prefsbtn");
-
-    style_context = gtk_widget_get_style_context (headerbar_seekbar);
-    gtk_style_context_add_provider(style_context, GTK_STYLE_PROVIDER(css_provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
-    gtk_style_context_add_class(style_context, "no-slider");
 
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     gtk_widget_show(headerbar);
@@ -512,8 +480,6 @@ void window_init_hook (void *userdata) {
         "on_seekbar_button_release_event", on_seekbar_button_release_event,
         "on_seekbar_value_changed", on_seekbar_value_changed,
         "on_prefsbtn_clicked", on_prefsbtn_clicked,
-        "on_seekbar_enter_notify_event", on_seekbar_enter_notify_event,
-        "on_seekbar_leave_notify_event", on_seekbar_leave_notify_event,
         NULL);
     gtk_builder_connect_signals(builder, NULL);
 
