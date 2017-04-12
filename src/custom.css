@@ -1,4 +1,4 @@
-scale.no-slider slider {
+scale.no-slider:not(:hover) slider {
     border-color: transparent;
     background-color: transparent;
     color: transparent;

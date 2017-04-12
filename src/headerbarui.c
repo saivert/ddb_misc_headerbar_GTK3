@@ -161,19 +161,6 @@ headerbarui_slider_set_visible(gboolean visibility) {
         gtk_style_context_add_class (gtk_widget_get_style_context (headerbar_seekbar), "no-slider");
 }
 
-gboolean
-on_seekbar_enter_notify_event (GtkWidget *widget,
-               GdkEvent  *event,
-               gpointer   user_data) {
-    headerbarui_slider_set_visible(TRUE);
-}
-
-gboolean
-on_seekbar_leave_notify_event (GtkWidget *widget,
-               GdkEvent  *event,
-               gpointer   user_data) {
-    headerbarui_slider_set_visible(FALSE);
-}
 
 static
 void
@@ -512,8 +499,6 @@ void window_init_hook (void *userdata) {
         "on_seekbar_button_release_event", on_seekbar_button_release_event,
         "on_seekbar_value_changed", on_seekbar_value_changed,
         "on_prefsbtn_clicked", on_prefsbtn_clicked,
-        "on_seekbar_enter_notify_event", on_seekbar_enter_notify_event,
-        "on_seekbar_leave_notify_event", on_seekbar_leave_notify_event,
         NULL);
     gtk_builder_connect_signals(builder, NULL);
 
