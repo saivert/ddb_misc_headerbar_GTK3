@@ -92,13 +92,15 @@ Author: Nicolai Syvertsen
         <property name="name">seekbar</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="events">GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
+        <property name="events">GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_STRUCTURE_MASK</property>
         <property name="margin_right">8</property>
         <property name="restrict_to_fill_level">False</property>
         <property name="value_pos">right</property>
         <signal name="button-press-event" handler="on_seekbar_button_press_event" swapped="no"/>
         <signal name="button-release-event" handler="on_seekbar_button_release_event" swapped="no"/>
+        <signal name="enter-notify-event" handler="on_seekbar_enter_notify_event" swapped="no"/>
         <signal name="format-value" handler="on_seekbar_format_value" swapped="no"/>
+        <signal name="leave-notify-event" handler="on_seekbar_leave_notify_event" swapped="no"/>
         <signal name="value-changed" handler="on_seekbar_value_changed" swapped="no"/>
       </object>
       <packing>
