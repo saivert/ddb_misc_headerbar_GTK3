@@ -76,6 +76,18 @@ Author: Nicolai Syvertsen
       </object>
     </child>
     <child>
+      <object class="GtkButton" id="prefsbtn">
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <property name="image">image6</property>
+        <property name="always_show_image">True</property>
+        <signal name="clicked" handler="on_prefsbtn_clicked" swapped="no"/>
+      </object>
+      <packing>
+        <property name="position">1</property>
+      </packing>
+    </child>
+    <child>
       <object class="GtkScale" id="scale1">
         <property name="name">seekbar</property>
         <property name="visible">True</property>
@@ -86,23 +98,13 @@ Author: Nicolai Syvertsen
         <property name="value_pos">right</property>
         <signal name="button-press-event" handler="on_seekbar_button_press_event" swapped="no"/>
         <signal name="button-release-event" handler="on_seekbar_button_release_event" swapped="no"/>
+        <signal name="enter-notify-event" handler="on_seekbar_enter_notify_event" swapped="no"/>
         <signal name="format-value" handler="on_seekbar_format_value" swapped="no"/>
+        <signal name="leave-notify-event" handler="on_seekbar_leave_notify_event" swapped="no"/>
         <signal name="value-changed" handler="on_seekbar_value_changed" swapped="no"/>
       </object>
       <packing>
         <property name="position">2</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkButton" id="prefsbtn">
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-        <property name="image">image6</property>
-        <property name="always_show_image">True</property>
-        <signal name="clicked" handler="on_prefsbtn_clicked" swapped="no"/>
-      </object>
-      <packing>
-        <property name="position">1</property>
       </packing>
     </child>
     <child>
