@@ -46,6 +46,7 @@ GtkWidget *headerbar_prefsbtn;
 guint headerbar_timer;
 
 gboolean seekbar_ismoving = FALSE;
+gboolean seekbar_isvisible = FALSE;
 gboolean headerbar_stoptimer = FALSE;
 
 static struct headerbarui_flag_s {
@@ -302,11 +303,15 @@ headerbarui_update_seekbar_cb(gpointer user_data)
 {
     DB_playItem_t *trk;
     DB_output_t *out;
+    seekbar_isvisible = TRUE;
 
     out = deadbeef->get_output();
     if (out) {
         playpause_update(out->state());
-        if (out->state() == OUTPUT_STATE_STOPPED) headerbarui_reset_seekbar_cb(NULL);
+        if (out->state() == OUTPUT_STATE_STOPPED) {
+            seekbar_isvisible = FALSE;
+            goto END;
+        }
     }
 
     if (seekbar_ismoving) goto END;
@@ -316,7 +321,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
             deadbeef->pl_item_unref (trk);
         }
         if (headerbarui_flags.hide_seekbar_on_streaming && !headerbarui_flags.seekbar_minimized)
-            gtk_widget_hide(headerbar_seekbar);
+            seekbar_isvisible = FALSE;
         else
             headerbarui_reset_seekbar_cb(NULL);
         goto END;
@@ -332,12 +337,13 @@ headerbarui_update_seekbar_cb(gpointer user_data)
 
         gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), TRUE);
         if (headerbarui_flags.hide_seekbar_on_streaming && !headerbarui_flags.seekbar_minimized)
-            gtk_widget_show(headerbar_seekbar);
+            seekbar_isvisible = TRUE;
     }
     if (trk) {
         deadbeef->pl_item_unref (trk);
     }
 END:
+    gtk_widget_set_visible(headerbar_seekbar, seekbar_isvisible);
     return !headerbar_stoptimer;
 }
 
@@ -391,7 +397,7 @@ static gboolean
 mainwindow_resize (GtkWindow *mainwindow,
                    GdkEventConfigure *event,
                    gpointer pointer) {
-    if (headerbarui_flags.show_seek_bar && event->width != mainwin_width) {
+    if (headerbarui_flags.show_seek_bar && seekbar_isvisible && event->width != mainwin_width) {
         mainwin_width = event->width;
 
         if (seekbar_width () < 50) {
@@ -449,10 +455,6 @@ void window_init_hook (void *userdata) {
         gtk_container_child_set(GTK_CONTAINER(headerbar), menubar, "position", 0, NULL);
     }
 
-    if (!headerbarui_flags.show_seek_bar)
-    {
-        gtk_widget_hide(headerbar_seekbar);
-    }
 
     if (!headerbarui_flags.combined_playpause) {
         gtk_widget_show(headerbar_playbtn);
@@ -565,7 +567,7 @@ static
 gboolean
 headerbarui_configchanged_cb(gpointer user_data)
 {
-    gtk_widget_set_visible(headerbar_seekbar, headerbarui_flags.show_seek_bar);
+    gtk_widget_set_visible(headerbar_seekbar, headerbarui_flags.show_seek_bar && seekbar_isvisible);
     gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     playpause_update(OUTPUT_STATE_STOPPED);
