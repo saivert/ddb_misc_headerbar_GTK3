@@ -332,8 +332,8 @@ headerbarui_update_seekbar_cb(gpointer user_data)
             0, // lower
             deadbeef->pl_get_item_duration (trk), // upper
             1, // step_increment
-            1, // page_increment
-            0); // page_size
+            10, // page_increment
+            1); // page_size
 
         gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), TRUE);
         seekbar_isvisible = TRUE;
