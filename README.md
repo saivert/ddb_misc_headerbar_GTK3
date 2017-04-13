@@ -1,8 +1,6 @@
 # ddb_misc_headerbar_GTK3
 Adds a headerbar to your DeaDBeeF.
 
-[![Build Status](https://drone.io/github.com/saivert/ddb_misc_headerbar_GTK3/status.png)](https://drone.io/github.com/saivert/ddb_misc_headerbar_GTK3/latest)
-
 Requirements
 ------------
 * Version 0.7 or higher of DeaDBeeF.
