@@ -320,7 +320,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
         if (trk) {
             deadbeef->pl_item_unref (trk);
         }
-        if (headerbarui_flags.hide_seekbar_on_streaming && !headerbarui_flags.seekbar_minimized)
+        if (headerbarui_flags.hide_seekbar_on_streaming)
             seekbar_isvisible = FALSE;
         else
             headerbarui_reset_seekbar_cb(NULL);
@@ -336,14 +336,13 @@ headerbarui_update_seekbar_cb(gpointer user_data)
             0); // page_size
 
         gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), TRUE);
-        if (headerbarui_flags.hide_seekbar_on_streaming && !headerbarui_flags.seekbar_minimized)
-            seekbar_isvisible = TRUE;
+        seekbar_isvisible = TRUE;
     }
     if (trk) {
         deadbeef->pl_item_unref (trk);
     }
 END:
-    gtk_widget_set_visible(headerbar_seekbar, seekbar_isvisible);
+    if (!headerbarui_flags.seekbar_minimized) gtk_widget_set_visible(headerbar_seekbar, seekbar_isvisible);
     return !headerbar_stoptimer;
 }
 
@@ -390,7 +389,7 @@ headerbarui_update_menubutton()
 
 static gint
 seekbar_width () {
-    return MIN((mainwin_width / 2) - 210, 420);
+    return MIN(MAX((mainwin_width / 2) - 210,0), 420);
 }
 
 static gboolean
