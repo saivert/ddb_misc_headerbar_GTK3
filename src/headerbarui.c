@@ -465,7 +465,7 @@ void window_init_hook (void *userdata) {
     float volume = deadbeef->volume_get_min_db()-deadbeef->volume_get_db();
     g_assert_false((volume>0));
     gtk_scale_button_set_adjustment(GTK_SCALE_BUTTON (volbutton),
-        gtk_adjustment_new (volume, 0, (int)-deadbeef->volume_get_min_db (), 5, 5, 0));
+        gtk_adjustment_new (volume, 0, -deadbeef->volume_get_min_db (), 5, 5, 0));
 
     gtk_widget_show(volbutton);
 
@@ -535,7 +535,7 @@ headerbarui_volume_changed(gpointer user_data)
     GSignalMatchType mask = (GSignalMatchType)(G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA);
     GQuark detail = g_quark_from_static_string("value_changed");
     g_signal_handlers_block_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, NULL);
-    gtk_scale_button_set_value( GTK_SCALE_BUTTON (volbutton), (int)-volume );
+    gtk_scale_button_set_value( GTK_SCALE_BUTTON (volbutton), -volume );
     g_signal_handlers_unblock_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, NULL);
 
     return FALSE;
