@@ -17,7 +17,8 @@ resources.c: headerbarui.gresource.xml $(resource_files) resources.h
 
 ddb_misc_headerbar_GTK3_la_SOURCES=resources.c headerbarui.c headerbarui.h resources.h headerbarui.gresource.xml
 ddb_misc_headerbar_GTK3_la_CFLAGS=${GTK_DEPS_CFLAGS}
-ddb_misc_headerbar_GTK3_la_LDFLAGS=${GTK_DEPS_LIBS} -module -avoid-version -shared
+ddb_misc_headerbar_GTK3_la_LDFLAGS=-module -avoid-version -shared
+ddb_misc_headerbar_GTK3_la_LIBADD=${GTK_DEPS_LIBS}
 
 localinstall:
 	install .libs/ddb_misc_headerbar_GTK3.so ~/.local/lib64/deadbeef
