@@ -342,7 +342,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
         deadbeef->pl_item_unref (trk);
     }
 END:
-    if (!headerbarui_flags.seekbar_minimized) gtk_widget_set_visible(headerbar_seekbar, seekbar_isvisible);
+    if (!headerbarui_flags.seekbar_minimized) gtk_widget_set_visible(headerbar_seekbar, seekbar_isvisible && headerbarui_flags.show_seek_bar);
     return !headerbar_stoptimer;
 }
 
