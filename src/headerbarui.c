@@ -491,8 +491,10 @@ void window_init_hook (void *userdata) {
         G_CALLBACK(mainwindow_resize),
         NULL);
 
+#if (DDB_API_LEVEL >= 10)
     if (deadbeef->vmajor>=1 && deadbeef->vminor >= 10)
         deadbeef->log_detailed(&plugin.plugin, DDB_LOG_LAYER_INFO, "GTK3 Headerbar plugin loaded.");
+#endif
 }
 
 
@@ -611,7 +613,9 @@ static DB_misc_t plugin = {
     .plugin.type = DB_PLUGIN_MISC,
     .plugin.api_vmajor = 1,
     .plugin.api_vminor = 9, // using 10 apis if available
+#if (DDB_API_LEVEL >= 10)
     .plugin.flags = DDB_PLUGIN_FLAG_LOGGING,
+#endif
     .plugin.version_major = 1,
     .plugin.version_minor = 0,
     .plugin.id = "headerbarui_gtk3",
