@@ -56,6 +56,8 @@ static struct headerbarui_flag_s {
     gboolean seekbar_minimized;
     gboolean hide_seekbar_on_streaming;
     gboolean combined_playpause;
+    gboolean show_stop_button;
+    gboolean show_volume_button;
     gboolean show_preferences_button;
     int button_spacing;
 } headerbarui_flags;
@@ -389,7 +391,32 @@ headerbarui_update_menubutton()
 
 static gint
 seekbar_width () {
-    return MIN(MAX((mainwin_width / 2) - 210,0), 420);
+    int button_size = 38; // can maybe be read dynamic, depending on padding of theme
+    // Min size calculated by basic static elements (prev, play/pause, next, menu) including 3 possible window decoration buttons
+    // For every optional button extra width is added.
+    int min_size_fixed_content = button_size * 9;
+    if (headerbarui_flags.show_stop_button) {
+        min_size_fixed_content += button_size;
+    }
+    if (headerbarui_flags.show_volume_button) {
+        min_size_fixed_content += button_size;
+    }
+    if (headerbarui_flags.show_preferences_button) {
+        min_size_fixed_content += button_size;
+    }
+    if (!headerbarui_flags.combined_playpause) {
+        min_size_fixed_content += button_size;
+    }
+    int min_size_seekbar = 140;
+    int min_size_title = 100;
+    int required_width = min_size_fixed_content + min_size_title + min_size_seekbar;
+
+    if (mainwin_width < required_width) {
+        return 0;
+    } else {
+        int remaining_width = mainwin_width - required_width;
+        return min_size_seekbar + remaining_width * 0.7;
+    }
 }
 
 static gboolean
@@ -399,13 +426,15 @@ mainwindow_resize (GtkWindow *mainwindow,
     if (headerbarui_flags.show_seek_bar && seekbar_isvisible && event->width != mainwin_width) {
         mainwin_width = event->width;
 
-        if (seekbar_width () < 50) {
+        int width = seekbar_width();
+
+        if (width == 0) {
             headerbarui_flags.seekbar_minimized = TRUE;
             gtk_widget_hide (headerbar_seekbar);
         } else {
             headerbarui_flags.seekbar_minimized = FALSE;
             gtk_widget_set_size_request (headerbar_seekbar,
-                seekbar_width (),
+                width,
                 -1);
             gtk_widget_show (headerbar_seekbar);
         }
@@ -509,6 +538,8 @@ void headerbarui_getconfig()
     else
         headerbarui_flags.hide_seekbar_on_streaming = FALSE;
     headerbarui_flags.combined_playpause = deadbeef->conf_get_int ("headerbarui.combined_playpause", 1);
+    headerbarui_flags.show_stop_button = deadbeef->conf_get_int ("headerbarui.show_stop_button", 1);
+    headerbarui_flags.show_volume_button = deadbeef->conf_get_int ("headerbarui.show_volume_button", 1);
     headerbarui_flags.show_preferences_button = deadbeef->conf_get_int ("headerbarui.show_preferences_button", 0);
     headerbarui_flags.button_spacing = deadbeef->conf_get_int ("headerbarui.button_spacing", 6);
 }
@@ -569,6 +600,8 @@ gboolean
 headerbarui_configchanged_cb(gpointer user_data)
 {
     gtk_widget_set_visible(headerbar_seekbar, headerbarui_flags.show_seek_bar && seekbar_isvisible);
+    gtk_widget_set_visible(headerbar_stopbtn, headerbarui_flags.show_stop_button);
+    gtk_widget_set_visible(volbutton, headerbarui_flags.show_volume_button);
     gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     playpause_update(OUTPUT_STATE_STOPPED);
@@ -606,6 +639,8 @@ static const char settings_dlg[] =
     "property \"Use combined play/pause button\" checkbox headerbarui.combined_playpause 1;\n"
     "property \"Show seekbar\" checkbox headerbarui.show_seek_bar 1;\n"
     "property \"Hide seekbar on streaming\" checkbox headerbarui.hide_seekbar_on_streaming 0;\n"
+    "property \"Show stop button\" checkbox headerbarui.show_stop_button 1;\n"
+    "property \"Show volume button\" checkbox headerbarui.show_volume_button 1;\n"
     "property \"Show preferences button\" checkbox headerbarui.show_preferences_button 0;\n"
 ;
 
