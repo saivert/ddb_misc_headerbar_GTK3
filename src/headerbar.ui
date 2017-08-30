@@ -27,35 +27,35 @@ Author: Nicolai Syvertsen
   <!-- interface-name headerbarui -->
   <!-- interface-description Headerbar UI plugin for DeaDBeeF -->
   <!-- interface-authors Nicolai Syvertsen -->
-  <object class="GtkImage" id="image1">
+  <object class="GtkImage" id="next_img">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="icon_name">media-skip-forward-symbolic</property>
   </object>
-  <object class="GtkImage" id="image2">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="icon_name">media-skip-backward-symbolic</property>
-  </object>
-  <object class="GtkImage" id="image3">
+  <object class="GtkImage" id="pause_img">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="icon_name">media-playback-pause-symbolic</property>
   </object>
-  <object class="GtkImage" id="image4">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="icon_name">media-playback-stop-symbolic</property>
-  </object>
-  <object class="GtkImage" id="image5">
+  <object class="GtkImage" id="play_img">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="icon_name">media-playback-start-symbolic</property>
   </object>
-  <object class="GtkImage" id="image6">
+  <object class="GtkImage" id="pref_img">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="icon_name">applications-system-symbolic</property>
+  </object>
+  <object class="GtkImage" id="prev_img">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="icon_name">media-skip-backward-symbolic</property>
+  </object>
+  <object class="GtkImage" id="stop_img">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="icon_name">media-playback-stop-symbolic</property>
   </object>
   <object class="GtkHeaderBar" id="headerbar1">
     <property name="visible">True</property>
@@ -79,7 +79,7 @@ Author: Nicolai Syvertsen
       <object class="GtkButton" id="prefsbtn">
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">image6</property>
+        <property name="image">pref_img</property>
         <property name="always_show_image">True</property>
         <signal name="clicked" handler="on_prefsbtn_clicked" swapped="no"/>
       </object>
@@ -148,7 +148,7 @@ audio-volume-medium-symbolic</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">image1</property>
+        <property name="image">next_img</property>
         <signal name="clicked" handler="on_nextbtn_clicked" swapped="no"/>
       </object>
       <packing>
@@ -161,7 +161,7 @@ audio-volume-medium-symbolic</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">image4</property>
+        <property name="image">stop_img</property>
         <signal name="clicked" handler="on_stopbtn_clicked" swapped="no"/>
       </object>
       <packing>
@@ -173,7 +173,7 @@ audio-volume-medium-symbolic</property>
       <object class="GtkButton" id="pausebtn">
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">image3</property>
+        <property name="image">pause_img</property>
         <property name="image_position">bottom</property>
         <signal name="clicked" handler="on_pausebtn_clicked" swapped="no"/>
       </object>
@@ -187,7 +187,7 @@ audio-volume-medium-symbolic</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">image5</property>
+        <property name="image">play_img</property>
         <signal name="clicked" handler="on_playbtn_clicked" swapped="no"/>
       </object>
       <packing>
@@ -200,7 +200,7 @@ audio-volume-medium-symbolic</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">image2</property>
+        <property name="image">prev_img</property>
         <signal name="clicked" handler="on_prevbtn_clicked" swapped="no"/>
       </object>
       <packing>
