@@ -407,8 +407,8 @@ seekbar_width () {
     if (!headerbarui_flags.combined_playpause) {
         min_size_fixed_content += button_size;
     }
-    int min_size_seekbar = 100;
-    int min_size_title = 150;
+    int min_size_seekbar = 140;
+    int min_size_title = 100;
     int title_growth = 200; // title size in total is min_size_title + title_growth
     int required_width = min_size_fixed_content + min_size_title + min_size_seekbar;
 
