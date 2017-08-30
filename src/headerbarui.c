@@ -409,18 +409,13 @@ seekbar_width () {
     }
     int min_size_seekbar = 140;
     int min_size_title = 100;
-    int title_growth = 200; // title size in total is min_size_title + title_growth
     int required_width = min_size_fixed_content + min_size_title + min_size_seekbar;
 
     if (mainwin_width < required_width) {
         return 0;
     } else {
-        int width = mainwin_width - required_width;
-        if (width > title_growth * 2) {
-            return min_size_seekbar + width - title_growth;
-        } else {
-            return min_size_seekbar + width / 2;
-        }
+        int remaining_width = mainwin_width - required_width;
+        return min_size_seekbar + remaining_width * 0.7;
     }
 }
 
