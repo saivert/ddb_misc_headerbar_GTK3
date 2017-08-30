@@ -543,8 +543,8 @@ void headerbarui_getconfig()
     else
         headerbarui_flags.hide_seekbar_on_streaming = FALSE;
     headerbarui_flags.combined_playpause = deadbeef->conf_get_int ("headerbarui.combined_playpause", 1);
-    headerbarui_flags.show_stop_button = deadbeef->conf_get_int ("headerbarui.show_stop_button", 0);
-    headerbarui_flags.show_volume_button = deadbeef->conf_get_int ("headerbarui.show_volume_button", 0);
+    headerbarui_flags.show_stop_button = deadbeef->conf_get_int ("headerbarui.show_stop_button", 1);
+    headerbarui_flags.show_volume_button = deadbeef->conf_get_int ("headerbarui.show_volume_button", 1);
     headerbarui_flags.show_preferences_button = deadbeef->conf_get_int ("headerbarui.show_preferences_button", 0);
     headerbarui_flags.button_spacing = deadbeef->conf_get_int ("headerbarui.button_spacing", 6);
 }
