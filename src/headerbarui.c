@@ -389,7 +389,31 @@ headerbarui_update_menubutton()
 
 static gint
 seekbar_width () {
-    return MIN(MAX((mainwin_width / 2) - 210,0), 420);
+    int button_size = 38; // can maybe be read dynamic, depending on padding of theme
+    // Min size calculated by basic static elements (prev, play/pause, next, menu) including 3 possible window decoration buttons
+    // also stop, volume (TODO make optional). For every optional button extra width is added
+    int min_size_fixed_content = button_size * 9;
+    if (headerbarui_flags.show_preferences_button) {
+        min_size_fixed_content += button_size;
+    }
+    if (!headerbarui_flags.combined_playpause) {
+        min_size_fixed_content += button_size;
+    }
+    int min_size_seekbar = 100;
+    int min_size_title = 150;
+    int title_growth = 200; // title size in total is min_size_title + title_growth
+    int required_width = min_size_fixed_content + min_size_title + min_size_seekbar;
+
+    if (mainwin_width < required_width) {
+        return 0;
+    } else {
+        int width = mainwin_width - required_width;
+        if (width > title_growth * 2) {
+            return min_size_seekbar + width - title_growth;
+        } else {
+            return min_size_seekbar + width / 2;
+        }
+    }
 }
 
 static gboolean
@@ -399,13 +423,15 @@ mainwindow_resize (GtkWindow *mainwindow,
     if (headerbarui_flags.show_seek_bar && seekbar_isvisible && event->width != mainwin_width) {
         mainwin_width = event->width;
 
-        if (seekbar_width () < 50) {
+        int width = seekbar_width();
+
+        if (width == 0) {
             headerbarui_flags.seekbar_minimized = TRUE;
             gtk_widget_hide (headerbar_seekbar);
         } else {
             headerbarui_flags.seekbar_minimized = FALSE;
             gtk_widget_set_size_request (headerbar_seekbar,
-                seekbar_width (),
+                width,
                 -1);
             gtk_widget_show (headerbar_seekbar);
         }
