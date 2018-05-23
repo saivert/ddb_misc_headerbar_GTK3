@@ -29,6 +29,6 @@ For Arch linux you can use the PKGBUILD in the distro/arch directory.
 Binary builds
 -------------
 
-Static builds are not ready yet, I'm waiting on deadbeef-plugin-builder to be updated.
+Static builds can now be downloaded from the [deadbeef plugin page](http://deadbeef.sourceforge.net/plugins.html).
 
 Build scripts for your favorite distro are accepted :)
