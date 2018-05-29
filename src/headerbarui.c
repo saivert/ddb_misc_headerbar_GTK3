@@ -520,10 +520,6 @@ void window_init_hook (void *userdata) {
         G_CALLBACK(mainwindow_resize),
         NULL);
 
-#if (DDB_API_LEVEL >= 10)
-    if (deadbeef->vmajor>=1 && deadbeef->vminor >= 10)
-        deadbeef->log_detailed(&plugin.plugin, DDB_LOG_LAYER_INFO, "GTK3 Headerbar plugin loaded.");
-#endif
 }
 
 
