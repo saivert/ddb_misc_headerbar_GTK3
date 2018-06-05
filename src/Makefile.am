@@ -1,6 +1,6 @@
 pkglib_LTLIBRARIES = ddb_misc_headerbar_GTK3.la
 
-EXTRA_DIST = headerbar.ui
+EXTRA_DIST = headerbar.ui menu.ui
 
 ACLOCAL_AMFLAGS= -I m4
 AUTOMAKE_OPTIONS = foreign

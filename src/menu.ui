@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <menu id="file-menu">
+    <section>
+      <item>
+        <attribute name="label">Open file(s)</attribute>
+        <attribute name="action">db.open_files</attribute>
+      </item>
+    </section>
+    <section>
+      <attribute name="label">Add</attribute>
+      <attribute name="display-hint">vertical-buttons</attribute>
+      <item>
+        <attribute name="label">File(s)</attribute>
+        <attribute name="action">db.add_files</attribute>
+      </item>
+      <item>
+        <attribute name="label">Folder(s)</attribute>
+        <attribute name="action">db.add_folders</attribute>
+      </item>
+      <item>
+        <attribute name="label">Location</attribute>
+        <attribute name="action">db.add_location</attribute>
+      </item>
+    </section>
+    <section>
+    <attribute name="label">Playlists</attribute>
+    <attribute name="display-hint">vertical-buttons</attribute>
+      <item>
+        <attribute name="label">New</attribute>
+        <attribute name="action">db.new_playlist</attribute>
+      </item>
+      <item>
+        <attribute name="label">Load</attribute>
+        <attribute name="action">db.load_playlist</attribute>
+      </item>
+      <item>
+        <attribute name="label">Save</attribute>
+        <attribute name="action">db.save_playlist</attribute>
+      </item>
+    </section>
+  </menu>
+
+  <menu id="order-menu">
+    <attribute name="label">Order</attribute>
+    <section>
+      <item>
+        <attribute name="label">Linear</attribute>
+        <attribute name="action">db.order_linear</attribute>
+      </item>
+      <item>
+        <attribute name="label">Shuffle tracks</attribute>
+        <attribute name="action">db.order_shuffle</attribute>
+      </item>
+      <item>
+        <attribute name="label">Shuffle albums</attribute>
+        <attribute name="action">db.order_shuffle_albums</attribute>
+      </item>
+      <item>
+        <attribute name="label">Random</attribute>
+        <attribute name="action">db.order_random</attribute>
+      </item>
+    </section>
+  </menu>
+
+
+</interface>

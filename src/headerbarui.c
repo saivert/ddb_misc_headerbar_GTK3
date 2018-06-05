@@ -40,6 +40,7 @@ GtkWidget *headerbar_pausebtn;
 GtkWidget *headerbar_stopbtn;
 GtkWidget *headerbar_menubtn;
 GtkWidget *headerbar_prefsbtn;
+GtkWidget *headerbar_designmodebtn;
 
 #define GTK_BUILDER_GET_WIDGET(builder, name) (GtkWidget *)gtk_builder_get_object(builder, name)
 
@@ -59,6 +60,7 @@ static struct headerbarui_flag_s {
     gboolean show_stop_button;
     gboolean show_volume_button;
     gboolean show_preferences_button;
+    gboolean show_designmode_button;
     int button_spacing;
 } headerbarui_flags;
 
@@ -153,102 +155,6 @@ on_seekbar_format_value (GtkScale *scale,
         return g_strdup_printf ("%02d:%02d", mn, sc);
     else
         return g_strdup_printf ("%02d:%02d:%02d", hr, mn, sc);
-}
-
-static
-void
-on_stopbtn_clicked                     (GtkButton       *button,
-                                        gpointer         user_data)
-{
-    deadbeef->sendmessage (DB_EV_STOP, 0, 0, 0);
-}
-
-
-static
-void
-on_playbtn_clicked                     (GtkButton       *button,
-                                        gpointer         user_data)
-{
-    // NOTE: this function is a copy of action_play_cb
-    DB_output_t *output = deadbeef->get_output ();
-    if (output->state () == OUTPUT_STATE_PAUSED) {
-        ddb_playlist_t *plt = deadbeef->plt_get_curr ();
-        int cur = deadbeef->plt_get_cursor (plt, PL_MAIN);
-        if (cur != -1) {
-            ddb_playItem_t *it = deadbeef->plt_get_item_for_idx (plt, cur, PL_MAIN);
-            ddb_playItem_t *it_playing = deadbeef->streamer_get_playing_track ();
-
-            if (it) {
-                deadbeef->pl_item_unref (it);
-            }
-            if (it_playing) {
-                deadbeef->pl_item_unref (it_playing);
-            }
-            if (it != it_playing) {
-                deadbeef->sendmessage (DB_EV_PLAY_NUM, 0, cur, 0);
-            }
-            else {
-                deadbeef->sendmessage (DB_EV_PLAY_CURRENT, 0, 0, 0);
-            }
-        }
-        else {
-            deadbeef->sendmessage (DB_EV_PLAY_CURRENT, 0, 0, 0);
-        }
-        deadbeef->plt_unref (plt);
-    }
-    else {
-        ddb_playlist_t *plt = deadbeef->plt_get_curr ();
-        int cur = -1;
-        if (plt) {
-            cur = deadbeef->plt_get_cursor (plt, PL_MAIN);
-            deadbeef->plt_unref (plt);
-        }
-        if (cur == -1) {
-            cur = 0;
-        }
-        deadbeef->sendmessage (DB_EV_PLAY_NUM, 0, cur, 0);
-    }
-}
-
-static
-void
-on_pausebtn_clicked                    (GtkButton       *button,
-                                        gpointer         user_data)
-{
-    deadbeef->sendmessage (DB_EV_TOGGLE_PAUSE, 0, 0, 0);
-}
-
-static
-void
-on_prevbtn_clicked                     (GtkButton       *button,
-                                        gpointer         user_data)
-{
-    deadbeef->sendmessage (DB_EV_PREV, 0, 0, 0);
-}
-
-static
-void
-on_nextbtn_clicked                     (GtkButton       *button,
-                                        gpointer         user_data)
-{
-    deadbeef->sendmessage (DB_EV_NEXT, 0, 0, 0);
-}
-
-static
-void
-on_prefsbtn_clicked                     (GtkButton       *button,
-                                        gpointer         user_data)
-{
-    DB_plugin_action_t *acts = gtkui_plugin->gui.plugin.get_actions(NULL);
-    while (acts) {
-        if (!strcmp (acts->name, "preferences")) {
-            if (acts->callback2) {
-                acts->callback2 (acts, DDB_ACTION_CTX_MAIN);
-            }
-            return;
-        }
-        acts = acts->next;
-    }
 }
 
 static
@@ -443,6 +349,127 @@ mainwindow_resize (GtkWindow *mainwindow,
     return FALSE;
 }
 
+static void
+action_design_mode_change_state(GSimpleAction *simple, GVariant *value, gpointer user_data)
+{
+    gboolean state = g_variant_get_boolean (value);
+    GtkCheckMenuItem *designmode_menu_item = GTK_CHECK_MENU_ITEM (lookup_widget (gtkui_plugin->get_mainwin(), "design_mode1"));
+    gtk_check_menu_item_set_active (designmode_menu_item, state);
+
+    gtkui_plugin->w_set_design_mode (state);
+
+    g_simple_action_set_state ( simple,  value);
+}
+
+static void
+design_mode_menu_item_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+    gboolean act = gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (menuitem));
+    GSimpleAction *designmode_action = G_SIMPLE_ACTION (user_data);
+
+    g_simple_action_set_state (designmode_action, g_variant_new_boolean (act));
+}
+
+static GActionGroup *
+create_action_group(void)
+{
+    const GActionEntry entries[] = {
+        {"designmode", NULL, NULL, "false", action_design_mode_change_state}};
+    GSimpleActionGroup *group;
+
+    group = g_simple_action_group_new();
+    g_action_map_add_action_entries(G_ACTION_MAP(group), entries, G_N_ELEMENTS(entries), NULL);
+
+    return G_ACTION_GROUP(group);
+}
+
+void
+dup_gtkui_exec_action_14 (DB_plugin_action_t *action, int cursor) {
+    // Plugin can handle all tracks by itself
+    if (action->flags & DB_ACTION_CAN_MULTIPLE_TRACKS)
+    {
+        action->callback (action, NULL);
+        return;
+    }
+
+    // For single-track actions just invoke it with first selected track
+    if (!(action->flags & DB_ACTION_MULTIPLE_TRACKS))
+    {
+        if (cursor == -1) {
+            cursor = deadbeef->pl_get_cursor (PL_MAIN);
+        }
+        if (cursor == -1) 
+        {
+            return;
+        }
+        DB_playItem_t *it = deadbeef->pl_get_for_idx_and_iter (cursor, PL_MAIN);
+        action->callback (action, it);
+        deadbeef->pl_item_unref (it);
+        return;
+    }
+
+    //We end up here if plugin won't traverse tracks and we have to do it ourselves
+    DB_playItem_t *it = deadbeef->pl_get_first (PL_MAIN);
+    while (it) {
+        if (deadbeef->pl_is_selected (it)) {
+            action->callback (action, it);
+        }
+        DB_playItem_t *next = deadbeef->pl_get_next (it, PL_MAIN);
+        deadbeef->pl_item_unref (it);
+        it = next;
+    }
+}
+
+static void
+action_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
+{
+    DB_plugin_action_t *dbaction = (DB_plugin_action_t *) g_object_get_data (G_OBJECT (simple), "deadbeefaction");
+    if (dbaction->callback) {
+        dup_gtkui_exec_action_14 (dbaction, -1);
+    }
+    else if (dbaction->callback2) {
+        dbaction->callback2 (dbaction, DDB_ACTION_CTX_MAIN);
+    }
+}
+
+static GActionGroup *
+create_action_group_deadbeef(void)
+{
+    GSimpleActionGroup *group;
+    GSimpleAction *action;
+
+    group = g_simple_action_group_new();
+
+    // add new
+    DB_plugin_t **plugins = deadbeef->plug_get_list();
+    int i;
+
+    for (i = 0; plugins[i]; i++)
+    {
+        if (!plugins[i]->get_actions)
+            continue;
+
+        DB_plugin_action_t *dbactions = plugins[i]->get_actions (NULL);
+        DB_plugin_action_t *dbaction;
+
+        for (dbaction = dbactions; dbaction; dbaction = dbaction->next)
+        {
+            char *tmp = NULL;
+
+            if (dbaction->callback2 && dbaction->flags & DB_ACTION_COMMON) {
+                action = g_simple_action_new (dbaction->name, NULL);
+                g_object_set_data (G_OBJECT (action), "deadbeefaction", dbaction);
+                g_signal_connect (action, "activate", action_activate, NULL);
+                g_action_map_add_action (G_ACTION_MAP (group), G_ACTION (action));
+                g_debug ("Action added %s", dbaction->name);
+            }
+
+        }
+    }
+
+    return G_ACTION_GROUP (group);
+}
+
 void window_init_hook (void *userdata) {
     GtkWindow *mainwin;
     GtkWidget *menubar;
@@ -455,6 +482,7 @@ void window_init_hook (void *userdata) {
     g_assert_nonnull(menubar);
 
     builder = gtk_builder_new_from_resource("/org/deadbeef/headerbarui/headerbar.ui");
+    gtk_builder_add_from_resource (builder, "/org/deadbeef/headerbarui/menu.ui", NULL);
     headerbar = GTK_BUILDER_GET_WIDGET(builder, "headerbar1");
     volbutton = GTK_BUILDER_GET_WIDGET(builder, "volumebutton1");
     headerbar_menubtn =  GTK_BUILDER_GET_WIDGET(builder, "menubutton1");
@@ -463,6 +491,23 @@ void window_init_hook (void *userdata) {
     headerbar_pausebtn = GTK_BUILDER_GET_WIDGET(builder, "pausebtn");
     headerbar_stopbtn = GTK_BUILDER_GET_WIDGET(builder, "stopbtn");
     headerbar_prefsbtn = GTK_BUILDER_GET_WIDGET(builder, "prefsbtn");
+    headerbar_designmodebtn = GTK_BUILDER_GET_WIDGET(builder, "designmodebtn");
+    GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
+
+    GtkWidget *file_menu_btn = GTK_MENU_BUTTON (gtk_builder_get_object (builder, "file_menu_btn"));
+    //gtk_menu_button_set_use_popover (GTK_MENU_BUTTON (file_menu_btn), FALSE);
+    gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (file_menu_btn), menumodel);
+
+    GActionGroup *group = create_action_group();
+    gtk_widget_insert_action_group (headerbar, "win", group);
+
+    GAction *designmode_action = g_action_map_lookup_action (G_ACTION_MAP (group), "designmode");
+
+    g_signal_connect_after (G_OBJECT (lookup_widget (gtkui_plugin->get_mainwin(), "design_mode1")),
+        "activate", G_CALLBACK (design_mode_menu_item_activate), designmode_action);
+
+    GActionGroup *deadbeef_action_group = create_action_group_deadbeef();    
+    gtk_widget_insert_action_group (headerbar, "db", deadbeef_action_group);
 
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     gtk_widget_show(headerbar);
@@ -500,16 +545,10 @@ void window_init_hook (void *userdata) {
 
     gtk_builder_add_callback_symbols(builder,
         "on_volbutton_value_changed", (GCallback)on_volbutton_value_changed,
-        "on_nextbtn_clicked", on_nextbtn_clicked,
-        "on_prevbtn_clicked", on_prevbtn_clicked,
-        "on_pausebtn_clicked", on_pausebtn_clicked,
-        "on_playbtn_clicked", on_playbtn_clicked,
-        "on_stopbtn_clicked", on_stopbtn_clicked,
         "on_seekbar_format_value", on_seekbar_format_value,
         "on_seekbar_button_press_event", on_seekbar_button_press_event,
         "on_seekbar_button_release_event", on_seekbar_button_release_event,
         "on_seekbar_value_changed", on_seekbar_value_changed,
-        "on_prefsbtn_clicked", on_prefsbtn_clicked,
         NULL);
     gtk_builder_connect_signals(builder, NULL);
 
@@ -537,6 +576,7 @@ void headerbarui_getconfig()
     headerbarui_flags.show_stop_button = deadbeef->conf_get_int ("headerbarui.show_stop_button", 1);
     headerbarui_flags.show_volume_button = deadbeef->conf_get_int ("headerbarui.show_volume_button", 1);
     headerbarui_flags.show_preferences_button = deadbeef->conf_get_int ("headerbarui.show_preferences_button", 0);
+    headerbarui_flags.show_designmode_button = deadbeef->conf_get_int ("headerbarui.show_designmode_button", 0);
     headerbarui_flags.button_spacing = deadbeef->conf_get_int ("headerbarui.button_spacing", 6);
 }
 
@@ -599,6 +639,8 @@ headerbarui_configchanged_cb(gpointer user_data)
     gtk_widget_set_visible(headerbar_stopbtn, headerbarui_flags.show_stop_button);
     gtk_widget_set_visible(volbutton, headerbarui_flags.show_volume_button);
     gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
+    gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
+    gtk_widget_set_visible(headerbar_designmodebtn, headerbarui_flags.show_designmode_button);
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     playpause_update(OUTPUT_STATE_STOPPED);
 
@@ -638,6 +680,7 @@ static const char settings_dlg[] =
     "property \"Show stop button\" checkbox headerbarui.show_stop_button 1;\n"
     "property \"Show volume button\" checkbox headerbarui.show_volume_button 1;\n"
     "property \"Show preferences button\" checkbox headerbarui.show_preferences_button 0;\n"
+    "property \"Show design mode button\" checkbox headerbarui.show_designmode_button 0;\n"
 ;
 
 static DB_misc_t plugin = {
