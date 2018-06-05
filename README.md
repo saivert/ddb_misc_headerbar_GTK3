@@ -8,7 +8,7 @@ Requirements
 
 Screenshot
 ----------
-![Screenshot](http://i.imgur.com/zYXzoSp.png "Screenshot")
+![Screenshot](https://i.imgur.com/cVcJOI9.png "Screenshot")
 
 Installation
 ------------
