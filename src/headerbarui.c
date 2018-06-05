@@ -268,31 +268,74 @@ gtkui_get_gui_refresh_rate () {
     return fps;
 }
 
+static GtkWidget *menubarpopover;
+static GtkWidget *menubarpopover_box;
+
+
+static gboolean
+headerbar_menubtn_key_press_event_cb (GtkWidget *widget, GdkEvent  *event, gpointer user_data)
+{
+    if (event->key.keyval == GDK_KEY_Return) {
+        gtk_popover_popup (menubarpopover);
+        gtk_menu_shell_select_first (GTK_WIDGET (user_data), FALSE);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 static
 void
 headerbarui_update_menubutton()
 {
     GtkWindow *mainwin;
     GtkWidget *menubar;
-    static GtkMenu *menu;
 
     mainwin = GTK_WINDOW (gtkui_plugin->get_mainwin ());
     menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
 
-    menu = GTK_MENU (gtk_menu_new ());
+    GtkStyleContext *style = gtk_widget_get_style_context (menubar);
+    GtkCssProvider *css = gtk_css_provider_new();
+    gtk_css_provider_load_from_resource (css, "/org/deadbeef/headerbarui/menu.css");
+    gtk_style_context_add_provider (style, css, GTK_STYLE_PROVIDER_PRIORITY_USER);
+    g_object_unref (css);
+    gtk_style_context_add_class (style, "deadbeefmenubar");
 
+    g_signal_connect (headerbar_menubtn, "key-release-event", G_CALLBACK (headerbar_menubtn_key_press_event_cb), menubar);
+
+#if 0
     GList *l, *children;
     children = gtk_container_get_children(GTK_CONTAINER (menubar));
     for (l = children; l; l = l->next)
     {
-        GtkWidget *menuitem;
-        menuitem = gtk_menu_item_new_with_mnemonic(gtk_menu_item_get_label(GTK_MENU_ITEM(l->data)));
-        gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), gtk_menu_item_get_submenu(GTK_MENU_ITEM(l->data)));
-        gtk_widget_show(menuitem);
-        gtk_container_add(GTK_CONTAINER(menu), GTK_WIDGET(menuitem));
+        GtkWidget *menubtn;
+        gtk_container_remove (menubar, l->data);
+
+        menubtn = gtk_menu_button_new();
+        gtk_menu_button_set_popup (GTK_MENU_BUTTON (menubtn), gtk_menu_item_get_submenu (GTK_MENU_ITEM (l->data)));
+        gtk_button_set_relief (GTK_BUTTON (menubtn), GTK_RELIEF_NONE);
+
+        GtkWidget *label = gtk_label_new_with_mnemonic (gtk_menu_item_get_label (GTK_MENU_ITEM (l->data)));
+        GtkWidget *image = gtk_image_new_from_icon_name ("arrow-right", GTK_ICON_SIZE_MENU);
+        //GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+        gtk_label_set_xalign (GTK_LABEL (label), 0.0);
+        //gtk_box_pack_start (box, label, TRUE, TRUE, 5);
+        //gtk_box_pack_start (box, image, FALSE, FALSE, 0);
+        gtk_container_add (menubtn, label);
+
+        gtk_style_context_add_class (gtk_widget_get_style_context (menubtn), "popup");
+
+        gtk_menu_button_set_direction (GTK_MENU_BUTTON (menubtn), GTK_ARROW_RIGHT);
+        gtk_box_pack_start (GTK_BOX (menubarpopover_box), menubtn, TRUE, FALSE, 0);
+        gtk_widget_show_all(menubtn);
     }
     g_list_free(children);
-    gtk_menu_button_set_popup(GTK_MENU_BUTTON (headerbar_menubtn), GTK_WIDGET(menu));
+#else
+    gtk_container_remove (gtk_widget_get_parent (GTK_WIDGET (menubar)), menubar);
+    gtk_container_add (GTK_CONTAINER (menubarpopover_box), menubar);
+    gtk_widget_show(menubar);
+#endif
+    gtk_widget_show (headerbar_menubtn);
 }
 
 static gint
@@ -470,6 +513,8 @@ create_action_group_deadbeef(void)
     return G_ACTION_GROUP (group);
 }
 
+
+
 void window_init_hook (void *userdata) {
     GtkWindow *mainwin;
     GtkWidget *menubar;
@@ -492,6 +537,8 @@ void window_init_hook (void *userdata) {
     headerbar_stopbtn = GTK_BUILDER_GET_WIDGET(builder, "stopbtn");
     headerbar_prefsbtn = GTK_BUILDER_GET_WIDGET(builder, "prefsbtn");
     headerbar_designmodebtn = GTK_BUILDER_GET_WIDGET(builder, "designmodebtn");
+    menubarpopover = GTK_BUILDER_GET_WIDGET(builder, "menubarpopover");
+    menubarpopover_box = GTK_BUILDER_GET_WIDGET(builder, "menubarpopover_box");
     GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
 
     GtkWidget *file_menu_btn = GTK_MENU_BUTTON (gtk_builder_get_object (builder, "file_menu_btn"));
@@ -519,9 +566,7 @@ void window_init_hook (void *userdata) {
         gtk_widget_hide(menubar);
 
         headerbarui_update_menubutton();
-
         gtk_widget_set_can_focus(headerbar_menubtn, FALSE);
-        gtk_widget_show (headerbar_menubtn);
     } else {
         gtk_widget_destroy(headerbar_menubtn);
         gtk_widget_reparent(menubar, headerbar);

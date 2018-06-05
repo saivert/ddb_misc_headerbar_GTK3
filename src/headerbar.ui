@@ -67,6 +67,19 @@ Author: Nicolai Syvertsen
     <property name="can_focus">False</property>
     <property name="icon_name">media-playback-stop-symbolic</property>
   </object>
+
+  <object class="GtkPopover" id="menubarpopover">
+    <property name="can_focus">True</property>
+    <property name="receives_default">True</property>
+    <child>
+      <object class="GtkBox" id="menubarpopover_box">
+	<property name="orientation">vertical</property>
+        <property name="visible">True</property>
+        <property name="margin">5</property>
+      </object>
+    </child>
+  </object>	
+
   <object class="GtkHeaderBar" id="headerbar1">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -278,6 +291,8 @@ audio-volume-medium-symbolic</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
         <property name="tooltip-text">Open menu</property>
+        <property name="popover">menubarpopover</property>
+        <property name="direction">down</property>
         <child>
           <object class="GtkImage" id="menubtnimage">
             <property name="visible">True</property>

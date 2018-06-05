@@ -3,5 +3,6 @@
   <gresource prefix="/org/deadbeef/headerbarui">
     <file compressed="true">headerbar.ui</file>
     <file compressed="true">menu.ui</file>
+    <file compressed="true">menu.css</file>
   </gresource>
 </gresources>
