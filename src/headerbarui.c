@@ -587,8 +587,16 @@ int headerbarui_connect() {
     gtkui_plugin = (ddb_gtkui_t *) deadbeef->plug_get_for_id (DDB_GTKUI_PLUGIN_ID);
     if (gtkui_plugin) {
         if (gtkui_plugin->gui.plugin.version_major >= 2) {
+
+            if (!deadbeef->plug_get_for_id ("hotkeys")) {
+                fprintf (stderr, "Headerbar plugin failure: Hotkeys plugin is required!\n");
+                return -1;
+            }
+
             gtkui_plugin->add_window_init_hook (window_init_hook, NULL);
             return 0;
+        } else {
+            fprintf (stderr, "Headerbar plugin failure: DeaDBeeF version 1.7 or higher is required!\n");
         }
     }
     return -1;
