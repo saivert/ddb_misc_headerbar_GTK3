@@ -25,6 +25,7 @@
 #include <deadbeef/gtkui_api.h>
 #include "resources.h"
 #include "headerbarui.h"
+#include "ddbheaderbar.h"
 
 DB_functions_t *deadbeef;
 static DB_misc_t plugin;
@@ -32,6 +33,7 @@ static DB_misc_t plugin;
 static ddb_gtkui_t *gtkui_plugin;
 static gint mainwin_width;
 
+GtkWindow *mainwin;
 GtkWidget *headerbar;
 GtkWidget *volbutton;
 GtkWidget *headerbar_seekbar;
@@ -90,7 +92,6 @@ lookup_widget (GtkWidget *widget, const gchar *widget_name)
   return found_widget;
 }
 
-static
 void
 on_volbutton_value_changed (GtkScaleButton *button,
                gdouble         value,
@@ -113,16 +114,14 @@ deadbeef_seek(int value)
     }
 }
 
-static
 void
 on_seekbar_value_changed (GtkRange *range,
                gpointer  user_data)
 {
     if (seekbar_ismoving) return;
-    deadbeef_seek((int)gtk_range_get_value(range));
+    deadbeef_seek((int)gtk_range_get_value(headerbar_seekbar));
 }
 
-static
 gboolean
 on_seekbar_button_press_event (GtkScale *widget,
                GdkEvent  *event,
@@ -132,18 +131,17 @@ on_seekbar_button_press_event (GtkScale *widget,
     return FALSE;
 }
 
-static
 gboolean
 on_seekbar_button_release_event (GtkScale *widget,
                GdkEvent  *event,
                gpointer   user_data)
 {
-    deadbeef_seek((int)gtk_range_get_value(GTK_RANGE(widget)));
+    deadbeef_seek((int)gtk_range_get_value(GTK_RANGE(headerbar_seekbar)));
     seekbar_ismoving = FALSE;
     return FALSE;
 }
 
-static gchar*
+gchar*
 on_seekbar_format_value (GtkScale *scale,
                 gdouble value)
 {
@@ -272,11 +270,9 @@ static
 void
 headerbarui_update_menubutton()
 {
-    GtkWindow *mainwin;
     GtkWidget *menubar;
     static GtkMenu *menu;
 
-    mainwin = GTK_WINDOW (gtkui_plugin->get_mainwin ());
     menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
 
     menu = GTK_MENU (gtk_menu_new ());
@@ -353,7 +349,7 @@ static void
 action_design_mode_change_state(GSimpleAction *simple, GVariant *value, gpointer user_data)
 {
     gboolean state = g_variant_get_boolean (value);
-    GtkCheckMenuItem *designmode_menu_item = GTK_CHECK_MENU_ITEM (lookup_widget (gtkui_plugin->get_mainwin(), "design_mode1"));
+    GtkCheckMenuItem *designmode_menu_item = GTK_CHECK_MENU_ITEM (lookup_widget (mainwin, "design_mode1"));
     gtk_check_menu_item_set_active (designmode_menu_item, state);
 
     gtkui_plugin->w_set_design_mode (state);
@@ -461,7 +457,6 @@ create_action_group_deadbeef(void)
                 g_object_set_data (G_OBJECT (action), "deadbeefaction", dbaction);
                 g_signal_connect (action, "activate", action_activate, NULL);
                 g_action_map_add_action (G_ACTION_MAP (group), G_ACTION (action));
-                g_debug ("Action added %s", dbaction->name);
             }
 
         }
@@ -471,7 +466,6 @@ create_action_group_deadbeef(void)
 }
 
 void window_init_hook (void *userdata) {
-    GtkWindow *mainwin;
     GtkWidget *menubar;
     GtkBuilder *builder;
 
@@ -481,22 +475,23 @@ void window_init_hook (void *userdata) {
     g_assert_nonnull(mainwin);
     g_assert_nonnull(menubar);
 
-    builder = gtk_builder_new_from_resource("/org/deadbeef/headerbarui/headerbar.ui");
-    gtk_builder_add_from_resource (builder, "/org/deadbeef/headerbarui/menu.ui", NULL);
-    headerbar = GTK_BUILDER_GET_WIDGET(builder, "headerbar1");
-    volbutton = GTK_BUILDER_GET_WIDGET(builder, "volumebutton1");
-    headerbar_menubtn =  GTK_BUILDER_GET_WIDGET(builder, "menubutton1");
-    headerbar_seekbar = GTK_BUILDER_GET_WIDGET(builder, "scale1");
-    headerbar_playbtn = GTK_BUILDER_GET_WIDGET(builder, "playbtn");
-    headerbar_pausebtn = GTK_BUILDER_GET_WIDGET(builder, "pausebtn");
-    headerbar_stopbtn = GTK_BUILDER_GET_WIDGET(builder, "stopbtn");
-    headerbar_prefsbtn = GTK_BUILDER_GET_WIDGET(builder, "prefsbtn");
-    headerbar_designmodebtn = GTK_BUILDER_GET_WIDGET(builder, "designmodebtn");
-    GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
+    //builder = gtk_builder_new();
+    //gtk_builder_add_from_resource (builder, "/org/deadbeef/headerbarui/menu.ui", NULL);
+    headerbar = ddb_header_bar_new();
 
-    GtkWidget *file_menu_btn = GTK_MENU_BUTTON (gtk_builder_get_object (builder, "file_menu_btn"));
-    //gtk_menu_button_set_use_popover (GTK_MENU_BUTTON (file_menu_btn), FALSE);
-    gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (file_menu_btn), menumodel);
+    volbutton = DDB_HEADER_BAR(headerbar)->volbutton;
+    headerbar_menubtn =  DDB_HEADER_BAR(headerbar)->menubtn;
+    headerbar_seekbar = DDB_HEADER_BAR(headerbar)->seekbar;
+    headerbar_playbtn = DDB_HEADER_BAR(headerbar)->playbtn;
+    headerbar_pausebtn = DDB_HEADER_BAR(headerbar)->pausebtn;
+    headerbar_stopbtn = DDB_HEADER_BAR(headerbar)->stopbtn;
+    headerbar_prefsbtn = DDB_HEADER_BAR(headerbar)->prefsbtn;
+    headerbar_designmodebtn = DDB_HEADER_BAR(headerbar)->designmodebtn;
+
+    //GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
+
+    //GtkWidget *file_menu_btn = GTK_MENU_BUTTON (gtk_builder_get_object (builder, "file_menu_btn"));
+    //gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (file_menu_btn), menumodel);
 
     GActionGroup *group = create_action_group();
     gtk_widget_insert_action_group (headerbar, "win", group);
@@ -543,14 +538,16 @@ void window_init_hook (void *userdata) {
 
     gtk_widget_show(volbutton);
 
-    gtk_builder_add_callback_symbols(builder,
-        "on_volbutton_value_changed", (GCallback)on_volbutton_value_changed,
-        "on_seekbar_format_value", on_seekbar_format_value,
-        "on_seekbar_button_press_event", on_seekbar_button_press_event,
-        "on_seekbar_button_release_event", on_seekbar_button_release_event,
-        "on_seekbar_value_changed", on_seekbar_value_changed,
-        NULL);
-    gtk_builder_connect_signals(builder, NULL);
+
+
+    // gtk_builder_add_callback_symbols(builder,
+    //     "on_volbutton_value_changed", (GCallback)on_volbutton_value_changed,
+    //     "on_seekbar_format_value", on_seekbar_format_value,
+    //     "on_seekbar_button_press_event", on_seekbar_button_press_event,
+    //     "on_seekbar_button_release_event", on_seekbar_button_release_event,
+    //     "on_seekbar_value_changed", on_seekbar_value_changed,
+    //     NULL);
+    //gtk_builder_connect_signals(builder, NULL);
 
     gtk_window_get_size (mainwin, &mainwin_width, NULL);
     gtk_widget_set_size_request (headerbar_seekbar, seekbar_width (), -1);

@@ -8,5 +8,14 @@ simple_resources = gnome.compile_resources('resources',
   source_dir : './src',
   c_name : 'headerbarui')
 
-shared_library(meson.project_name(), ['src/headerbarui.c',simple_resources], dependencies : gtkdep, name_prefix: '')
+cc = meson.get_compiler('c')
+m_dep = cc.find_library('m', required : false)
+
+myfiles = [
+  'src/ddbheaderbar.c',
+  'src/headerbarui.c',
+  simple_resources
+]
+
+shared_library(meson.project_name(), myfiles, dependencies : [gtkdep, m_dep], name_prefix: '', c_args : '-fPIC')
 

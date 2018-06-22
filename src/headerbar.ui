@@ -27,11 +27,7 @@ Author: Nicolai Syvertsen
   <!-- interface-name headerbarui -->
   <!-- interface-description Headerbar UI plugin for DeaDBeeF -->
   <!-- interface-authors Nicolai Syvertsen -->
-  <object class="GtkAdjustment" id="adjustment1">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-  </object>
+
 <!-- not in use
   <object class="GThemedIcon" id="designmodeicon">
     <property name="name">edit-symbolic</property>
@@ -67,7 +63,7 @@ Author: Nicolai Syvertsen
     <property name="can_focus">False</property>
     <property name="icon_name">media-playback-stop-symbolic</property>
   </object>
-  <object class="GtkHeaderBar" id="headerbar1">
+  <template class="DdbHeaderBar" parent="GtkHeaderBar">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="show_close_button">True</property>
@@ -140,7 +136,7 @@ Author: Nicolai Syvertsen
 <!--headerbar title-->
 
     <child>
-      <object class="GtkScale" id="scale1">
+      <object class="GtkScale" id="seekbar">
         <property name="name">seekbar</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
@@ -200,7 +196,7 @@ Author: Nicolai Syvertsen
     </child>
 
     <child>
-      <object class="GtkVolumeButton" id="volumebutton1">
+      <object class="GtkVolumeButton" id="volbutton">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="focus_on_click">False</property>
@@ -274,7 +270,7 @@ audio-volume-medium-symbolic</property>
     </child>
 
     <child>
-      <object class="GtkMenuButton" id="menubutton1">
+      <object class="GtkMenuButton" id="menubtn">
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
         <property name="tooltip-text">Open menu</property>
@@ -291,5 +287,5 @@ audio-volume-medium-symbolic</property>
         <property name="position">1</property>
       </packing>
     </child>
-  </object>
+  </template>
 </interface>
