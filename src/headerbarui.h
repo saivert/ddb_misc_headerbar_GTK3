@@ -12,7 +12,7 @@
 #define trace(...) { fprintf(stderr, __VA_ARGS__); }
 
 extern DB_functions_t *deadbeef;
-//extern seekbar_ismoving;
+
 
 void
 on_volbutton_value_changed (GtkScaleButton *button,

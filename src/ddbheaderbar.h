@@ -4,16 +4,12 @@
 
 G_BEGIN_DECLS
 
-#define DDB_TYPE_HEADER_BAR            (ddb_header_bar_get_type ())
-#define DDB_HEADER_BAR(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), DDB_TYPE_HEADER_BAR, DdbHeaderBar))
-#define DDB_HEADER_BAR_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), DDB_TYPE_HEADER_BAR, DdbHeaderBarClass))
-#define DDB_IS_HEADER_BAR(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), DDB_TYPE_HEADER_BAR))
-#define DDB_IS_HEADER_BAR_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), DDB_TYPE_HEADER_BAR))
-#define DDB_HEADER_BAR_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), DDB_TYPE_HEADER_BAR, DdbHeaderBarClass))
 
-typedef struct _DdbHeaderBar              DdbHeaderBar;
-//typedef struct _DdbHeaderBarPrivate       DdbHeaderBarPrivate;
-typedef struct _DdbHeaderBarClass         DdbHeaderBarClass;
+#define DDB_TYPE_HEADER_BAR            (ddb_header_bar_get_type ())
+
+G_DECLARE_FINAL_TYPE(DdbHeaderBar, ddb_header_bar, DDB, HEADER_BAR, GtkHeaderBar)
+
+
 
 struct _DdbHeaderBar
 {
@@ -35,5 +31,8 @@ struct _DdbHeaderBarClass
   GtkHeaderBarClass parent_class;
 
 };
+
+GtkWidget *
+ddb_header_bar_new (void);
 
 G_END_DECLS

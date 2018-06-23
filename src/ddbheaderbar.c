@@ -4,14 +4,12 @@
 #include <deadbeef/gtkui_api.h>
 #include "headerbarui.h"
 
-//G_DEFINE_TYPE(DdbHeaderBar, ddb_header_bar, GTK_TYPE_HEADER_BAR)
-
 static void
 ddb_header_bar_buildable_init (GtkBuildableIface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (DdbHeaderBar, ddb_header_bar, GTK_TYPE_HEADER_BAR,
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
-                         ddb_header_bar_buildable_init));
+                         ddb_header_bar_buildable_init))
 
 GtkWidget *
 ddb_header_bar_new (void)
@@ -25,12 +23,13 @@ ddb_header_bar_class_init (DdbHeaderBarClass *class)
     GObjectClass *object_class = G_OBJECT_CLASS (class);
     GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (class);
     GtkContainerClass *container_class = GTK_CONTAINER_CLASS (class);
-    DdbHeaderBarClass *us = DDB_HEADER_BAR_CLASS (class);
+    GtkHeaderBarClass *headerbar_class = GTK_HEADER_BAR_CLASS (class);
+
+
 
     /* Setup the template GtkBuilder xml for this class */
     gtk_widget_class_set_template_from_resource (widget_class, "/org/deadbeef/headerbarui/headerbar.ui");
 
-    //gtk_widget_class_bind_template_child (widget_class, DdbHeaderBar, seekbar_adjustment);
     gtk_widget_class_bind_template_child (widget_class, DdbHeaderBar, volbutton);
     gtk_widget_class_bind_template_child (widget_class, DdbHeaderBar, seekbar);
     gtk_widget_class_bind_template_child (widget_class, DdbHeaderBar, playbtn);
