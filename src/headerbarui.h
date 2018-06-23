@@ -11,8 +11,24 @@
 
 #define trace(...) { fprintf(stderr, __VA_ARGS__); }
 
-extern DB_functions_t *deadbeef;
+struct headerbarui_flag_s {
+    gboolean disable;
+    gboolean embed_menubar;
+    gboolean show_seek_bar;
+    gboolean seekbar_minimized;
+    gboolean hide_seekbar_on_streaming;
+    gboolean combined_playpause;
+    gboolean show_stop_button;
+    gboolean show_volume_button;
+    gboolean show_preferences_button;
+    gboolean show_designmode_button;
+    int button_spacing;
+};
 
+extern DB_functions_t *deadbeef;
+extern ddb_gtkui_t *gtkui_plugin;
+extern struct headerbarui_flag_s headerbarui_flags;
+extern seekbar_isvisible;
 
 void
 on_volbutton_value_changed (GtkScaleButton *button,
