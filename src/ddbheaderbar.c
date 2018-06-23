@@ -20,12 +20,9 @@ ddb_header_bar_new (void)
 static void
 ddb_header_bar_class_init (DdbHeaderBarClass *class)
 {
-    GObjectClass *object_class = G_OBJECT_CLASS (class);
+    // GObjectClass *object_class = G_OBJECT_CLASS (class);
     GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (class);
-    GtkContainerClass *container_class = GTK_CONTAINER_CLASS (class);
-    GtkHeaderBarClass *headerbar_class = GTK_HEADER_BAR_CLASS (class);
-
-
+    // GtkContainerClass *container_class = GTK_CONTAINER_CLASS (class);
 
     /* Setup the template GtkBuilder xml for this class */
     gtk_widget_class_set_template_from_resource (widget_class, "/org/deadbeef/headerbarui/headerbar.ui");

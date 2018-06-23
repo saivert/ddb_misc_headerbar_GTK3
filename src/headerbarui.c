@@ -33,7 +33,7 @@ static DB_misc_t plugin;
 static ddb_gtkui_t *gtkui_plugin;
 static gint mainwin_width;
 
-GtkWindow *mainwin;
+GtkWidget *mainwin;
 GtkWidget *headerbar;
 GtkWidget *volbutton;
 GtkWidget *headerbar_seekbar;
@@ -119,7 +119,7 @@ on_seekbar_value_changed (GtkRange *range,
                gpointer  user_data)
 {
     if (seekbar_ismoving) return;
-    deadbeef_seek((int)gtk_range_get_value(headerbar_seekbar));
+    deadbeef_seek((int)gtk_range_get_value(GTK_RANGE(headerbar_seekbar)));
 }
 
 gboolean
@@ -169,7 +169,7 @@ headerbarui_adjust_range(GtkRange *range,
 
     GSignalMatchType mask = (GSignalMatchType)(G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA);
     GQuark detail = g_quark_from_static_string("value_changed");
-    g_signal_handlers_block_matched ((gpointer)range, mask, detail, 0, NULL, NULL, NULL);
+    g_signal_handlers_block_matched ((gpointer)range, mask, detail, 0, NULL, NULL, headerbar);
 
     gtk_adjustment_configure(adjustment,
     value, //value
@@ -179,7 +179,7 @@ headerbarui_adjust_range(GtkRange *range,
     page_increment, // page_increment
     page_size); // page_size
 
-    g_signal_handlers_unblock_matched ((gpointer)range, mask, detail, 0, NULL, NULL, NULL);
+    g_signal_handlers_unblock_matched ((gpointer)range, mask, detail, 0, NULL, NULL, headerbar);
 }
 
 static
@@ -450,8 +450,6 @@ create_action_group_deadbeef(void)
 
         for (dbaction = dbactions; dbaction; dbaction = dbaction->next)
         {
-            char *tmp = NULL;
-
             if (dbaction->callback2 && dbaction->flags & DB_ACTION_COMMON) {
                 action = g_simple_action_new (dbaction->name, NULL);
                 g_object_set_data (G_OBJECT (action), "deadbeefaction", dbaction);
@@ -469,7 +467,7 @@ void window_init_hook (void *userdata) {
     GtkWidget *menubar;
     GtkBuilder *builder;
 
-    mainwin = GTK_WINDOW (gtkui_plugin->get_mainwin ());
+    mainwin = gtkui_plugin->get_mainwin ();
 
     menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
     g_assert_nonnull(mainwin);
@@ -498,7 +496,7 @@ void window_init_hook (void *userdata) {
 
     GAction *designmode_action = g_action_map_lookup_action (G_ACTION_MAP (group), "designmode");
 
-    g_signal_connect_after (G_OBJECT (lookup_widget (gtkui_plugin->get_mainwin(), "design_mode1")),
+    g_signal_connect_after (G_OBJECT (lookup_widget (mainwin, "design_mode1")),
         "activate", G_CALLBACK (design_mode_menu_item_activate), designmode_action);
 
     GActionGroup *deadbeef_action_group = create_action_group_deadbeef();    
@@ -507,7 +505,7 @@ void window_init_hook (void *userdata) {
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     gtk_widget_show(headerbar);
 
-    gtk_window_set_titlebar(mainwin, GTK_WIDGET(headerbar));
+    gtk_window_set_titlebar(GTK_WINDOW (mainwin), GTK_WIDGET(headerbar));
 
     if (!headerbarui_flags.embed_menubar)
     {
@@ -538,18 +536,7 @@ void window_init_hook (void *userdata) {
 
     gtk_widget_show(volbutton);
 
-
-
-    // gtk_builder_add_callback_symbols(builder,
-    //     "on_volbutton_value_changed", (GCallback)on_volbutton_value_changed,
-    //     "on_seekbar_format_value", on_seekbar_format_value,
-    //     "on_seekbar_button_press_event", on_seekbar_button_press_event,
-    //     "on_seekbar_button_release_event", on_seekbar_button_release_event,
-    //     "on_seekbar_value_changed", on_seekbar_value_changed,
-    //     NULL);
-    //gtk_builder_connect_signals(builder, NULL);
-
-    gtk_window_get_size (mainwin, &mainwin_width, NULL);
+    gtk_window_get_size (GTK_WINDOW (mainwin), &mainwin_width, NULL);
     gtk_widget_set_size_request (headerbar_seekbar, seekbar_width (), -1);
     g_signal_connect (G_OBJECT(mainwin),
         "configure-event",
@@ -608,9 +595,9 @@ headerbarui_volume_changed(gpointer user_data)
 
     GSignalMatchType mask = (GSignalMatchType)(G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA);
     GQuark detail = g_quark_from_static_string("value_changed");
-    g_signal_handlers_block_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, NULL);
+    g_signal_handlers_block_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, headerbar);
     gtk_scale_button_set_value( GTK_SCALE_BUTTON (volbutton), -volume );
-    g_signal_handlers_unblock_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, NULL);
+    g_signal_handlers_unblock_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, headerbar);
 
     return FALSE;
 }
