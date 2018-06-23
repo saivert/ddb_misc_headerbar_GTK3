@@ -517,7 +517,8 @@ void window_init_hook (void *userdata) {
         gtk_widget_show (headerbar_menubtn);
     } else {
         gtk_widget_destroy(headerbar_menubtn);
-        gtk_widget_reparent(menubar, headerbar);
+        gtk_container_remove(gtk_widget_get_parent(menubar), menubar);
+        gtk_container_add(headerbar, menubar);
         gtk_container_child_set(GTK_CONTAINER(headerbar), menubar, "position", 0, NULL);
     }
 
