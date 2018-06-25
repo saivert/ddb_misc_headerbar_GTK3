@@ -1,7 +1,7 @@
 #pragma once
 
+#include <stdint.h>
 #include <gtk/gtk.h>
-
 G_BEGIN_DECLS
 
 
@@ -23,7 +23,18 @@ struct _DdbHeaderBar
     GtkWidget *menubtn;
     GtkWidget *prefsbtn;
     GtkWidget *designmodebtn;
-    GtkAdjustment *seekbar_adjustment;
+    GtkWidget *titlelabel;
+    GtkWidget *durationlabel;
+    GtkWidget *playbacktimelabel;
+    GtkWidget *seekbarbox;
+    
+    gboolean seekbar_ismoving;
+    gboolean seekbar_isvisible;
+    gboolean stoptimer;
+    guint timer;
+#ifdef HB2
+    gboolean is_statusbar;
+#endif
 };
 
 struct _DdbHeaderBarClass
@@ -34,5 +45,8 @@ struct _DdbHeaderBarClass
 
 GtkWidget *
 ddb_header_bar_new (void);
+
+int
+ddb_header_bar_message (DdbHeaderBar *bar, uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2);
 
 G_END_DECLS

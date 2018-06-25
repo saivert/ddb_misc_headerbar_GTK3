@@ -27,12 +27,6 @@ Author: Nicolai Syvertsen
   <!-- interface-name headerbarui -->
   <!-- interface-description Headerbar UI plugin for DeaDBeeF -->
   <!-- interface-authors Nicolai Syvertsen -->
-
-<!-- not in use
-  <object class="GThemedIcon" id="designmodeicon">
-    <property name="name">edit-symbolic</property>
-  </object>
--->
   <object class="GtkImage" id="next_img">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -67,134 +61,196 @@ Author: Nicolai Syvertsen
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="show_close_button">True</property>
-
     <child>
       <object class="GtkButton" id="prevbtn">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">prev_img</property>
         <property name="action_name">db.prev</property>
+        <property name="image">prev_img</property>
       </object>
       <packing>
         <property name="position">1</property>
       </packing>
     </child>
-
     <child>
       <object class="GtkButton" id="playbtn">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">play_img</property>
         <property name="action_name">db.play</property>
+        <property name="image">play_img</property>
       </object>
       <packing>
         <property name="position">2</property>
       </packing>
     </child>
-
     <child>
       <object class="GtkButton" id="pausebtn">
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
+        <property name="action_name">db.toggle_pause</property>
         <property name="image">pause_img</property>
         <property name="image_position">bottom</property>
-        <property name="action_name">db.toggle_pause</property>
       </object>
       <packing>
         <property name="position">3</property>
       </packing>
     </child>
-
     <child>
       <object class="GtkButton" id="stopbtn">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">stop_img</property>
         <property name="action_name">db.stop</property>
+        <property name="image">stop_img</property>
       </object>
       <packing>
         <property name="position">4</property>
       </packing>
     </child>
-
     <child>
       <object class="GtkButton" id="nextbtn">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">next_img</property>
         <property name="action_name">db.next</property>
+        <property name="image">next_img</property>
       </object>
       <packing>
         <property name="position">5</property>
       </packing>
     </child>
-
-<!--headerbar title-->
-
-    <child>
-      <object class="GtkScale" id="seekbar">
-        <property name="name">seekbar</property>
+    <child type="title">
+      <object class="GtkBox">
         <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="events">GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
-        <property name="margin_right">8</property>
-        <property name="restrict_to_fill_level">False</property>
-        <property name="value_pos">right</property>
-        <signal name="button-press-event" handler="on_seekbar_button_press_event" swapped="no"/>
-        <signal name="button-release-event" handler="on_seekbar_button_release_event" swapped="no"/>
-        <signal name="format-value" handler="on_seekbar_format_value" swapped="no"/>
-        <signal name="value-changed" handler="on_seekbar_value_changed" swapped="no"/>
-      </object>
-      <packing>
-        <property name="pack_type">end</property>
-        <property name="position">6</property>
-      </packing>
-    </child>
-
-<!-- 3.16 feature
-    <child>
-      <object class="GtkModelButton" id="designmodebtn">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-        <property name="action_name">win.designmode</property>
-        <property name="centered">True</property>
-        <property name="iconic">True</property>
-        <property name="tooltip-text">Toggle design mode</property>
-        <property name="icon">designmodeicon</property>
-      </object>
-      <packing>
-        <property name="pack_type">end</property>
-        <property name="position">5</property>
-      </packing>
-    </child>
--->
-
-    <child>
-      <object class="GtkToggleButton" id="designmodebtn">
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-        <property name="action_name">win.designmode</property>
-        <property name="tooltip-text">Toggle design mode</property>
+        <property name="can_focus">False</property>
+        <property name="hexpand">True</property>
         <child>
-          <object class="GtkImage" id="designmodebtn_image">
+          <object class="GtkLabel" id="titlelabel">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="icon_name">edit-symbolic</property>
+            <property name="halign">end</property>
+            <property name="label" translatable="yes">label</property>
+            <property name="ellipsize">end</property>
+            <style>
+              <class name="title"/>
+            </style>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="seekbarbox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="spacing">6</property>
+            <child>
+              <object class="GtkLabel" id="playbacktimelabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">0:00</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScale" id="seekbar">
+                <property name="name">seekbar</property>
+                <property name="width_request">200</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="events">GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
+                <property name="restrict_to_fill_level">False</property>
+                <property name="draw_value">False</property>
+                <property name="value_pos">left</property>
+                <signal name="button-press-event" handler="on_seekbar_button_press_event" swapped="yes"/>
+                <signal name="button-release-event" handler="on_seekbar_button_release_event" swapped="yes"/>
+                <signal name="value-changed" handler="on_seekbar_value_changed" swapped="yes"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="durationlabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">3:50</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuButton" id="menubtn">
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <property name="tooltip_text">Open menu</property>
+        <child>
+          <object class="GtkImage" id="menubtnimage">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="icon_name">open-menu-symbolic</property>
           </object>
         </child>
       </object>
       <packing>
         <property name="pack_type">end</property>
-        <property name="position">5</property>
+        <property name="position">1</property>
       </packing>
     </child>
-
+    <child>
+      <object class="GtkMenuButton" id="file_menu_btn">
+        <property name="can_focus">False</property>
+        <property name="receives_default">True</property>
+        <property name="valign">center</property>
+        <child>
+          <object class="GtkImage" id="file_menu_btn_image">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="icon_name">audio-card-symbolic</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="pack_type">end</property>
+        <property name="position">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkButton" id="prefsbtn">
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <property name="tooltip_text">Open preferences</property>
+        <property name="action_name">db.preferences</property>
+        <property name="image">pref_img</property>
+        <property name="always_show_image">True</property>
+      </object>
+      <packing>
+        <property name="pack_type">end</property>
+        <property name="position">3</property>
+      </packing>
+    </child>
     <child>
       <object class="GtkVolumeButton" id="volbutton">
         <property name="visible">True</property>
@@ -233,58 +289,24 @@ audio-volume-medium-symbolic</property>
         <property name="position">4</property>
       </packing>
     </child>
-
     <child>
-      <object class="GtkButton" id="prefsbtn">
+      <object class="GtkToggleButton" id="designmodebtn">
+        <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="receives_default">True</property>
-        <property name="image">pref_img</property>
-        <property name="always_show_image">True</property>
-        <property name="action_name">db.preferences</property>
-        <property name="tooltip-text">Open preferences</property>
-      </object>
-      <packing>
-        <property name="pack_type">end</property>
-        <property name="position">3</property>
-      </packing>
-    </child>
-
-    <child>
-      <object class="GtkMenuButton" id="file_menu_btn">
-        <property name="visible">False</property>
-        <property name="can_focus">False</property>
-        <property name="receives_default">True</property>
-        <property name="valign">center</property>
+        <property name="tooltip_text">Toggle design mode</property>
+        <property name="action_name">win.designmode</property>
         <child>
-          <object class="GtkImage" id="file_menu_btn_image">
+          <object class="GtkImage" id="designmodebtn_image">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="icon_name">audio-card-symbolic</property>
+            <property name="icon_name">edit-symbolic</property>
           </object>
         </child>
       </object>
       <packing>
         <property name="pack_type">end</property>
-        <property name="position">2</property>
-      </packing>
-    </child>
-
-    <child>
-      <object class="GtkMenuButton" id="menubtn">
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-        <property name="tooltip-text">Open menu</property>
-        <child>
-          <object class="GtkImage" id="menubtnimage">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="icon_name">open-menu-symbolic</property>
-          </object>
-        </child>
-      </object>
-      <packing>
-        <property name="pack_type">end</property>
-        <property name="position">1</property>
+        <property name="position">5</property>
       </packing>
     </child>
   </template>

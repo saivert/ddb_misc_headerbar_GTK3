@@ -45,15 +45,14 @@ GtkWidget *headerbar_designmodebtn;
 
 #define GTK_BUILDER_GET_WIDGET(builder, name) (GtkWidget *)gtk_builder_get_object(builder, name)
 
-guint headerbar_timer;
-
-gboolean seekbar_ismoving = FALSE;
-gboolean seekbar_isvisible = FALSE;
-gboolean headerbar_stoptimer = FALSE;
-
 struct headerbarui_flag_s headerbarui_flags;
 
-static
+// Just a test of a second instance
+#ifdef HB2
+GtkWidget *hb2;
+#endif
+
+
 GtkWidget*
 lookup_widget (GtkWidget *widget, const gchar *widget_name)
 {
@@ -79,203 +78,20 @@ lookup_widget (GtkWidget *widget, const gchar *widget_name)
   return found_widget;
 }
 
-void
-on_volbutton_value_changed (GtkScaleButton *button,
-               gdouble         value,
-               gpointer        user_data)
-{
-        deadbeef->volume_set_db (deadbeef->volume_get_min_db()-(double)-value);
-}
-
-
-static
-void
-deadbeef_seek(int value)
-{
-    DB_playItem_t *trk = deadbeef->streamer_get_playing_track ();
-    if (trk) {
-        if (deadbeef->pl_get_item_duration (trk) >= 0) {
-            deadbeef->sendmessage (DB_EV_SEEK, 0, (int)value * 1000, 0);
-        }
-        deadbeef->pl_item_unref (trk);
-    }
-}
-
-void
-on_seekbar_value_changed (GtkRange *range,
-               gpointer  user_data)
-{
-    if (seekbar_ismoving) return;
-    deadbeef_seek((int)gtk_range_get_value(GTK_RANGE(headerbar_seekbar)));
-}
-
-gboolean
-on_seekbar_button_press_event (GtkScale *widget,
-               GdkEvent  *event,
-               gpointer   user_data)
-{
-    seekbar_ismoving = TRUE;
-    return FALSE;
-}
-
-gboolean
-on_seekbar_button_release_event (GtkScale *widget,
-               GdkEvent  *event,
-               gpointer   user_data)
-{
-    deadbeef_seek((int)gtk_range_get_value(GTK_RANGE(headerbar_seekbar)));
-    seekbar_ismoving = FALSE;
-    return FALSE;
-}
-
-gchar*
-on_seekbar_format_value (GtkScale *scale,
-                gdouble value)
+gchar *
+format_time(gdouble value)
 {
     int time = value;
     int hr = time/3600;
     int mn = (time-hr*3600)/60;
     int sc = time-hr*3600-mn*60;
+    gchar *text;
     if (hr==0)
-        return g_strdup_printf ("%02d:%02d", mn, sc);
+        text = g_strdup_printf ("%02d:%02d", mn, sc);
     else
-        return g_strdup_printf ("%02d:%02d:%02d", hr, mn, sc);
-}
+        text = g_strdup_printf ("%02d:%02d:%02d", hr, mn, sc);
 
-static
-void
-headerbarui_adjust_range(GtkRange *range,
-                          gdouble value,
-                          gdouble lower,
-                          gdouble upper,
-                          gdouble step_increment,
-                          gdouble page_increment,
-                          gdouble page_size)
-{
-    GtkAdjustment * adjustment = gtk_range_get_adjustment(range);
-
-    GSignalMatchType mask = (GSignalMatchType)(G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA);
-    GQuark detail = g_quark_from_static_string("value_changed");
-    g_signal_handlers_block_matched ((gpointer)range, mask, detail, 0, NULL, NULL, headerbar);
-
-    gtk_adjustment_configure(adjustment,
-    value, //value
-    lower, // lower
-    upper, // upper
-    step_increment, // step_increment
-    page_increment, // page_increment
-    page_size); // page_size
-
-    g_signal_handlers_unblock_matched ((gpointer)range, mask, detail, 0, NULL, NULL, headerbar);
-}
-
-static
-gboolean
-headerbarui_reset_seekbar_cb(gpointer user_data)
-{
-    if (!headerbarui_flags.show_seek_bar) return FALSE;
-
-    headerbarui_adjust_range(GTK_RANGE (headerbar_seekbar),
-        0, //value
-        0, // lower
-        0, // upper
-        0, // step_increment
-        0, // page_increment
-        0); // page_size
-
-    gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), FALSE);
-    return FALSE;
-}
-
-void
-playpause_update(int state);
-
-static
-gboolean
-headerbarui_update_seekbar_cb(gpointer user_data)
-{
-    DB_playItem_t *trk;
-    DB_output_t *out;
-    seekbar_isvisible = TRUE;
-
-    out = deadbeef->get_output();
-    if (out) {
-        playpause_update(out->state());
-        if (out->state() == OUTPUT_STATE_STOPPED) {
-            seekbar_isvisible = FALSE;
-            goto END;
-        }
-    }
-
-    if (seekbar_ismoving) goto END;
-    trk = deadbeef->streamer_get_playing_track ();
-    if (!trk || deadbeef->pl_get_item_duration (trk) < 0) {
-        if (trk) {
-            deadbeef->pl_item_unref (trk);
-        }
-        if (headerbarui_flags.hide_seekbar_on_streaming)
-            seekbar_isvisible = FALSE;
-        else
-            headerbarui_reset_seekbar_cb(NULL);
-        goto END;
-    }
-    if (deadbeef->pl_get_item_duration (trk) > 0) {
-        headerbarui_adjust_range(GTK_RANGE (headerbar_seekbar),
-            deadbeef->streamer_get_playpos (), //value
-            0, // lower
-            deadbeef->pl_get_item_duration (trk), // upper
-            1, // step_increment
-            10, // page_increment
-            1); // page_size
-
-        gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), TRUE);
-        seekbar_isvisible = TRUE;
-    }
-    if (trk) {
-        deadbeef->pl_item_unref (trk);
-    }
-END:
-    if (!headerbarui_flags.seekbar_minimized) gtk_widget_set_visible(headerbar_seekbar, seekbar_isvisible && headerbarui_flags.show_seek_bar);
-    return !headerbar_stoptimer;
-}
-
-
-static
-int
-gtkui_get_gui_refresh_rate () {
-    int fps = deadbeef->conf_get_int ("gtkui.refresh_rate", 10);
-    if (fps < 1) {
-        fps = 1;
-    }
-    else if (fps > 30) {
-        fps = 30;
-    }
-    return fps;
-}
-
-static
-void
-headerbarui_update_menubutton()
-{
-    GtkWidget *menubar;
-    static GtkMenu *menu;
-
-    menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
-
-    menu = GTK_MENU (gtk_menu_new ());
-
-    GList *l, *children;
-    children = gtk_container_get_children(GTK_CONTAINER (menubar));
-    for (l = children; l; l = l->next)
-    {
-        GtkWidget *menuitem;
-        menuitem = gtk_menu_item_new_with_mnemonic(gtk_menu_item_get_label(GTK_MENU_ITEM(l->data)));
-        gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), gtk_menu_item_get_submenu(GTK_MENU_ITEM(l->data)));
-        gtk_widget_show(menuitem);
-        gtk_container_add(GTK_CONTAINER(menu), GTK_WIDGET(menuitem));
-    }
-    g_list_free(children);
-    gtk_menu_button_set_popup(GTK_MENU_BUTTON (headerbar_menubtn), GTK_WIDGET(menu));
+    return text;
 }
 
 static void
@@ -409,15 +225,9 @@ void window_init_hook (void *userdata) {
     //builder = gtk_builder_new();
     //gtk_builder_add_from_resource (builder, "/org/deadbeef/headerbarui/menu.ui", NULL);
     headerbar = ddb_header_bar_new();
+    gtk_widget_show(headerbar);
+    gtk_window_set_titlebar(GTK_WINDOW (mainwin), GTK_WIDGET(headerbar));
 
-    volbutton = DDB_HEADER_BAR(headerbar)->volbutton;
-    headerbar_menubtn =  DDB_HEADER_BAR(headerbar)->menubtn;
-    headerbar_seekbar = DDB_HEADER_BAR(headerbar)->seekbar;
-    headerbar_playbtn = DDB_HEADER_BAR(headerbar)->playbtn;
-    headerbar_pausebtn = DDB_HEADER_BAR(headerbar)->pausebtn;
-    headerbar_stopbtn = DDB_HEADER_BAR(headerbar)->stopbtn;
-    headerbar_prefsbtn = DDB_HEADER_BAR(headerbar)->prefsbtn;
-    headerbar_designmodebtn = DDB_HEADER_BAR(headerbar)->designmodebtn;
 
     //GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
 
@@ -425,7 +235,7 @@ void window_init_hook (void *userdata) {
     //gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (file_menu_btn), menumodel);
 
     GActionGroup *group = create_action_group();
-    gtk_widget_insert_action_group (headerbar, "win", group);
+    gtk_widget_insert_action_group (mainwin, "win", group);
 
     GAction *designmode_action = g_action_map_lookup_action (G_ACTION_MAP (group), "designmode");
 
@@ -433,47 +243,20 @@ void window_init_hook (void *userdata) {
         "activate", G_CALLBACK (design_mode_menu_item_activate), designmode_action);
 
     GActionGroup *deadbeef_action_group = create_action_group_deadbeef();    
-    gtk_widget_insert_action_group (headerbar, "db", deadbeef_action_group);
-
-    g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
-    gtk_widget_show(headerbar);
-
-    gtk_window_set_titlebar(GTK_WINDOW (mainwin), GTK_WIDGET(headerbar));
-
-    if (!headerbarui_flags.embed_menubar)
-    {
-        gtk_widget_hide(menubar);
-
-        headerbarui_update_menubutton();
-
-        gtk_widget_set_can_focus(headerbar_menubtn, FALSE);
-        gtk_widget_show (headerbar_menubtn);
-    } else {
-        gtk_widget_destroy(headerbar_menubtn);
-        gtk_container_remove(gtk_widget_get_parent(menubar), menubar);
-        gtk_container_add(headerbar, menubar);
-        gtk_container_child_set(GTK_CONTAINER(headerbar), menubar, "position", 0, NULL);
-    }
+    gtk_widget_insert_action_group (mainwin, "db", deadbeef_action_group);
 
 
-    if (!headerbarui_flags.combined_playpause) {
-        gtk_widget_show(headerbar_playbtn);
-        gtk_widget_show(headerbar_pausebtn);
-    }
 
-    gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
-
-    float volume = deadbeef->volume_get_min_db()-deadbeef->volume_get_db();
-    g_assert_false((volume>0));
-    gtk_scale_button_set_adjustment(GTK_SCALE_BUTTON (volbutton),
-        gtk_adjustment_new (volume, 0, -deadbeef->volume_get_min_db (), 5, 5, 0));
-
-    gtk_widget_show(volbutton);
-
+#ifdef HB2
+    // Just a test of a second instance
+    hb2 = ddb_header_bar_new();
+    gtk_container_add_with_properties(lookup_widget(mainwin, "vbox1"), hb2, "expand", FALSE, NULL);
+    gtk_header_bar_set_decoration_layout (hb2, "");
+    DDB_HEADER_BAR(hb2)->is_statusbar=1;
+#endif
 }
 
 
-static
 void headerbarui_getconfig()
 {
     headerbarui_flags.disable = deadbeef->conf_get_int ("headerbarui.disable", 0);
@@ -513,80 +296,29 @@ int headerbarui_connect() {
     return -1;
 }
 
-static
-gboolean
-headerbarui_volume_changed(gpointer user_data)
+gboolean headebarui_delayed_startup(gpointer user_data)
 {
-    float volume = deadbeef->volume_get_min_db()-deadbeef->volume_get_db();
-    if (volume > 0) volume = 0;
-
-    GSignalMatchType mask = (GSignalMatchType)(G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA);
-    GQuark detail = g_quark_from_static_string("value_changed");
-    g_signal_handlers_block_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, headerbar);
-    gtk_scale_button_set_value( GTK_SCALE_BUTTON (volbutton), -volume );
-    g_signal_handlers_unblock_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, headerbar);
-
-    return FALSE;
-}
-
-
-void
-playpause_update(int state) {
-    if (headerbarui_flags.combined_playpause) {
-        switch (state) {
-            case OUTPUT_STATE_PLAYING:
-            gtk_widget_show(headerbar_pausebtn);
-            gtk_widget_hide(headerbar_playbtn);
-            break;
-            case OUTPUT_STATE_STOPPED:
-            case OUTPUT_STATE_PAUSED:
-            gtk_widget_show(headerbar_playbtn);
-            gtk_widget_hide(headerbar_pausebtn);
-            break;
-        }
-    } else {
-        gtk_widget_show(headerbar_playbtn);
-        gtk_widget_show(headerbar_pausebtn);
-    }
-}
-
-static
-gboolean
-headerbarui_configchanged_cb(gpointer user_data)
-{
-    gtk_widget_set_visible(headerbar_seekbar, headerbarui_flags.show_seek_bar && seekbar_isvisible);
-    gtk_widget_set_visible(headerbar_stopbtn, headerbarui_flags.show_stop_button);
-    gtk_widget_set_visible(volbutton, headerbarui_flags.show_volume_button);
-    gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
-    gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
-    gtk_widget_set_visible(headerbar_designmodebtn, headerbarui_flags.show_designmode_button);
-    g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
-    playpause_update(OUTPUT_STATE_STOPPED);
-
+    if (headerbar) ddb_header_bar_message(headerbar, DB_EV_SONGSTARTED, 0, 0, 0);
     return FALSE;
 }
 
 static int
 headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
-    if (id != DB_EV_CONFIGCHANGED && headerbarui_flags.disable) return 0;
-    switch (id) {
-    case DB_EV_SONGSTARTED:
-        headerbar_stoptimer = 0;
-        headerbar_timer = g_timeout_add (1000/gtkui_get_gui_refresh_rate (), headerbarui_update_seekbar_cb, NULL);
-        break;
-    case DB_EV_SONGFINISHED:
-        headerbar_stoptimer = 1;
-        break;
-    case DB_EV_CONFIGCHANGED:
-        headerbarui_getconfig();
-        g_idle_add (headerbarui_configchanged_cb, NULL);
-        g_idle_add (headerbarui_volume_changed, NULL);
-        break;
-    case DB_EV_VOLUMECHANGED:
-        g_idle_add (headerbarui_volume_changed, NULL);
-        break;
+
+#ifdef HB2
+    if (hb2) {
+        ddb_header_bar_message (hb2, id, ctx, p1, p2);
     }
-    return 0;
+#endif
+
+    if (headerbar) {
+        return ddb_header_bar_message(headerbar, id, ctx, p1, p2);
+    }
+
+    // This event is emitted before headerbar is initialized on deadbeef startup
+    if (id == DB_EV_SONGSTARTED) {
+        g_idle_add(headebarui_delayed_startup, NULL);
+    }
 }
 
 static const char settings_dlg[] =

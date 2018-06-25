@@ -9,6 +9,8 @@
 
 #endif
 
+//#define HB2
+
 #define trace(...) { fprintf(stderr, __VA_ARGS__); }
 
 struct headerbarui_flag_s {
@@ -28,28 +30,13 @@ struct headerbarui_flag_s {
 extern DB_functions_t *deadbeef;
 extern ddb_gtkui_t *gtkui_plugin;
 extern struct headerbarui_flag_s headerbarui_flags;
-extern seekbar_isvisible;
-
-void
-on_volbutton_value_changed (GtkScaleButton *button,
-               gdouble         value,
-               gpointer        user_data);
+extern GtkWidget *mainwin;
 
 
-void
-on_seekbar_value_changed (GtkRange *range,
-               gpointer  user_data);
+GtkWidget*
+lookup_widget (GtkWidget *widget, const gchar *widget_name);
 
-gboolean
-on_seekbar_button_press_event (GtkScale *widget,
-               GdkEvent  *event,
-               gpointer   user_data);
+void headerbarui_getconfig();
 
-gboolean
-on_seekbar_button_release_event (GtkScale *widget,
-               GdkEvent  *event,
-               gpointer   user_data);
-
-gchar*
-on_seekbar_format_value (GtkScale *scale,
-                gdouble value);
+gchar *
+format_time(gdouble value);
