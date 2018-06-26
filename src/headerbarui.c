@@ -212,6 +212,30 @@ create_action_group_deadbeef(void)
     return G_ACTION_GROUP (group);
 }
 
+void
+headerbarui_update_menubutton()
+{
+    GtkWidget *menubar;
+    GtkMenu *menu;
+
+    menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
+ 
+    menu = GTK_MENU (gtk_menu_new ());
+
+    GList *l, *children;
+    children = gtk_container_get_children(GTK_CONTAINER (menubar));
+    for (l = children; l; l = l->next)
+    {
+        GtkWidget *menuitem;
+        menuitem = gtk_menu_item_new_with_mnemonic(gtk_menu_item_get_label(GTK_MENU_ITEM(l->data)));
+        gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), gtk_menu_item_get_submenu(GTK_MENU_ITEM(l->data)));
+        gtk_widget_show(menuitem);
+        gtk_container_add(GTK_CONTAINER(menu), GTK_WIDGET(menuitem));
+    }
+    g_list_free(children);
+    gtk_menu_button_set_popup(GTK_MENU_BUTTON (DDB_HEADER_BAR (headerbar)->menubtn), GTK_WIDGET(menu));
+}
+
 void window_init_hook (void *userdata) {
     GtkWidget *menubar;
     GtkBuilder *builder;
@@ -222,17 +246,21 @@ void window_init_hook (void *userdata) {
     g_assert_nonnull(mainwin);
     g_assert_nonnull(menubar);
 
-    //builder = gtk_builder_new();
-    //gtk_builder_add_from_resource (builder, "/org/deadbeef/headerbarui/menu.ui", NULL);
     headerbar = ddb_header_bar_new();
     gtk_widget_show(headerbar);
     gtk_window_set_titlebar(GTK_WINDOW (mainwin), GTK_WIDGET(headerbar));
 
-
-    //GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
-
-    //GtkWidget *file_menu_btn = GTK_MENU_BUTTON (gtk_builder_get_object (builder, "file_menu_btn"));
-    //gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (file_menu_btn), menumodel);
+    if (!headerbarui_flags.embed_menubar)
+    {
+        gtk_widget_hide (menubar);
+        headerbarui_update_menubutton();
+        gtk_widget_show (DDB_HEADER_BAR(headerbar)->menubtn);
+    } else {
+        gtk_widget_destroy(DDB_HEADER_BAR(headerbar)->menubtn);
+        gtk_container_remove(GTK_CONTAINER (gtk_widget_get_parent(menubar)), menubar);
+        gtk_container_add(GTK_CONTAINER (headerbar), menubar);
+        gtk_container_child_set(GTK_CONTAINER(headerbar), menubar, "position", 0, NULL);
+    }
 
     GActionGroup *group = create_action_group();
     gtk_widget_insert_action_group (mainwin, "win", group);
@@ -244,7 +272,6 @@ void window_init_hook (void *userdata) {
 
     GActionGroup *deadbeef_action_group = create_action_group_deadbeef();    
     gtk_widget_insert_action_group (mainwin, "db", deadbeef_action_group);
-
 
 
 #ifdef HB2
@@ -298,7 +325,9 @@ int headerbarui_connect() {
 
 gboolean headebarui_delayed_startup(gpointer user_data)
 {
-    if (headerbar) ddb_header_bar_message(headerbar, DB_EV_SONGSTARTED, 0, 0, 0);
+    if (headerbar) {
+        ddb_header_bar_message(headerbar, DB_EV_SONGSTARTED, 0, 0, 0);
+    }
     return FALSE;
 }
 

@@ -115,31 +115,6 @@ on_seekbar_button_release_event (GtkWidget *headerbar,
 }
 
 
-void
-headerbarui_update_menubutton(DdbHeaderBar *bar)
-{
-    GtkWidget *menubar;
-    static GtkMenu *menu;
-
-    GtkWidget *mainwin = gtkui_plugin->get_mainwin ();
-
-    menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
-
-    menu = GTK_MENU (gtk_menu_new ());
-
-    GList *l, *children;
-    children = gtk_container_get_children(GTK_CONTAINER (menubar));
-    for (l = children; l; l = l->next)
-    {
-        GtkWidget *menuitem;
-        menuitem = gtk_menu_item_new_with_mnemonic(gtk_menu_item_get_label(GTK_MENU_ITEM(l->data)));
-        gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), gtk_menu_item_get_submenu(GTK_MENU_ITEM(l->data)));
-        gtk_widget_show(menuitem);
-        gtk_container_add(GTK_CONTAINER(menu), GTK_WIDGET(menuitem));
-    }
-    g_list_free(children);
-    gtk_menu_button_set_popup(GTK_MENU_BUTTON (bar->menubtn), GTK_WIDGET(menu));
-}
 
 void
 ddb_header_bar_set_volume (DdbHeaderBar *bar, double volume)
@@ -239,12 +214,7 @@ headerbarui_reset_seekbar_cb(gpointer user_data)
     return FALSE;
 }
 
-static
-void
-clone_titlebar_text(DdbHeaderBar *bar)
-{
-    gtk_label_set_text(GTK_LABEL (bar->titlelabel), gtk_header_bar_get_title(GTK_HEADER_BAR (bar)));
-}
+
 
 #ifdef HB2
 static
@@ -345,7 +315,6 @@ headerbarui_configchanged_cb(gpointer user_data)
     gtk_widget_set_visible(bar->stopbtn, headerbarui_flags.show_stop_button);
     gtk_widget_set_visible(bar->volbutton, headerbarui_flags.show_volume_button);
     gtk_widget_set_visible(bar->prefsbtn, headerbarui_flags.show_preferences_button);
-    gtk_widget_set_visible(bar->prefsbtn, headerbarui_flags.show_preferences_button);
     gtk_widget_set_visible(bar->designmodebtn, headerbarui_flags.show_designmode_button);
     g_object_set(G_OBJECT(bar), "spacing", headerbarui_flags.button_spacing, NULL);
     playpause_update(bar, OUTPUT_STATE_STOPPED);
@@ -414,6 +383,8 @@ ddb_header_bar_get_property(GObject *object,
     g_debug("get propery %s", g_param_spec_get_name(pspec));
 }
 
+static
+void
 ddb_header_bar_notify(GObject *object,
 					 GParamSpec *pspec)
 {
@@ -469,26 +440,6 @@ ddb_header_bar_init (DdbHeaderBar *bar)
 {
     gtk_widget_init_template (GTK_WIDGET (bar));
 
-    GtkWidget *mainwin = gtkui_plugin->get_mainwin ();
-    GtkWidget *menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
-    GtkWidget *headerbar_menubtn = bar->menubtn;
-
-    if (!headerbarui_flags.embed_menubar)
-    {
-        gtk_widget_hide(menubar);
-
-        headerbarui_update_menubutton(bar);
-
-        gtk_widget_set_can_focus(headerbar_menubtn, FALSE);
-        gtk_widget_show (headerbar_menubtn);
-    } else {
-        gtk_widget_destroy(headerbar_menubtn);
-        gtk_container_remove(GTK_CONTAINER (gtk_widget_get_parent(menubar)), menubar);
-        gtk_container_add(GTK_CONTAINER (bar), menubar);
-        gtk_container_child_set(GTK_CONTAINER(bar), menubar, "position", 0, NULL);
-    }
-
-
     if (!headerbarui_flags.combined_playpause) {
         gtk_widget_show(bar->playbtn);
         gtk_widget_show(bar->pausebtn);
@@ -502,7 +453,6 @@ ddb_header_bar_init (DdbHeaderBar *bar)
         gtk_adjustment_new (volume, 0, -deadbeef->volume_get_min_db (), 5, 5, 0));
 
     g_object_set(G_OBJECT(bar), "spacing", headerbarui_flags.button_spacing, NULL);
-//    clone_titlebar_text(bar);
 }
 
 static void
