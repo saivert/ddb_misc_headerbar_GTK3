@@ -25,6 +25,7 @@
 #include <deadbeef/gtkui_api.h>
 #include "resources.h"
 #include "headerbarui.h"
+#include <math.h>
 
 DB_functions_t *deadbeef;
 static DB_misc_t plugin;
@@ -41,6 +42,10 @@ GtkWidget *headerbar_stopbtn;
 GtkWidget *headerbar_menubtn;
 GtkWidget *headerbar_prefsbtn;
 GtkWidget *headerbar_designmodebtn;
+GtkWidget *headerbar_titlelabel;
+GtkWidget *headerbar_seekbarbox;
+GtkWidget *headerbar_playbacktimelabel;
+GtkWidget *headerbar_durationlabel;
 
 #define GTK_BUILDER_GET_WIDGET(builder, name) (GtkWidget *)gtk_builder_get_object(builder, name)
 
@@ -63,6 +68,9 @@ static struct headerbarui_flag_s {
     gboolean show_designmode_button;
     int button_spacing;
 } headerbarui_flags;
+
+static char *
+format_time (float t, char *dur, int size);
 
 static
 GtkWidget*
@@ -96,7 +104,7 @@ on_volbutton_value_changed (GtkScaleButton *button,
                gdouble         value,
                gpointer        user_data)
 {
-        deadbeef->volume_set_db (deadbeef->volume_get_min_db()-(double)-value);
+    deadbeef->volume_set_db (deadbeef->volume_get_min_db()-(double)-value);
 }
 
 
@@ -118,7 +126,12 @@ void
 on_seekbar_value_changed (GtkRange *range,
                gpointer  user_data)
 {
-    if (seekbar_ismoving) return;
+    char buf[100];
+    gdouble value = gtk_range_get_value(GTK_RANGE(headerbar_seekbar));
+    if (seekbar_ismoving) {
+        gtk_label_set_text (GTK_LABEL (headerbar_playbacktimelabel), format_time(value, buf, sizeof(buf)));
+        return;
+}
     deadbeef_seek((int)gtk_range_get_value(range));
 }
 
@@ -143,18 +156,25 @@ on_seekbar_button_release_event (GtkScale *widget,
     return FALSE;
 }
 
-static gchar*
-on_seekbar_format_value (GtkScale *scale,
-                gdouble value)
-{
-    int time = value;
-    int hr = time/3600;
-    int mn = (time-hr*3600)/60;
-    int sc = time-hr*3600-mn*60;
-    if (hr==0)
-        return g_strdup_printf ("%02d:%02d", mn, sc);
-    else
-        return g_strdup_printf ("%02d:%02d:%02d", hr, mn, sc);
+static char *
+format_time (float t, char *dur, int size) {
+    if (t >= 0) {
+        //t = roundf (t);
+        int hourdur = t / (60 * 60);
+        int mindur = (t - hourdur * 60 * 60) / 60;
+        int secdur = t - hourdur*60*60 - mindur * 60;
+
+        if (hourdur) {
+            snprintf (dur, size, "%d:%02d:%02d", hourdur, mindur, secdur);
+        }
+        else {
+            snprintf (dur, size, "%d:%02d", mindur, secdur);
+        }
+    }
+    else {
+        strcpy (dur, "∞");
+    }
+    return dur;
 }
 
 static
@@ -198,12 +218,19 @@ headerbarui_reset_seekbar_cb(gpointer user_data)
         0, // page_increment
         0); // page_size
 
-    gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), FALSE);
     return FALSE;
 }
 
 void
 playpause_update(int state);
+
+static void
+set_seekbar_text(float time, float duration)
+{
+    char buf[100];
+    gtk_label_set_text (GTK_LABEL (headerbar_playbacktimelabel), format_time(time, buf, sizeof(buf)));
+    gtk_label_set_text (GTK_LABEL (headerbar_durationlabel), format_time(roundf(duration), buf, sizeof(buf)));
+}
 
 static
 gboolean
@@ -224,6 +251,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
 
     if (seekbar_ismoving) goto END;
     trk = deadbeef->streamer_get_playing_track ();
+    set_seekbar_text(deadbeef->streamer_get_playpos (), deadbeef->pl_get_item_duration (trk));
     if (!trk || deadbeef->pl_get_item_duration (trk) < 0) {
         if (trk) {
             deadbeef->pl_item_unref (trk);
@@ -243,14 +271,13 @@ headerbarui_update_seekbar_cb(gpointer user_data)
             10, // page_increment
             1); // page_size
 
-        gtk_scale_set_draw_value(GTK_SCALE(headerbar_seekbar), TRUE);
         seekbar_isvisible = TRUE;
     }
     if (trk) {
         deadbeef->pl_item_unref (trk);
     }
 END:
-    if (!headerbarui_flags.seekbar_minimized) gtk_widget_set_visible(headerbar_seekbar, seekbar_isvisible && headerbarui_flags.show_seek_bar);
+    if (!headerbarui_flags.seekbar_minimized) gtk_widget_set_visible(headerbar_seekbarbox, seekbar_isvisible && headerbarui_flags.show_seek_bar);
     return !headerbar_stoptimer;
 }
 
@@ -295,8 +322,8 @@ headerbarui_update_menubutton()
     gtk_menu_button_set_popup(GTK_MENU_BUTTON (headerbar_menubtn), GTK_WIDGET(menu));
 }
 
-static gint
-seekbar_width () {
+static gboolean
+seekbar_collapsed (int width) {
     int button_size = 38; // can maybe be read dynamic, depending on padding of theme
     // Min size calculated by basic static elements (prev, play/pause, next, menu) including 3 possible window decoration buttons
     // For every optional button extra width is added.
@@ -310,18 +337,20 @@ seekbar_width () {
     if (headerbarui_flags.show_preferences_button) {
         min_size_fixed_content += button_size;
     }
+    if (headerbarui_flags.show_designmode_button) {
+        min_size_fixed_content += button_size;
+    }
     if (!headerbarui_flags.combined_playpause) {
         min_size_fixed_content += button_size;
     }
-    int min_size_seekbar = 140;
-    int min_size_title = 100;
+    int min_size_seekbar = 200;
+    int min_size_title = 120;
     int required_width = min_size_fixed_content + min_size_title + min_size_seekbar;
 
-    if (mainwin_width < required_width) {
-        return 0;
+    if (width < required_width) {
+        return TRUE;
     } else {
-        int remaining_width = mainwin_width - required_width;
-        return min_size_seekbar + remaining_width * 0.7;
+        return FALSE;
     }
 }
 
@@ -332,17 +361,12 @@ mainwindow_resize (GtkWindow *mainwindow,
     if (headerbarui_flags.show_seek_bar && seekbar_isvisible && event->width != mainwin_width) {
         mainwin_width = event->width;
 
-        int width = seekbar_width();
-
-        if (width == 0) {
+        if (seekbar_collapsed(mainwin_width)) {
             headerbarui_flags.seekbar_minimized = TRUE;
-            gtk_widget_hide (headerbar_seekbar);
+            gtk_widget_hide (headerbar_seekbarbox);
         } else {
             headerbarui_flags.seekbar_minimized = FALSE;
-            gtk_widget_set_size_request (headerbar_seekbar,
-                width,
-                -1);
-            gtk_widget_show (headerbar_seekbar);
+            gtk_widget_show (headerbar_seekbarbox);
         }
 
     }
@@ -470,6 +494,14 @@ create_action_group_deadbeef(void)
     return G_ACTION_GROUP (group);
 }
 
+void mainwindow_settitle(GtkWidget* widget,
+                    GParamSpec* property,
+                    gpointer data)
+{
+    // Since we use a custom title widget we need to reimplement copying the window title
+    gtk_label_set_text (GTK_LABEL (headerbar_titlelabel), gtk_window_get_title (gtkui_plugin->get_mainwin ()));
+}
+
 void window_init_hook (void *userdata) {
     GtkWindow *mainwin;
     GtkWidget *menubar;
@@ -486,16 +518,20 @@ void window_init_hook (void *userdata) {
     headerbar = GTK_BUILDER_GET_WIDGET(builder, "headerbar1");
     volbutton = GTK_BUILDER_GET_WIDGET(builder, "volumebutton1");
     headerbar_menubtn =  GTK_BUILDER_GET_WIDGET(builder, "menubutton1");
-    headerbar_seekbar = GTK_BUILDER_GET_WIDGET(builder, "scale1");
+    headerbar_seekbar = GTK_BUILDER_GET_WIDGET(builder, "seekbar");
     headerbar_playbtn = GTK_BUILDER_GET_WIDGET(builder, "playbtn");
     headerbar_pausebtn = GTK_BUILDER_GET_WIDGET(builder, "pausebtn");
     headerbar_stopbtn = GTK_BUILDER_GET_WIDGET(builder, "stopbtn");
     headerbar_prefsbtn = GTK_BUILDER_GET_WIDGET(builder, "prefsbtn");
     headerbar_designmodebtn = GTK_BUILDER_GET_WIDGET(builder, "designmodebtn");
+    headerbar_seekbarbox = GTK_BUILDER_GET_WIDGET(builder, "seekbarbox");
+    headerbar_playbacktimelabel = GTK_BUILDER_GET_WIDGET(builder, "playbacktimelabel");
+    headerbar_durationlabel = GTK_BUILDER_GET_WIDGET(builder, "durationlabel");
+    headerbar_titlelabel = GTK_BUILDER_GET_WIDGET(builder, "titlelabel");
+
     GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
 
     GtkWidget *file_menu_btn = GTK_MENU_BUTTON (gtk_builder_get_object (builder, "file_menu_btn"));
-    //gtk_menu_button_set_use_popover (GTK_MENU_BUTTON (file_menu_btn), FALSE);
     gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (file_menu_btn), menumodel);
 
     GActionGroup *group = create_action_group();
@@ -545,20 +581,21 @@ void window_init_hook (void *userdata) {
 
     gtk_builder_add_callback_symbols(builder,
         "on_volbutton_value_changed", (GCallback)on_volbutton_value_changed,
-        "on_seekbar_format_value", on_seekbar_format_value,
         "on_seekbar_button_press_event", on_seekbar_button_press_event,
         "on_seekbar_button_release_event", on_seekbar_button_release_event,
         "on_seekbar_value_changed", on_seekbar_value_changed,
         NULL);
     gtk_builder_connect_signals(builder, NULL);
 
-    gtk_window_get_size (mainwin, &mainwin_width, NULL);
-    gtk_widget_set_size_request (headerbar_seekbar, seekbar_width (), -1);
     g_signal_connect (G_OBJECT(mainwin),
         "configure-event",
         G_CALLBACK(mainwindow_resize),
         NULL);
 
+    g_signal_connect (G_OBJECT(mainwin),
+        "notify::title",
+        G_CALLBACK(mainwindow_settitle),
+        NULL);
 }
 
 
@@ -643,7 +680,7 @@ static
 gboolean
 headerbarui_configchanged_cb(gpointer user_data)
 {
-    gtk_widget_set_visible(headerbar_seekbar, headerbarui_flags.show_seek_bar && seekbar_isvisible);
+    gtk_widget_set_visible(headerbar_seekbarbox, headerbarui_flags.show_seek_bar && !headerbarui_flags.seekbar_minimized && seekbar_isvisible);
     gtk_widget_set_visible(headerbar_stopbtn, headerbarui_flags.show_stop_button);
     gtk_widget_set_visible(volbutton, headerbarui_flags.show_volume_button);
     gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);

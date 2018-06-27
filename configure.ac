@@ -25,6 +25,8 @@ fi
 
 LT_INIT
 
+AC_SEARCH_LIBS([roundf], [m])
+
 AC_CHECK_HEADERS([libintl.h stdlib.h string.h])
 AC_TYPE_UINT32_T
 AC_CHECK_FUNCS([atexit])

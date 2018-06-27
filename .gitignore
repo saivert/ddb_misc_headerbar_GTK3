@@ -19,3 +19,6 @@ headerbarui.sublime-workspace
 scratchbox
 resources.c
 resources.h
+build/
+.ninja*
+run
