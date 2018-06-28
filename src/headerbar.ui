@@ -181,14 +181,25 @@ Author: Nicolai Syvertsen
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="durationlabel">
+              <object class="GtkEventBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">3:50</property>
+                <property name="events">GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
+                <property name="visible_window">False</property>
+                <signal name="button-release-event" handler="on_durationlabel_button_release_event" swapped="no"/>
+                <child>
+                  <object class="GtkLabel" id="durationlabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="events">GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
+                    <property name="tooltip_text" translatable="yes">Click to toggle duration/time remaining</property>
+                    <property name="label" translatable="yes">3:50</property>
+                  </object>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">False</property>
+                <property name="fill">True</property>
                 <property name="position">2</property>
               </packing>
             </child>

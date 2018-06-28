@@ -66,6 +66,7 @@ static struct headerbarui_flag_s {
     gboolean show_volume_button;
     gboolean show_preferences_button;
     gboolean show_designmode_button;
+    gboolean show_time_remaining;
     int button_spacing;
 } headerbarui_flags;
 
@@ -156,6 +157,17 @@ on_seekbar_button_release_event (GtkScale *widget,
     return FALSE;
 }
 
+static
+gboolean
+on_durationlabel_button_release_event (GtkScale *widget,
+               GdkEvent  *event,
+               gpointer   user_data)
+{
+    headerbarui_flags.show_time_remaining = !headerbarui_flags.show_time_remaining;
+    deadbeef->conf_set_int ("headerbarui.show_time_remaining", headerbarui_flags.show_time_remaining);
+    return FALSE;
+}
+
 static char *
 format_time (float t, char *dur, int size) {
     if (t >= 0) {
@@ -229,7 +241,14 @@ set_seekbar_text(float time, float duration)
 {
     char buf[100];
     gtk_label_set_text (GTK_LABEL (headerbar_playbacktimelabel), format_time(time, buf, sizeof(buf)));
-    gtk_label_set_text (GTK_LABEL (headerbar_durationlabel), format_time(roundf(duration), buf, sizeof(buf)));
+    if (headerbarui_flags.show_time_remaining) {
+        duration -= time;
+        buf[0] = '-';
+        format_time(roundf(duration), buf+1, sizeof(buf)-1);
+    } else {
+        format_time(roundf(duration), buf, sizeof(buf));
+    }
+    gtk_label_set_text (GTK_LABEL (headerbar_durationlabel), buf);
 }
 
 static
@@ -584,6 +603,7 @@ void window_init_hook (void *userdata) {
         "on_seekbar_button_press_event", on_seekbar_button_press_event,
         "on_seekbar_button_release_event", on_seekbar_button_release_event,
         "on_seekbar_value_changed", on_seekbar_value_changed,
+        "on_durationlabel_button_release_event", on_durationlabel_button_release_event,
         NULL);
     gtk_builder_connect_signals(builder, NULL);
 
@@ -615,6 +635,7 @@ void headerbarui_getconfig()
     headerbarui_flags.show_preferences_button = deadbeef->conf_get_int ("headerbarui.show_preferences_button", 0);
     headerbarui_flags.show_designmode_button = deadbeef->conf_get_int ("headerbarui.show_designmode_button", 0);
     headerbarui_flags.button_spacing = deadbeef->conf_get_int ("headerbarui.button_spacing", 6);
+    headerbarui_flags.show_time_remaining = deadbeef->conf_get_int ("headerbarui.show_time_remaining", 0);
 }
 
 static
