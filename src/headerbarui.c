@@ -259,6 +259,12 @@ headerbarui_update_seekbar_cb(gpointer user_data)
     DB_output_t *out;
     seekbar_isvisible = TRUE;
 
+    trk = deadbeef->streamer_get_playing_track ();
+    if (!trk) {
+        seekbar_isvisible = FALSE;
+        goto END;
+    }
+
     out = deadbeef->get_output();
     if (out) {
         playpause_update(out->state());
@@ -269,12 +275,8 @@ headerbarui_update_seekbar_cb(gpointer user_data)
     }
 
     if (seekbar_ismoving) goto END;
-    trk = deadbeef->streamer_get_playing_track ();
     set_seekbar_text(deadbeef->streamer_get_playpos (), deadbeef->pl_get_item_duration (trk));
-    if (!trk || deadbeef->pl_get_item_duration (trk) < 0) {
-        if (trk) {
-            deadbeef->pl_item_unref (trk);
-        }
+    if (deadbeef->pl_get_item_duration (trk) < 0) {
         if (headerbarui_flags.hide_seekbar_on_streaming)
             seekbar_isvisible = FALSE;
         else
