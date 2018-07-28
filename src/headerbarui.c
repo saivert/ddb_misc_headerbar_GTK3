@@ -261,6 +261,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
 
     trk = deadbeef->streamer_get_playing_track ();
     if (!trk) {
+        playpause_update(FALSE);
         seekbar_isvisible = FALSE;
         goto END;
     }
