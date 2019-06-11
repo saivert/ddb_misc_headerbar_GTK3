@@ -153,6 +153,10 @@ Author: Nicolai Syvertsen
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">0:00</property>
+                <property name="width_chars">5</property>
+                <property name="single_line_mode">True</property>
+                <property name="max_width_chars">10</property>
+                <property name="xalign">1</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -194,6 +198,10 @@ Author: Nicolai Syvertsen
                     <property name="events">GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
                     <property name="tooltip_text" translatable="yes">Click to toggle duration/time remaining</property>
                     <property name="label" translatable="yes">3:50</property>
+                    <property name="width_chars">9</property>
+                    <property name="single_line_mode">True</property>
+                    <property name="max_width_chars">10</property>
+                    <property name="xalign">0</property>
                   </object>
                 </child>
               </object>
@@ -240,7 +248,7 @@ Author: Nicolai Syvertsen
           <object class="GtkImage" id="file_menu_btn_image">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="icon_name">audio-card-symbolic</property>
+            <property name="icon_name">list-add-symbolic</property>
           </object>
         </child>
       </object>
@@ -313,7 +321,7 @@ audio-volume-medium-symbolic</property>
           <object class="GtkImage" id="designmodebtn_image">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="icon_name">edit-symbolic</property>
+            <property name="icon_name">document-edit-symbolic</property>
           </object>
         </child>
       </object>

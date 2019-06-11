@@ -9,34 +9,32 @@
       </item>
     </section>
     <section>
-      <attribute name="label">Add</attribute>
       <attribute name="display-hint">vertical-buttons</attribute>
       <item>
-        <attribute name="label">File(s)</attribute>
+        <attribute name="label">Add file(s)</attribute>
         <attribute name="action">db.add_files</attribute>
       </item>
       <item>
-        <attribute name="label">Folder(s)</attribute>
+        <attribute name="label">Add folder(s)</attribute>
         <attribute name="action">db.add_folders</attribute>
       </item>
       <item>
-        <attribute name="label">Location</attribute>
+        <attribute name="label">Add location</attribute>
         <attribute name="action">db.add_location</attribute>
       </item>
     </section>
     <section>
-    <attribute name="label">Playlists</attribute>
     <attribute name="display-hint">vertical-buttons</attribute>
       <item>
-        <attribute name="label">New</attribute>
+        <attribute name="label">New playlist</attribute>
         <attribute name="action">db.new_playlist</attribute>
       </item>
       <item>
-        <attribute name="label">Load</attribute>
+        <attribute name="label">Load playlist</attribute>
         <attribute name="action">db.load_playlist</attribute>
       </item>
       <item>
-        <attribute name="label">Save</attribute>
+        <attribute name="label">Save playlist</attribute>
         <attribute name="action">db.save_playlist</attribute>
       </item>
     </section>
