@@ -539,6 +539,8 @@ void window_init_hook (void *userdata) {
     gtk_builder_add_from_resource (builder, "/org/deadbeef/headerbarui/menu.ui", NULL);
     headerbar = GTK_BUILDER_GET_WIDGET(builder, "headerbar1");
     volbutton = GTK_BUILDER_GET_WIDGET(builder, "volumebutton1");
+    GtkStyleContext *volctx = gtk_widget_get_style_context(volbutton);
+    gtk_style_context_remove_class(volctx, "flat");
     headerbar_menubtn =  GTK_BUILDER_GET_WIDGET(builder, "menubutton1");
     headerbar_seekbar = GTK_BUILDER_GET_WIDGET(builder, "seekbar");
     headerbar_playbtn = GTK_BUILDER_GET_WIDGET(builder, "playbtn");
