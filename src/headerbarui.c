@@ -295,10 +295,12 @@ headerbarui_update_seekbar_cb(gpointer user_data)
 
         seekbar_isvisible = TRUE;
     }
+
+END:
     if (trk) {
         deadbeef->pl_item_unref (trk);
     }
-END:
+
     if (!headerbarui_flags.seekbar_minimized) gtk_widget_set_visible(headerbar_seekbarbox, seekbar_isvisible && headerbarui_flags.show_seek_bar);
     return !headerbar_stoptimer;
 }
@@ -505,7 +507,7 @@ create_action_group_deadbeef(void)
             if (dbaction->callback2 && dbaction->flags & DB_ACTION_COMMON) {
                 action = g_simple_action_new (dbaction->name, NULL);
                 g_object_set_data (G_OBJECT (action), "deadbeefaction", dbaction);
-                g_signal_connect (action, "activate", action_activate, NULL);
+                g_signal_connect (action, "activate", G_CALLBACK (action_activate), NULL);
                 g_action_map_add_action (G_ACTION_MAP (group), G_ACTION (action));
                 g_debug ("Action added %s", dbaction->name);
             }
@@ -521,7 +523,7 @@ void mainwindow_settitle(GtkWidget* widget,
                     gpointer data)
 {
     // Since we use a custom title widget we need to reimplement copying the window title
-    gtk_label_set_text (GTK_LABEL (headerbar_titlelabel), gtk_window_get_title (gtkui_plugin->get_mainwin ()));
+    gtk_label_set_text (GTK_LABEL (headerbar_titlelabel), gtk_window_get_title (GTK_WINDOW (gtkui_plugin->get_mainwin ())));
 }
 
 void window_init_hook (void *userdata) {
@@ -555,8 +557,8 @@ void window_init_hook (void *userdata) {
 
     GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
 
-    GtkWidget *file_menu_btn = GTK_MENU_BUTTON (gtk_builder_get_object (builder, "file_menu_btn"));
-    gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (file_menu_btn), menumodel);
+    GtkMenuButton *file_menu_btn = GTK_MENU_BUTTON (gtk_builder_get_object (builder, "file_menu_btn"));
+    gtk_menu_button_set_menu_model (file_menu_btn, menumodel);
 
     GActionGroup *group = create_action_group();
     gtk_widget_insert_action_group (headerbar, "win", group);
