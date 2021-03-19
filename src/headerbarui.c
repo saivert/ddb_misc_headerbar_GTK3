@@ -46,6 +46,9 @@ GtkWidget *headerbar_titlelabel;
 GtkWidget *headerbar_seekbarbox;
 GtkWidget *headerbar_playbacktimelabel;
 GtkWidget *headerbar_durationlabel;
+GtkWidget *headerbar_prevbtn;
+GtkWidget *headerbar_nextbtn;
+GtkWidget *headerbar_playback_button_box;
 
 #define GTK_BUILDER_GET_WIDGET(builder, name) (GtkWidget *)gtk_builder_get_object(builder, name)
 
@@ -67,6 +70,7 @@ static struct headerbarui_flag_s {
     gboolean show_preferences_button;
     gboolean show_designmode_button;
     gboolean show_time_remaining;
+    gboolean hide_playback_buttons;
     int button_spacing;
 } headerbarui_flags;
 
@@ -554,6 +558,9 @@ void window_init_hook (void *userdata) {
     headerbar_playbacktimelabel = GTK_BUILDER_GET_WIDGET(builder, "playbacktimelabel");
     headerbar_durationlabel = GTK_BUILDER_GET_WIDGET(builder, "durationlabel");
     headerbar_titlelabel = GTK_BUILDER_GET_WIDGET(builder, "titlelabel");
+    headerbar_prevbtn = GTK_BUILDER_GET_WIDGET(builder, "prevbtn");
+    headerbar_nextbtn = GTK_BUILDER_GET_WIDGET(builder, "nextbtn");
+    headerbar_playback_button_box = GTK_BUILDER_GET_WIDGET(builder, "playback_button_box");
 
     GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
 
@@ -586,6 +593,7 @@ void window_init_hook (void *userdata) {
         gtk_widget_show (headerbar_menubtn);
     } else {
         gtk_widget_destroy(headerbar_menubtn);
+        gtk_widget_set_valign(menubar, GTK_ALIGN_CENTER);
         gtk_widget_reparent(menubar, headerbar);
         gtk_container_child_set(GTK_CONTAINER(headerbar), menubar, "position", 0, NULL);
     }
@@ -643,6 +651,7 @@ void headerbarui_getconfig()
     headerbarui_flags.show_designmode_button = deadbeef->conf_get_int ("headerbarui.show_designmode_button", 0);
     headerbarui_flags.button_spacing = deadbeef->conf_get_int ("headerbarui.button_spacing", 6);
     headerbarui_flags.show_time_remaining = deadbeef->conf_get_int ("headerbarui.show_time_remaining", 0);
+    headerbarui_flags.hide_playback_buttons = deadbeef->conf_get_int ("headerbarui.hide_playback_buttons", 0);
 }
 
 static
@@ -686,6 +695,8 @@ headerbarui_volume_changed(gpointer user_data)
 
 void
 playpause_update(int state) {
+    if (headerbarui_flags.hide_playback_buttons) return;
+
     if (headerbarui_flags.combined_playpause) {
         switch (state) {
             case OUTPUT_STATE_PLAYING:
@@ -717,6 +728,8 @@ headerbarui_configchanged_cb(gpointer user_data)
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     playpause_update(OUTPUT_STATE_STOPPED);
 
+    gtk_widget_set_visible(headerbar_playback_button_box, !headerbarui_flags.hide_playback_buttons);
+
     return FALSE;
 }
 
@@ -746,7 +759,7 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
 static const char settings_dlg[] =
     "property \"Disable plugin (requires restart)\" checkbox headerbarui.disable 0;\n"
     "property \"Embed menubar instead of showing hamburger button (requires restart)\" checkbox headerbarui.embed_menubar 0;\n"
-    "property \"Button spacing (pixels)\" entry headerbarui.button_spacing 6;\n"
+    "property \"Button spacing (pixels)\" spinbtn[0,100,1] headerbarui.button_spacing 6;\n"
     "property \"Use combined play/pause button\" checkbox headerbarui.combined_playpause 1;\n"
     "property \"Show seekbar\" checkbox headerbarui.show_seek_bar 1;\n"
     "property \"Hide seekbar on streaming\" checkbox headerbarui.hide_seekbar_on_streaming 0;\n"
@@ -754,6 +767,7 @@ static const char settings_dlg[] =
     "property \"Show volume button\" checkbox headerbarui.show_volume_button 1;\n"
     "property \"Show preferences button\" checkbox headerbarui.show_preferences_button 0;\n"
     "property \"Show design mode button\" checkbox headerbarui.show_designmode_button 0;\n"
+    "property \"Hide playback buttons\" checkbox headerbarui.hide_playback_buttons 0;\n"
 ;
 
 static DB_misc_t plugin = {
@@ -764,13 +778,13 @@ static DB_misc_t plugin = {
     .plugin.flags = DDB_PLUGIN_FLAG_LOGGING,
 #endif
     .plugin.version_major = 1,
-    .plugin.version_minor = 0,
+    .plugin.version_minor = 1,
     .plugin.id = "headerbarui_gtk3",
     .plugin.name = "Headerbar for GTK3 UI",
     .plugin.descr = "A headerbar for the GTK3 UI",
     .plugin.copyright = 
         "Headerbar for GTK3 UI plugin for DeaDBeeF Player\n"
-        "Copyright (C) 2015 Nicolai Syvertsen <saivert@gmail.com>\n"
+        "Copyright (C) 2015-2021 Nicolai Syvertsen <saivert@gmail.com>\n"
         "\n"
         "This program is free software; you can redistribute it and/or\n"
         "modify it under the terms of the GNU General Public License\n"
@@ -785,7 +799,7 @@ static DB_misc_t plugin = {
         "You should have received a copy of the GNU General Public License\n"
         "along with this program; if not, write to the Free Software\n"
         "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\n",
-    .plugin.website = "http://saivert.com",
+    .plugin.website = "https://github.com/saivert/ddb_misc_headerbar_GTK3",
     .plugin.configdialog = settings_dlg,
     .plugin.connect = headerbarui_connect,
     .plugin.message = headerbarui_message,
