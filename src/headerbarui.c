@@ -109,7 +109,7 @@ on_volbutton_value_changed (GtkScaleButton *button,
                gdouble         value,
                gpointer        user_data)
 {
-    deadbeef->volume_set_db (deadbeef->volume_get_min_db()-(double)-value);
+    deadbeef->volume_set_amp (value*value*value);
 }
 
 
@@ -606,10 +606,8 @@ void window_init_hook (void *userdata) {
 
     gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
 
-    float volume = deadbeef->volume_get_min_db()-deadbeef->volume_get_db();
-    g_assert_false((volume>0));
-    gtk_scale_button_set_adjustment(GTK_SCALE_BUTTON (volbutton),
-        gtk_adjustment_new (volume, 0, -deadbeef->volume_get_min_db (), 5, 5, 0));
+    float volume = deadbeef->volume_get_amp();
+    gtk_scale_button_set_value (GTK_SCALE_BUTTON (volbutton), volume*volume*volume);
 
     gtk_widget_show(volbutton);
 
@@ -680,15 +678,13 @@ static
 gboolean
 headerbarui_volume_changed(gpointer user_data)
 {
-    float volume = deadbeef->volume_get_min_db()-deadbeef->volume_get_db();
-    if (volume > 0) volume = 0;
+    float volume = cbrt(deadbeef->volume_get_amp());
 
     GSignalMatchType mask = (GSignalMatchType)(G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA);
     GQuark detail = g_quark_from_static_string("value_changed");
     g_signal_handlers_block_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, NULL);
-    gtk_scale_button_set_value( GTK_SCALE_BUTTON (volbutton), -volume );
+    gtk_scale_button_set_value( GTK_SCALE_BUTTON (volbutton), volume);
     g_signal_handlers_unblock_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, NULL);
-
     return FALSE;
 }
 
