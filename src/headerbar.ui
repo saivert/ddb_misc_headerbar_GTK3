@@ -160,7 +160,7 @@ Author: Nicolai Syvertsen
         </child>
       </object>
       <packing>
-        <property name="position">5</property>
+        <property name="position">6</property>
       </packing>
     </child>
     <child>
@@ -272,6 +272,19 @@ audio-volume-medium-symbolic</property>
       </packing>
     </child>
     <child>
+      <object class="GtkCheckButton">
+        <property name="label" translatable="yes">Cursor follows playback</property>
+        <property name="visible">True</property>
+        <property name="can-focus">True</property>
+        <property name="receives-default">False</property>
+        <property name="action-name">db.toggle_cursor_follows_playback</property>
+        <property name="draw-indicator">True</property>
+      </object>
+      <packing>
+        <property name="position">5</property>
+      </packing>
+    </child>
+    <child>
       <object class="GtkBox" id="playback_button_box">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
@@ -350,7 +363,20 @@ audio-volume-medium-symbolic</property>
         </style>
       </object>
       <packing>
-        <property name="position">5</property>
+        <property name="position">6</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkCheckButton">
+        <property name="label" translatable="yes">Scroll follows playback</property>
+        <property name="visible">True</property>
+        <property name="can-focus">True</property>
+        <property name="receives-default">False</property>
+        <property name="action-name">db.toggle_scroll_follows_playback</property>
+        <property name="draw-indicator">True</property>
+      </object>
+      <packing>
+        <property name="position">7</property>
       </packing>
     </child>
   </object>

@@ -21,7 +21,8 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
-#include <deadbeef/deadbeef.h>
+//#include <deadbeef/deadbeef.h>
+#include "../../deadbeef-latest/deadbeef.h"
 #include <deadbeef/gtkui_api.h>
 #include "resources.h"
 #include "headerbarui.h"
@@ -480,8 +481,16 @@ action_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
         dup_gtkui_exec_action_14 (dbaction, -1);
     }
     else if (dbaction->callback2) {
-        dbaction->callback2 (dbaction, DDB_ACTION_CTX_MAIN);
+        //dbaction->callback2 (dbaction, DDB_ACTION_CTX_MAIN);
+        deadbeef->invoke_action(dbaction, DDB_ACTION_CTX_MAIN);
     }
+}
+
+static void
+action_change_state(GSimpleAction* simple, GVariant* value, gpointer user_data)
+{
+    DB_plugin_action_t *dbaction = (DB_plugin_action_t *) g_object_get_data (G_OBJECT (simple), "deadbeefaction");
+    g_simple_action_set_state (simple, value);
 }
 
 static GActionGroup *
@@ -509,9 +518,15 @@ create_action_group_deadbeef(void)
             char *tmp = NULL;
 
             if (dbaction->callback2 && dbaction->flags & DB_ACTION_COMMON) {
-                action = g_simple_action_new (dbaction->name, NULL);
-                g_object_set_data (G_OBJECT (action), "deadbeefaction", dbaction);
+                if (dbaction->flags & DB_ACTION_STATEFUL) {
+                    action = g_simple_action_new_stateful(dbaction->name, NULL,
+                        g_variant_new_boolean ((dbaction->flags & DB_ACTION_CHECKED)));
+                    g_signal_connect (action, "change-state", G_CALLBACK (action_change_state), NULL);
+                } else {
+                    action = g_simple_action_new (dbaction->name, NULL);
+                }
                 g_signal_connect (action, "activate", G_CALLBACK (action_activate), NULL);
+                g_object_set_data (G_OBJECT (action), "deadbeefaction", dbaction);
                 g_action_map_add_action (G_ACTION_MAP (group), G_ACTION (action));
                 g_debug ("Action added %s", dbaction->name);
             }
@@ -576,7 +591,7 @@ void window_init_hook (void *userdata) {
         "activate", G_CALLBACK (design_mode_menu_item_activate), designmode_action);
 
     GActionGroup *deadbeef_action_group = create_action_group_deadbeef();    
-    gtk_widget_insert_action_group (headerbar, "db", deadbeef_action_group);
+    gtk_widget_insert_action_group (mainwin, "db", deadbeef_action_group);
 
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     gtk_widget_show(headerbar);
@@ -747,6 +762,27 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
         break;
     case DB_EV_VOLUMECHANGED:
         g_idle_add (headerbarui_volume_changed, NULL);
+        break;
+    case DB_EV_ACTION_INVOKED:
+        {
+            DB_plugin_action_t *dbaction = (DB_plugin_action_t *)ctx;
+            // Just debug things...
+            printf("headerbar: action %s invoked", dbaction->name);
+            if (dbaction->flags & DB_ACTION_STATEFUL) {
+                printf(" stateful, %s", (dbaction->flags & DB_ACTION_CHECKED) ? "is checked": "is not checked");
+            }
+            printf("\n");
+
+            // Get the action group with prefix db which contains all the plugin actions mapped to GSimpleAction.
+            GActionGroup *db = gtk_widget_get_action_group (headerbar, "db");
+
+            // Now lookup the action by name, check if it is stateful and update the state.
+            GAction *act = g_action_map_lookup_action(G_ACTION_MAP(db), dbaction->name);
+            if (act && (dbaction->flags & DB_ACTION_STATEFUL)) {
+                int checked = (dbaction->flags & DB_ACTION_CHECKED) ? 1: 0;
+                g_action_change_state(act, g_variant_new_boolean(checked));
+            }
+        }
         break;
     }
     return 0;
