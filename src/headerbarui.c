@@ -414,19 +414,221 @@ action_design_mode_change_state(GSimpleAction *simple, GVariant *value, gpointer
 }
 
 static void
-design_mode_menu_item_activate(GtkMenuItem *menuitem, gpointer user_data)
+action_about_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-    gboolean act = gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (menuitem));
-    GSimpleAction *designmode_action = G_SIMPLE_ACTION (user_data);
-
-    g_simple_action_set_state (designmode_action, g_variant_new_boolean (act));
+   GtkWidget *about_item = lookup_widget(gtkui_plugin->get_mainwin(), "about1");
+   gtk_menu_item_activate(GTK_MENU_ITEM(about_item));
 }
 
+// Toggle log action
+static void
+action_toggle_log_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    GtkWidget *view_log_item = lookup_widget (gtkui_plugin->get_mainwin(), "view_log");
+    gtk_menu_item_activate (GTK_MENU_ITEM(view_log_item));
+    gboolean checked = gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM(view_log_item));
+    g_simple_action_set_state (action,  g_variant_new_boolean(checked));
+}
+
+// Toggle EQ action
+static void
+action_toggle_eq_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    GtkWidget *menuitem = lookup_widget (gtkui_plugin->get_mainwin(), "view_eq");
+    gtk_menu_item_activate (GTK_MENU_ITEM(menuitem));
+    gboolean checked = gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM(menuitem));
+    g_simple_action_set_state (action,  g_variant_new_boolean(checked));
+}
+
+// Toggle statusbar action
+static void
+action_toggle_statusbar_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    GtkWidget *menuitem = lookup_widget (gtkui_plugin->get_mainwin(), "view_status_bar");
+    gtk_menu_item_activate (GTK_MENU_ITEM(menuitem));
+    gboolean checked = gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM(menuitem));
+    g_simple_action_set_state (action,  g_variant_new_boolean(checked));
+}
+
+// Toggle menu action
+static void
+action_toggle_menu_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    GtkWidget *menubar = lookup_widget (gtkui_plugin->get_mainwin(), "menubar");
+    int val = 1-deadbeef->conf_get_int ("gtkui.show_menu", 1);
+    val ? gtk_widget_show (menubar) : gtk_widget_hide (menubar);
+    deadbeef->conf_set_int ("gtkui.show_menu", val);
+
+    g_simple_action_set_state (action,  g_variant_new_boolean(val));
+}
+
+// Copy item action
+static void
+action_copy_item_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    ddb_playlist_t *plt = deadbeef->plt_get_curr ();
+    if (plt) {
+        gtkui_plugin->copy_selection (plt, DDB_ACTION_CTX_SELECTION);
+        deadbeef->plt_unref (plt);
+    }
+}
+
+static void
+action_cut_item_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    ddb_playlist_t *plt = deadbeef->plt_get_curr ();
+    if (plt) {
+        gtkui_plugin->cut_selection (plt, DDB_ACTION_CTX_SELECTION);
+        deadbeef->plt_unref (plt);
+    }
+}
+
+static void
+action_paste_item_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    ddb_playlist_t *plt = deadbeef->plt_get_curr ();
+    if (plt) {
+        gtkui_plugin->paste_selection (plt, DDB_ACTION_CTX_SELECTION);
+        deadbeef->plt_unref (plt);
+    }
+}
+
+static gboolean
+toggle_and_get_active_menu_item(const gchar *glade_id)
+{
+    GtkWidget *menuitem = lookup_widget (gtkui_plugin->get_mainwin(), glade_id);
+    gtk_menu_item_activate(GTK_MENU_ITEM(menuitem));
+    // gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menuitem), TRUE);
+    return gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM(menuitem));
+}
+
+// Shuffle mode
+
+static void
+action_shuffle_mode_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    const gchar *mode = g_variant_get_string (parameter, NULL);
+    int update_state = 0;
+    if (!g_strcmp0(mode, "off")) {
+        update_state = toggle_and_get_active_menu_item ("order_linear");
+    } else if (!g_strcmp0(mode, "tracks")) {
+        update_state = toggle_and_get_active_menu_item ("order_shuffle");
+    } else if (!g_strcmp0(mode, "albums")) {
+        update_state = toggle_and_get_active_menu_item ("order_shuffle_albums");
+    } else if (!g_strcmp0(mode, "random")) {
+        update_state = toggle_and_get_active_menu_item ("order_random");
+    }
+
+    if (update_state) {
+        g_simple_action_set_state (action, parameter);
+    }
+}
+
+static void
+order_linear_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+    GSimpleAction *action = G_SIMPLE_ACTION (user_data);
+    g_simple_action_set_state (action, g_variant_new_string ("off"));
+}
+
+static void
+order_shuffle_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+    GSimpleAction *action = G_SIMPLE_ACTION (user_data);
+    g_simple_action_set_state (action, g_variant_new_string ("tracks"));
+}
+
+static void
+order_shuffle_albums_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+    GSimpleAction *action = G_SIMPLE_ACTION (user_data);
+    g_simple_action_set_state (action, g_variant_new_string ("albums"));
+}
+
+static void
+order_random_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+    GSimpleAction *action = G_SIMPLE_ACTION (user_data);
+    g_simple_action_set_state (action, g_variant_new_string ("random"));
+}
+
+// Repeat mode
+
+static void
+action_repeat_mode_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    const gchar *mode = g_variant_get_string (parameter, NULL);
+    int update_state = 0;
+    if (!g_strcmp0(mode, "off")) {
+        update_state = toggle_and_get_active_menu_item ("loop_disable");
+    } else if (!g_strcmp0(mode, "single")) {
+        update_state = toggle_and_get_active_menu_item ("loop_single");
+    } else if (!g_strcmp0(mode, "all")) {
+        update_state = toggle_and_get_active_menu_item ("loop_all");
+    }
+
+    if (update_state) {
+        g_simple_action_set_state (action, parameter);
+    }
+}
+
+static void
+loop_disable_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+    GSimpleAction *action = G_SIMPLE_ACTION (user_data);
+    g_simple_action_set_state (action, g_variant_new_string ("off"));
+}
+
+static void
+loop_single_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+    GSimpleAction *action = G_SIMPLE_ACTION (user_data);
+    g_simple_action_set_state (action, g_variant_new_string ("single"));
+}
+
+static void
+loop_all_albums_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+    GSimpleAction *action = G_SIMPLE_ACTION (user_data);
+    g_simple_action_set_state (action, g_variant_new_string ("all"));
+}
+
+static void
+common_checked_menuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+    gboolean act = gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (menuitem));
+    GSimpleAction *action = G_SIMPLE_ACTION (user_data);
+
+    g_simple_action_set_state (action, g_variant_new_boolean (act));
+}
+
+static gboolean
+get_checked_menu_item_active(gchar *glade_id)
+{
+    GtkWidget *menuitem = lookup_widget(gtkui_plugin->get_mainwin(), glade_id);
+    if (!menuitem || !gtk_widget_get_visible(menuitem)) {
+        return FALSE;
+    }
+    return gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem));
+}
+
+// Actions that have no matching deadbeef action or need to sync with deadbeef's own menus
 static GActionGroup *
 create_action_group(void)
 {
     const GActionEntry entries[] = {
-        {"designmode", NULL, NULL, "false", action_design_mode_change_state}};
+        {"designmode", NULL, NULL, "false", action_design_mode_change_state},
+        {"toggle_log", action_toggle_log_activate, NULL, "false", NULL},
+        {"toggle_eq", action_toggle_eq_activate, NULL, get_checked_menu_item_active("view_eq") ? "true" : "false", NULL},
+        {"toggle_statusbar", action_toggle_statusbar_activate, NULL, get_checked_menu_item_active("view_status_bar") ? "true" : "false", NULL},
+        {"toggle_menu", action_toggle_menu_activate, NULL, "false", NULL},
+        {"copy_item", action_copy_item_activate, NULL, NULL, NULL},
+        {"cut_item", action_cut_item_activate, NULL, NULL, NULL},
+        {"paste_item", action_paste_item_activate, NULL, NULL, NULL},
+        {"about", action_about_activate, NULL, NULL, NULL},
+        {"shufflemode", action_shuffle_mode_activate, "s", "'off'", NULL},
+        {"repeatmode", action_repeat_mode_activate, "s", "'off'", NULL},
+    };
     GSimpleActionGroup *group;
 
     group = g_simple_action_group_new();
@@ -480,7 +682,12 @@ action_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
         dup_gtkui_exec_action_14 (dbaction, -1);
     }
     else if (dbaction->callback2) {
-        dbaction->callback2 (dbaction, DDB_ACTION_CTX_MAIN);
+        if (parameter && g_variant_is_of_type(parameter, G_VARIANT_TYPE_INT32)) {
+            int value = g_variant_get_int32(parameter);
+            dbaction->callback2 (dbaction, value);
+        } else {
+            dbaction->callback2 (dbaction, DDB_ACTION_CTX_MAIN);
+        }
     }
 }
 
@@ -508,8 +715,8 @@ create_action_group_deadbeef(void)
         {
             char *tmp = NULL;
 
-            if (dbaction->callback2 && dbaction->flags & DB_ACTION_COMMON) {
-                action = g_simple_action_new (dbaction->name, NULL);
+            if (dbaction->callback2 && dbaction->flags & (DB_ACTION_COMMON|DB_ACTION_MULTIPLE_TRACKS)) {
+                action = g_simple_action_new (dbaction->name, (dbaction->flags & DB_ACTION_MULTIPLE_TRACKS) ? G_VARIANT_TYPE_INT32 : NULL);
                 g_object_set_data (G_OBJECT (action), "deadbeefaction", dbaction);
                 g_signal_connect (action, "activate", G_CALLBACK (action_activate), NULL);
                 g_action_map_add_action (G_ACTION_MAP (group), G_ACTION (action));
@@ -530,6 +737,24 @@ void mainwindow_settitle(GtkWidget* widget,
     gtk_label_set_text (GTK_LABEL (headerbar_titlelabel), gtk_window_get_title (GTK_WINDOW (gtkui_plugin->get_mainwin ())));
 }
 
+
+static void
+hookup_action_to_menu_item(GActionMap *map, const gchar *action_name, const gchar *glade_id)
+{
+    GAction *action = g_action_map_lookup_action (G_ACTION_MAP (map), action_name);
+
+    g_signal_connect_after (G_OBJECT (lookup_widget (gtkui_plugin->get_mainwin(), glade_id)),
+        "activate", G_CALLBACK (common_checked_menuitem_activate), action);
+}
+
+static void
+hookup_action_to_radio_menu_item(GActionMap *map, const gchar *action_name, GCallback event_handler, const gchar *glade_id)
+{
+    GAction *action = g_action_map_lookup_action (G_ACTION_MAP (map), action_name);
+
+    g_signal_connect_after (G_OBJECT (lookup_widget (gtkui_plugin->get_mainwin(), glade_id)), "activate", event_handler, action);
+}
+
 void window_init_hook (void *userdata) {
     GtkWindow *mainwin;
     GtkWidget *menubar;
@@ -543,6 +768,7 @@ void window_init_hook (void *userdata) {
 
     builder = gtk_builder_new_from_resource("/org/deadbeef/headerbarui/headerbar.ui");
     gtk_builder_add_from_resource (builder, "/org/deadbeef/headerbarui/menu.ui", NULL);
+    gtk_builder_add_from_resource (builder, "/org/deadbeef/headerbarui/popovermenu.ui", NULL);
     headerbar = GTK_BUILDER_GET_WIDGET(builder, "headerbar1");
     volbutton = GTK_BUILDER_GET_WIDGET(builder, "volumebutton1");
     GtkStyleContext *volctx = gtk_widget_get_style_context(volbutton);
@@ -570,10 +796,23 @@ void window_init_hook (void *userdata) {
     GActionGroup *group = create_action_group();
     gtk_widget_insert_action_group (headerbar, "win", group);
 
-    GAction *designmode_action = g_action_map_lookup_action (G_ACTION_MAP (group), "designmode");
+    GtkWidget *app_menu = GTK_WIDGET(gtk_builder_get_object (builder, "app_menu"));
+    GtkWidget *app_menu_btn = GTK_WIDGET(gtk_builder_get_object (builder, "app_menu_btn"));
+    gtk_menu_button_set_popover(GTK_MENU_BUTTON(app_menu_btn), app_menu);
 
-    g_signal_connect_after (G_OBJECT (lookup_widget (gtkui_plugin->get_mainwin(), "design_mode1")),
-        "activate", G_CALLBACK (design_mode_menu_item_activate), designmode_action);
+    hookup_action_to_menu_item(G_ACTION_MAP(group), "designmode", "design_mode1");
+    hookup_action_to_menu_item(G_ACTION_MAP(group), "toggle_log", "view_log");
+    hookup_action_to_menu_item(G_ACTION_MAP(group), "toggle_eq", "view_eq");
+    hookup_action_to_menu_item(G_ACTION_MAP(group), "toggle_statusbar", "view_status_bar");
+
+    hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "shufflemode", G_CALLBACK(order_linear_activate), "order_linear");
+    hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "shufflemode", G_CALLBACK(order_shuffle_activate), "order_shuffle");
+    hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "shufflemode", G_CALLBACK(order_shuffle_albums_activate), "order_shuffle_albums");
+    hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "shufflemode", G_CALLBACK(order_random_activate), "order_random");
+
+    hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "repeatmode", G_CALLBACK(loop_disable_activate), "loop_disable");
+    hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "repeatmode", G_CALLBACK(loop_single_activate), "loop_single");
+    hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "repeatmode", G_CALLBACK(loop_all_albums_activate), "loop_all");
 
     GActionGroup *deadbeef_action_group = create_action_group_deadbeef();    
     gtk_widget_insert_action_group (headerbar, "db", deadbeef_action_group);
@@ -586,6 +825,7 @@ void window_init_hook (void *userdata) {
     if (!headerbarui_flags.embed_menubar)
     {
         gtk_widget_hide(menubar);
+        deadbeef->conf_set_int ("gtkui.show_menu", 0);
 
         headerbarui_update_menubutton();
 
@@ -752,6 +992,12 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     return 0;
 }
 
+int headerbarui_disconnect(void)
+{
+    // HACK, need to reset this so users are not stuck without menubar when uninstalling this plugin
+    deadbeef->conf_set_int ("gtkui.show_menu", 1);
+}
+
 static const char settings_dlg[] =
     "property \"Disable plugin (requires restart)\" checkbox headerbarui.disable 0;\n"
     "property \"Embed menubar instead of showing hamburger button (requires restart)\" checkbox headerbarui.embed_menubar 0;\n"
@@ -799,6 +1045,7 @@ static DB_misc_t plugin = {
     .plugin.configdialog = settings_dlg,
     .plugin.connect = headerbarui_connect,
     .plugin.message = headerbarui_message,
+    .plugin.disconnect = headerbarui_disconnect
 };
 
 DB_plugin_t *

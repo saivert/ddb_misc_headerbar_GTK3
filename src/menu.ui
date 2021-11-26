@@ -41,8 +41,8 @@
   </menu>
 
   <menu id="order-menu">
-    <attribute name="label">Order</attribute>
     <section>
+      <attribute name="label">Order</attribute>
       <item>
         <attribute name="label">Linear</attribute>
         <attribute name="action">db.order_linear</attribute>

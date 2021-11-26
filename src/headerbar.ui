@@ -160,7 +160,7 @@ Author: Nicolai Syvertsen
         </child>
       </object>
       <packing>
-        <property name="position">5</property>
+        <property name="position">6</property>
       </packing>
     </child>
     <child>
@@ -255,6 +255,7 @@ audio-volume-medium-symbolic</property>
     </child>
     <child>
       <object class="GtkMenuButton" id="file_menu_btn">
+        <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="receives-default">True</property>
         <property name="valign">center</property>
@@ -269,6 +270,24 @@ audio-volume-medium-symbolic</property>
       <packing>
         <property name="pack-type">end</property>
         <property name="position">4</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkMenuButton" id="app_menu_btn">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="receives-default">True</property>
+        <child>
+          <object class="GtkImage">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="icon-name">face-plain</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="pack-type">end</property>
+        <property name="position">5</property>
       </packing>
     </child>
     <child>
@@ -350,7 +369,7 @@ audio-volume-medium-symbolic</property>
         </style>
       </object>
       <packing>
-        <property name="position">5</property>
+        <property name="position">6</property>
       </packing>
     </child>
   </object>
