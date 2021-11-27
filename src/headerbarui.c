@@ -50,6 +50,7 @@ GtkWidget *headerbar_prevbtn;
 GtkWidget *headerbar_nextbtn;
 GtkWidget *headerbar_playback_button_box;
 GtkWidget *headerbar_app_menu_btn;
+GtkWidget *headerbar_add_menu_btn;
 
 #define GTK_BUILDER_GET_WIDGET(builder, name) (GtkWidget *)gtk_builder_get_object(builder, name)
 
@@ -73,6 +74,7 @@ static struct headerbarui_flag_s {
     gboolean show_time_remaining;
     gboolean hide_playback_buttons;
     gboolean new_app_menu;
+    gboolean show_add_button;
     int button_spacing;
 } headerbarui_flags;
 
@@ -831,8 +833,8 @@ void window_init_hook (void *userdata) {
 
     GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
 
-    GtkMenuButton *file_menu_btn = GTK_MENU_BUTTON (gtk_builder_get_object (builder, "file_menu_btn"));
-    gtk_menu_button_set_menu_model (file_menu_btn, menumodel);
+    headerbar_add_menu_btn = GTK_BUILDER_GET_WIDGET(builder, "file_menu_btn");
+    gtk_menu_button_set_menu_model (GTK_MENU_BUTTON(headerbar_add_menu_btn), menumodel);
 
     GActionGroup *group = create_action_group();
     gtk_widget_insert_action_group (headerbar, "win", group);
@@ -878,6 +880,8 @@ void window_init_hook (void *userdata) {
         gtk_widget_show (headerbar_menubtn);
     } else {
         gtk_widget_destroy(headerbar_menubtn);
+        gtk_widget_destroy(headerbar_app_menu_btn);
+        gtk_widget_destroy(GTK_WIDGET(headerbar_add_menu_btn));
         gtk_widget_set_valign(menubar, GTK_ALIGN_CENTER);
         gtk_widget_reparent(menubar, headerbar);
         gtk_container_child_set(GTK_CONTAINER(headerbar), menubar, "position", 0, NULL);
@@ -890,6 +894,8 @@ void window_init_hook (void *userdata) {
     }
 
     gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
+
+    gtk_widget_set_visible(headerbar_add_menu_btn, headerbarui_flags.show_add_button);
 
     float volume = deadbeef->volume_get_amp();
     gtk_scale_button_set_value (GTK_SCALE_BUTTON (volbutton), volume*volume*volume);
@@ -936,6 +942,7 @@ void headerbarui_getconfig()
     headerbarui_flags.show_time_remaining = deadbeef->conf_get_int ("headerbarui.show_time_remaining", 0);
     headerbarui_flags.hide_playback_buttons = deadbeef->conf_get_int ("headerbarui.hide_playback_buttons", 0);
     headerbarui_flags.new_app_menu = deadbeef->conf_get_int ("headerbarui.new_app_menu", 0);
+    headerbarui_flags.show_add_button = deadbeef->conf_get_int ("headerbarui.show_add_button", 0);
 }
 
 static
@@ -1015,6 +1022,8 @@ headerbarui_configchanged_cb(gpointer user_data)
     gtk_widget_set_visible(headerbar_app_menu_btn, headerbarui_flags.new_app_menu);
     gtk_widget_set_visible(headerbar_menubtn, !headerbarui_flags.new_app_menu);
 
+    gtk_widget_set_visible(headerbar_add_menu_btn, headerbarui_flags.show_add_button);
+
     return FALSE;
 }
 
@@ -1060,6 +1069,7 @@ static const char settings_dlg[] =
     "property \"Show preferences button\" checkbox headerbarui.show_preferences_button 0;\n"
     "property \"Show design mode button\" checkbox headerbarui.show_designmode_button 0;\n"
     "property \"Hide playback buttons\" checkbox headerbarui.hide_playback_buttons 0;\n"
+    "property \"Show add (file/playlist) button\" checkbox headerbarui.show_add_button 0;\n"
 ;
 
 static DB_misc_t plugin = {
