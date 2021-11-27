@@ -33,6 +33,7 @@ static DB_misc_t plugin;
 static ddb_gtkui_t *gtkui_plugin;
 static gint mainwin_width;
 
+GtkWidget *mainwin;
 GtkWidget *headerbar;
 GtkWidget *volbutton;
 GtkWidget *headerbar_seekbar;
@@ -331,11 +332,9 @@ static
 void
 headerbarui_update_menubutton()
 {
-    GtkWindow *mainwin;
     GtkWidget *menubar;
     static GtkMenu *menu;
 
-    mainwin = GTK_WINDOW (gtkui_plugin->get_mainwin ());
     menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
 
     menu = GTK_MENU (gtk_menu_new ());
@@ -409,7 +408,7 @@ static void
 action_design_mode_change_state(GSimpleAction *simple, GVariant *value, gpointer user_data)
 {
     gboolean state = g_variant_get_boolean (value);
-    GtkCheckMenuItem *designmode_menu_item = GTK_CHECK_MENU_ITEM (lookup_widget (gtkui_plugin->get_mainwin(), "design_mode1"));
+    GtkCheckMenuItem *designmode_menu_item = GTK_CHECK_MENU_ITEM (lookup_widget (mainwin, "design_mode1"));
     gtk_check_menu_item_set_active (designmode_menu_item, state);
 
     gtkui_plugin->w_set_design_mode (state);
@@ -420,7 +419,7 @@ action_design_mode_change_state(GSimpleAction *simple, GVariant *value, gpointer
 static void
 action_about_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-   GtkWidget *about_item = lookup_widget(gtkui_plugin->get_mainwin(), "about1");
+   GtkWidget *about_item = lookup_widget(mainwin, "about1");
    gtk_menu_item_activate(GTK_MENU_ITEM(about_item));
 }
 
@@ -428,7 +427,7 @@ action_about_activate(GSimpleAction *action, GVariant *parameter, gpointer user_
 static void
 action_toggle_log_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-    GtkWidget *view_log_item = lookup_widget (gtkui_plugin->get_mainwin(), "view_log");
+    GtkWidget *view_log_item = lookup_widget (mainwin, "view_log");
     gtk_menu_item_activate (GTK_MENU_ITEM(view_log_item));
     gboolean checked = gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM(view_log_item));
     g_simple_action_set_state (action,  g_variant_new_boolean(checked));
@@ -438,7 +437,7 @@ action_toggle_log_activate(GSimpleAction *action, GVariant *parameter, gpointer 
 static void
 action_toggle_eq_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-    GtkWidget *menuitem = lookup_widget (gtkui_plugin->get_mainwin(), "view_eq");
+    GtkWidget *menuitem = lookup_widget (mainwin, "view_eq");
     gtk_menu_item_activate (GTK_MENU_ITEM(menuitem));
     gboolean checked = gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM(menuitem));
     g_simple_action_set_state (action,  g_variant_new_boolean(checked));
@@ -448,7 +447,7 @@ action_toggle_eq_activate(GSimpleAction *action, GVariant *parameter, gpointer u
 static void
 action_toggle_statusbar_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-    GtkWidget *menuitem = lookup_widget (gtkui_plugin->get_mainwin(), "view_status_bar");
+    GtkWidget *menuitem = lookup_widget (mainwin, "view_status_bar");
     gtk_menu_item_activate (GTK_MENU_ITEM(menuitem));
     gboolean checked = gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM(menuitem));
     g_simple_action_set_state (action,  g_variant_new_boolean(checked));
@@ -458,7 +457,7 @@ action_toggle_statusbar_activate(GSimpleAction *action, GVariant *parameter, gpo
 static void
 action_toggle_menu_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-    GtkWidget *menubar = lookup_widget (gtkui_plugin->get_mainwin(), "menubar");
+    GtkWidget *menubar = lookup_widget (mainwin, "menubar");
     int val = 1-deadbeef->conf_get_int ("gtkui.show_menu", 1);
     val ? gtk_widget_show (menubar) : gtk_widget_hide (menubar);
     deadbeef->conf_set_int ("gtkui.show_menu", val);
@@ -500,7 +499,7 @@ action_paste_item_activate(GSimpleAction *action, GVariant *parameter, gpointer 
 static gboolean
 toggle_and_get_active_menu_item(const gchar *glade_id)
 {
-    GtkWidget *menuitem = lookup_widget (gtkui_plugin->get_mainwin(), glade_id);
+    GtkWidget *menuitem = lookup_widget (mainwin, glade_id);
     gtk_menu_item_activate(GTK_MENU_ITEM(menuitem));
     // gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menuitem), TRUE);
     return gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM(menuitem));
@@ -637,7 +636,7 @@ common_checked_menuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 static gboolean
 get_checked_menu_item_active(gchar *glade_id)
 {
-    GtkWidget *menuitem = lookup_widget(gtkui_plugin->get_mainwin(), glade_id);
+    GtkWidget *menuitem = lookup_widget(mainwin, glade_id);
     if (!menuitem || !gtk_widget_get_visible(menuitem)) {
         return FALSE;
     }
@@ -774,7 +773,7 @@ void mainwindow_settitle(GtkWidget* widget,
                     gpointer data)
 {
     // Since we use a custom title widget we need to reimplement copying the window title
-    gtk_label_set_text (GTK_LABEL (headerbar_titlelabel), gtk_window_get_title (GTK_WINDOW (gtkui_plugin->get_mainwin ())));
+    gtk_label_set_text (GTK_LABEL (headerbar_titlelabel), gtk_window_get_title (GTK_WINDOW (mainwin)));
 }
 
 
@@ -783,7 +782,7 @@ hookup_action_to_menu_item(GActionMap *map, const gchar *action_name, const gcha
 {
     GAction *action = g_action_map_lookup_action (G_ACTION_MAP (map), action_name);
 
-    g_signal_connect_after (G_OBJECT (lookup_widget (gtkui_plugin->get_mainwin(), glade_id)),
+    g_signal_connect_after (G_OBJECT (lookup_widget (mainwin, glade_id)),
         "activate", G_CALLBACK (common_checked_menuitem_activate), action);
 }
 
@@ -792,15 +791,14 @@ hookup_action_to_radio_menu_item(GActionMap *map, const gchar *action_name, GCal
 {
     GAction *action = g_action_map_lookup_action (G_ACTION_MAP (map), action_name);
 
-    g_signal_connect_after (G_OBJECT (lookup_widget (gtkui_plugin->get_mainwin(), glade_id)), "activate", event_handler, action);
+    g_signal_connect_after (G_OBJECT (lookup_widget (mainwin, glade_id)), "activate", event_handler, action);
 }
 
 void window_init_hook (void *userdata) {
-    GtkWindow *mainwin;
     GtkWidget *menubar;
     GtkBuilder *builder;
 
-    mainwin = GTK_WINDOW (gtkui_plugin->get_mainwin ());
+    mainwin = gtkui_plugin->get_mainwin ();
 
     menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
     g_assert_nonnull(mainwin);
@@ -831,6 +829,11 @@ void window_init_hook (void *userdata) {
     headerbar_add_menu_btn = GTK_BUILDER_GET_WIDGET(builder, "file_menu_btn");
 
     GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
+
+    GMenuItem *cd_add = g_menu_item_new("Add Audio CD", "db.cd_add");
+    g_menu_insert_item(G_MENU(menumodel), 2, cd_add);
+    g_object_unref(cd_add);
+
     gtk_menu_button_set_menu_model (GTK_MENU_BUTTON(headerbar_add_menu_btn), menumodel);
 
     GActionGroup *group = create_action_group();
@@ -863,7 +866,7 @@ void window_init_hook (void *userdata) {
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     gtk_widget_show(headerbar);
 
-    gtk_window_set_titlebar(mainwin, GTK_WIDGET(headerbar));
+    gtk_window_set_titlebar(GTK_WINDOW(mainwin), GTK_WIDGET(headerbar));
 
     if (!headerbarui_flags.embed_menubar)
     {
