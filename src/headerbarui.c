@@ -755,8 +755,6 @@ create_action_group_deadbeef(void)
 
         for (dbaction = dbactions; dbaction; dbaction = dbaction->next)
         {
-            char *tmp = NULL;
-
             if (dbaction->callback2 && dbaction->flags & (DB_ACTION_COMMON|DB_ACTION_MULTIPLE_TRACKS)) {
                 action = g_simple_action_new (dbaction->name, (dbaction->flags & DB_ACTION_MULTIPLE_TRACKS) ? G_VARIANT_TYPE_INT32 : NULL);
                 g_object_set_data (G_OBJECT (action), "deadbeefaction", dbaction);
