@@ -1059,7 +1059,7 @@ int headerbarui_disconnect(void)
 static const char settings_dlg[] =
     "property \"Disable plugin (requires restart)\" checkbox headerbarui.disable 0;\n"
     "property \"Embed menubar instead of showing hamburger button (requires restart)\" checkbox headerbarui.embed_menubar 0;\n"
-    "property \"Show new popover menu instead of traditional context menu on hamburger button\" checkbox headerbarui.new_app_menu 0;\n"
+    "property \"Show new popover menu instead of traditional\ncontext menu on hamburger button\" checkbox headerbarui.new_app_menu 0;\n"
     "property \"Button spacing (pixels)\" spinbtn[0,100,1] headerbarui.button_spacing 6;\n"
     "property \"Use combined play/pause button\" checkbox headerbarui.combined_playpause 1;\n"
     "property \"Show seekbar\" checkbox headerbarui.show_seek_bar 1;\n"
