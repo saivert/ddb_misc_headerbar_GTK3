@@ -61,20 +61,20 @@ gboolean seekbar_isvisible = FALSE;
 gboolean headerbar_stoptimer = FALSE;
 
 static struct headerbarui_flag_s {
-    gboolean disable;
-    gboolean embed_menubar;
-    gboolean show_seek_bar;
-    gboolean seekbar_minimized;
-    gboolean hide_seekbar_on_streaming;
-    gboolean combined_playpause;
-    gboolean show_stop_button;
-    gboolean show_volume_button;
-    gboolean show_preferences_button;
-    gboolean show_designmode_button;
-    gboolean show_time_remaining;
-    gboolean hide_playback_buttons;
-    gboolean new_app_menu;
-    gboolean show_add_button;
+    gboolean disable:1;
+    gboolean embed_menubar:1;
+    gboolean show_seek_bar:1;
+    gboolean seekbar_minimized:1;
+    gboolean hide_seekbar_on_streaming:1;
+    gboolean combined_playpause:1;
+    gboolean show_stop_button:1;
+    gboolean show_volume_button:1;
+    gboolean show_preferences_button:1;
+    gboolean show_designmode_button:1;
+    gboolean show_time_remaining:1;
+    gboolean hide_playback_buttons:1;
+    gboolean new_app_menu:1;
+    gboolean show_add_button:1;
     int button_spacing;
 } headerbarui_flags;
 
