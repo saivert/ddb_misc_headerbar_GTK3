@@ -828,18 +828,16 @@ void window_init_hook (void *userdata) {
     headerbar_prevbtn = GTK_BUILDER_GET_WIDGET(builder, "prevbtn");
     headerbar_nextbtn = GTK_BUILDER_GET_WIDGET(builder, "nextbtn");
     headerbar_playback_button_box = GTK_BUILDER_GET_WIDGET(builder, "playback_button_box");
+    headerbar_add_menu_btn = GTK_BUILDER_GET_WIDGET(builder, "file_menu_btn");
 
     GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
-
-    headerbar_add_menu_btn = GTK_BUILDER_GET_WIDGET(builder, "file_menu_btn");
     gtk_menu_button_set_menu_model (GTK_MENU_BUTTON(headerbar_add_menu_btn), menumodel);
 
     GActionGroup *group = create_action_group();
     gtk_widget_insert_action_group (headerbar, "win", group);
 
     GtkWidget *app_menu = GTK_WIDGET(gtk_builder_get_object (builder, "app_menu"));
-    GtkWidget *app_menu_btn = GTK_WIDGET(gtk_builder_get_object (builder, "app_menu_btn"));
-    gtk_menu_button_set_popover(GTK_MENU_BUTTON(app_menu_btn), app_menu);
+    gtk_menu_button_set_popover(GTK_MENU_BUTTON(headerbar_app_menu_btn), app_menu);
 
     hookup_action_to_menu_item(G_ACTION_MAP(group), "designmode", "design_mode1");
     hookup_action_to_menu_item(G_ACTION_MAP(group), "toggle_log", "view_log");
@@ -881,7 +879,10 @@ void window_init_hook (void *userdata) {
         gtk_widget_destroy(headerbar_app_menu_btn);
         gtk_widget_destroy(GTK_WIDGET(headerbar_add_menu_btn));
         gtk_widget_set_valign(menubar, GTK_ALIGN_CENTER);
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
         gtk_widget_reparent(menubar, headerbar);
+#pragma GCC diagnostic pop
         gtk_container_child_set(GTK_CONTAINER(headerbar), menubar, "position", 0, NULL);
     }
 
@@ -1052,6 +1053,8 @@ int headerbarui_disconnect(void)
 {
     // HACK, need to reset this so users are not stuck without menubar when uninstalling this plugin
     deadbeef->conf_set_int ("gtkui.show_menu", 1);
+
+    return 0;
 }
 
 static const char settings_dlg[] =
