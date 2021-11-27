@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.38.2 -->
 <!-- Glade cannot handle this! -->
 <interface>
   <requires lib="gtk+" version="3.22"/>
@@ -17,23 +18,16 @@
           <object class="GtkBox">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
+            <property name="margin-start">6</property>
+            <property name="margin-top">6</property>
             <property name="margin-bottom">6</property>
             <property name="spacing">6</property>
             <child>
-              <object class="GtkButton">
+              <object class="GtkLabel">
                 <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-                <property name="tooltip-text" translatable="yes">New Window</property>
+                <property name="can-focus">False</property>
                 <property name="hexpand">True</property>
-                <property name="action-name">app.new-window</property>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="icon-name">window-new-symbolic</property>
-                  </object>
-                </child>
+                <property name="label" translatable="yes">Playlist</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -46,9 +40,11 @@
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
-                <property name="tooltip-text" translatable="yes">New Tab</property>
+                <property name="tooltip-text" translatable="yes">New playlist</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
                 <property name="hexpand">True</property>
-                <property name="action-name">win.new-tab</property>
+                <property name="action-name">db.new_playlist</property>
                 <child>
                   <object class="GtkImage">
                     <property name="visible">True</property>
@@ -64,19 +60,20 @@
               </packing>
             </child>
             <child>
-              <object class="GtkToggleButton" id="designmodebtn">
+              <object class="GtkButton">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
-                <property name="tooltip-text">Toggle design mode</property>
+                <property name="tooltip-text" translatable="yes">Load playlist</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
                 <property name="hexpand">True</property>
-                <property name="action-name">win.designmode</property>
-                <property name="draw-indicator">True</property>
+                <property name="action-name">db.load_playlist</property>
                 <child>
-                  <object class="GtkImage" id="designmodebtn_image">
+                  <object class="GtkImage">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="icon-name">document-edit-symbolic</property>
+                    <property name="icon-name">document-open-symbolic</property>
                   </object>
                 </child>
               </object>
@@ -84,6 +81,30 @@
                 <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="tooltip-text" translatable="yes">Save playlist</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <property name="hexpand">True</property>
+                <property name="action-name">db.save_playlist</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="icon-name">document-save-as-symbolic</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
               </packing>
             </child>
           </object>
@@ -104,9 +125,118 @@
             <property name="position">1</property>
           </packing>
         </child>
-
-        <!-- Edit section -->
-
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="margin-left">6</property>
+            <property name="margin-start">6</property>
+            <property name="margin-top">6</property>
+            <property name="margin-bottom">6</property>
+            <property name="spacing">6</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="margin-right">24</property>
+                <property name="margin-end">24</property>
+                <property name="hexpand">True</property>
+                <property name="label" translatable="yes">File</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="tooltip-text" translatable="yes">Open file(s)</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <property name="hexpand">True</property>
+                <property name="action-name">db.open_files</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="icon-name">document-open-symbolic</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="tooltip-text" translatable="yes" comments="Translators: This is a verb">Add file(s)</property>
+                <property name="halign">center</property>
+                <property name="hexpand">True</property>
+                <property name="action-name">db.add_files</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="icon-name">document-new-symbolic</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="tooltip-text" translatable="yes">Add folder(s)</property>
+                <property name="halign">center</property>
+                <property name="hexpand">True</property>
+                <property name="action-name">db.add_folders</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="icon-name">folder-new-symbolic</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkSeparator">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
         <child>
           <object class="GtkBox">
             <property name="visible">True</property>
@@ -203,7 +333,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">2</property>
+            <property name="position">4</property>
           </packing>
         </child>
         <child>
@@ -214,12 +344,9 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">3</property>
+            <property name="position">5</property>
           </packing>
         </child>
-
-        <!-- Select All button -->
-
         <child>
           <object class="GtkModelButton">
             <property name="visible">True</property>
@@ -232,12 +359,9 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">4</property>
+            <property name="position">6</property>
           </packing>
         </child>
-
-        <!-- Select None button -->
-
         <child>
           <object class="GtkModelButton">
             <property name="visible">True</property>
@@ -249,12 +373,9 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">5</property>
+            <property name="position">7</property>
           </packing>
         </child>
-
-        <!-- Invert selection button -->
-
         <child>
           <object class="GtkModelButton">
             <property name="visible">True</property>
@@ -267,10 +388,9 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">6</property>
+            <property name="position">8</property>
           </packing>
         </child>
-
         <child>
           <object class="GtkSeparator">
             <property name="visible">True</property>
@@ -279,12 +399,9 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">7</property>
+            <property name="position">9</property>
           </packing>
         </child>
-
-        <!-- View submenu button -->
-
         <child>
           <object class="GtkModelButton">
             <property name="visible">True</property>
@@ -297,14 +414,11 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">8</property>
+            <property name="position">10</property>
           </packing>
         </child>
-
-        <!-- Playback submenu button -->
-
         <child>
-          <object class="GtkModelButton" id="playback_modelbtn">
+          <object class="GtkModelButton">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">False</property>
@@ -314,13 +428,9 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">9</property>
+            <property name="position">11</property>
           </packing>
         </child>
-
-
-        <!-- Find button -->
-
         <child>
           <object class="GtkModelButton">
             <property name="visible">True</property>
@@ -333,7 +443,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">10</property>
+            <property name="position">12</property>
           </packing>
         </child>
         <child>
@@ -344,12 +454,9 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">11</property>
+            <property name="position">13</property>
           </packing>
         </child>
-
-        <!-- Preferences button -->
-
         <child>
           <object class="GtkModelButton">
             <property name="visible">True</property>
@@ -362,12 +469,9 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">12</property>
+            <property name="position">14</property>
           </packing>
         </child>
-
-        <!-- Help button -->
-
         <child>
           <object class="GtkModelButton">
             <property name="visible">True</property>
@@ -379,12 +483,9 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">13</property>
+            <property name="position">15</property>
           </packing>
         </child>
-
-        <!-- About button -->
-
         <child>
           <object class="GtkModelButton">
             <property name="visible">True</property>
@@ -396,18 +497,14 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">14</property>
+            <property name="position">16</property>
           </packing>
         </child>
       </object>
       <packing>
         <property name="submenu">main</property>
-        <property name="position">0</property>
       </packing>
     </child>
-
-    <!-- View submenu -->
-
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
@@ -444,10 +541,6 @@
             <property name="position">2</property>
           </packing>
         </child>
-
-
-        <!-- Statusbar toggle -->
-
         <child>
           <object class="GtkModelButton">
             <property name="visible">True</property>
@@ -462,9 +555,6 @@
             <property name="position">2</property>
           </packing>
         </child>
-
-        <!-- Equalizer toggle -->
-
         <child>
           <object class="GtkModelButton">
             <property name="visible">True</property>
@@ -493,9 +583,6 @@
             <property name="position">4</property>
           </packing>
         </child>
-
-        <!-- Log toggle -->
-
         <child>
           <object class="GtkModelButton">
             <property name="visible">True</property>
@@ -516,9 +603,6 @@
         <property name="position">1</property>
       </packing>
     </child>
-
-    <!-- Playback submenu -->
-
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
@@ -751,13 +835,78 @@
             <property name="position">9</property>
           </packing>
         </child>
+        <child>
+          <object class="GtkSeparator">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">10</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="action-name">win.scroll_follows_playback</property>
+            <property name="text" translatable="yes">Scroll follows playback</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">11</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="action-name">win.cursor_follows_playback</property>
+            <property name="text" translatable="yes">Cursor follows playback</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">12</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="action-name">win.stop_after_current</property>
+            <property name="text" translatable="yes">Stop after current track</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">13</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="action-name">win.stop_after_album</property>
+            <property name="text" translatable="yes">Stop after current album</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">14</property>
+          </packing>
+        </child>
       </object>
       <packing>
         <property name="submenu">playback</property>
         <property name="position">2</property>
       </packing>
     </child>
-
-
   </object>
 </interface>

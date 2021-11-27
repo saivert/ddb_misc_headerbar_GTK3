@@ -49,6 +49,7 @@ GtkWidget *headerbar_durationlabel;
 GtkWidget *headerbar_prevbtn;
 GtkWidget *headerbar_nextbtn;
 GtkWidget *headerbar_playback_button_box;
+GtkWidget *headerbar_app_menu_btn;
 
 #define GTK_BUILDER_GET_WIDGET(builder, name) (GtkWidget *)gtk_builder_get_object(builder, name)
 
@@ -71,6 +72,7 @@ static struct headerbarui_flag_s {
     gboolean show_designmode_button;
     gboolean show_time_remaining;
     gboolean hide_playback_buttons;
+    gboolean new_app_menu;
     int button_spacing;
 } headerbarui_flags;
 
@@ -594,6 +596,34 @@ loop_all_albums_activate(GtkMenuItem *menuitem, gpointer user_data)
 }
 
 static void
+action_scroll_follows_playback_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    gboolean active = toggle_and_get_active_menu_item ("scroll_follows_playback");
+    g_simple_action_set_state (action, g_variant_new_boolean (active)); 
+}
+
+static void
+action_cursor_follows_playback_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    gboolean active = toggle_and_get_active_menu_item ("cursor_follows_playback");
+    g_simple_action_set_state (action, g_variant_new_boolean (active)); 
+}
+
+static void
+action_stop_after_current_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    gboolean active = toggle_and_get_active_menu_item ("stop_after_current");
+    g_simple_action_set_state (action, g_variant_new_boolean (active)); 
+}
+
+static void
+action_stop_after_album_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    gboolean active = toggle_and_get_active_menu_item ("stop_after_album");
+    g_simple_action_set_state (action, g_variant_new_boolean (active)); 
+}
+
+static void
 common_checked_menuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
     gboolean act = gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (menuitem));
@@ -619,8 +649,10 @@ create_action_group(void)
     const GActionEntry entries[] = {
         {"designmode", NULL, NULL, "false", action_design_mode_change_state},
         {"toggle_log", action_toggle_log_activate, NULL, "false", NULL},
-        {"toggle_eq", action_toggle_eq_activate, NULL, get_checked_menu_item_active("view_eq") ? "true" : "false", NULL},
-        {"toggle_statusbar", action_toggle_statusbar_activate, NULL, get_checked_menu_item_active("view_status_bar") ? "true" : "false", NULL},
+        {"toggle_eq", action_toggle_eq_activate, NULL,
+            get_checked_menu_item_active("view_eq") ? "true" : "false", NULL},
+        {"toggle_statusbar", action_toggle_statusbar_activate, NULL,
+            get_checked_menu_item_active("view_status_bar") ? "true" : "false", NULL},
         {"toggle_menu", action_toggle_menu_activate, NULL, "false", NULL},
         {"copy_item", action_copy_item_activate, NULL, NULL, NULL},
         {"cut_item", action_cut_item_activate, NULL, NULL, NULL},
@@ -628,6 +660,14 @@ create_action_group(void)
         {"about", action_about_activate, NULL, NULL, NULL},
         {"shufflemode", action_shuffle_mode_activate, "s", "'off'", NULL},
         {"repeatmode", action_repeat_mode_activate, "s", "'off'", NULL},
+        {"scroll_follows_playback", action_scroll_follows_playback_activate, NULL,
+            get_checked_menu_item_active("scroll_follows_playback") ? "true" : "false", NULL},
+        {"cursor_follows_playback", action_cursor_follows_playback_activate, NULL,
+            get_checked_menu_item_active("cursor_follows_playback") ? "true" : "false", NULL},
+        {"stop_after_current", action_stop_after_current_activate, NULL,
+            get_checked_menu_item_active("stop_after_current") ? "true" : "false", NULL},
+        {"stop_after_album", action_stop_after_album_activate, NULL,
+            get_checked_menu_item_active("stop_after_album") ? "true" : "false", NULL},
     };
     GSimpleActionGroup *group;
 
@@ -774,6 +814,7 @@ void window_init_hook (void *userdata) {
     GtkStyleContext *volctx = gtk_widget_get_style_context(volbutton);
     gtk_style_context_remove_class(volctx, "flat");
     headerbar_menubtn =  GTK_BUILDER_GET_WIDGET(builder, "menubutton1");
+    headerbar_app_menu_btn =  GTK_BUILDER_GET_WIDGET(builder, "app_menu_btn");
     headerbar_seekbar = GTK_BUILDER_GET_WIDGET(builder, "seekbar");
     headerbar_playbtn = GTK_BUILDER_GET_WIDGET(builder, "playbtn");
     headerbar_pausebtn = GTK_BUILDER_GET_WIDGET(builder, "pausebtn");
@@ -804,6 +845,10 @@ void window_init_hook (void *userdata) {
     hookup_action_to_menu_item(G_ACTION_MAP(group), "toggle_log", "view_log");
     hookup_action_to_menu_item(G_ACTION_MAP(group), "toggle_eq", "view_eq");
     hookup_action_to_menu_item(G_ACTION_MAP(group), "toggle_statusbar", "view_status_bar");
+    hookup_action_to_menu_item(G_ACTION_MAP(group), "scroll_follows_playback", "scroll_follows_playback");
+    hookup_action_to_menu_item(G_ACTION_MAP(group), "cursor_follows_playback", "cursor_follows_playback");
+    hookup_action_to_menu_item(G_ACTION_MAP(group), "stop_after_current", "stop_after_current");
+    hookup_action_to_menu_item(G_ACTION_MAP(group), "stop_after_album", "stop_after_album");
 
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "shufflemode", G_CALLBACK(order_linear_activate), "order_linear");
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "shufflemode", G_CALLBACK(order_shuffle_activate), "order_shuffle");
@@ -890,6 +935,7 @@ void headerbarui_getconfig()
     headerbarui_flags.button_spacing = deadbeef->conf_get_int ("headerbarui.button_spacing", 6);
     headerbarui_flags.show_time_remaining = deadbeef->conf_get_int ("headerbarui.show_time_remaining", 0);
     headerbarui_flags.hide_playback_buttons = deadbeef->conf_get_int ("headerbarui.hide_playback_buttons", 0);
+    headerbarui_flags.new_app_menu = deadbeef->conf_get_int ("headerbarui.new_app_menu", 0);
 }
 
 static
@@ -966,6 +1012,9 @@ headerbarui_configchanged_cb(gpointer user_data)
 
     gtk_widget_set_visible(headerbar_playback_button_box, !headerbarui_flags.hide_playback_buttons);
 
+    gtk_widget_set_visible(headerbar_app_menu_btn, headerbarui_flags.new_app_menu);
+    gtk_widget_set_visible(headerbar_menubtn, !headerbarui_flags.new_app_menu);
+
     return FALSE;
 }
 
@@ -1001,6 +1050,7 @@ int headerbarui_disconnect(void)
 static const char settings_dlg[] =
     "property \"Disable plugin (requires restart)\" checkbox headerbarui.disable 0;\n"
     "property \"Embed menubar instead of showing hamburger button (requires restart)\" checkbox headerbarui.embed_menubar 0;\n"
+    "property \"Show new popover menu instead of traditional context menu on hamburger button\" checkbox headerbarui.new_app_menu 0;\n"
     "property \"Button spacing (pixels)\" spinbtn[0,100,1] headerbarui.button_spacing 6;\n"
     "property \"Use combined play/pause button\" checkbox headerbarui.combined_playpause 1;\n"
     "property \"Show seekbar\" checkbox headerbarui.show_seek_bar 1;\n"
