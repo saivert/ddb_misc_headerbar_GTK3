@@ -1098,10 +1098,8 @@ update_plugin_actions() {
     GSList *list = NULL;
 
     GtkBuilder *builder = gtk_builder_new_from_resource("/org/deadbeef/headerbarui/menu.ui");
-    g_object_unref(file_menu);
     file_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
 
-    g_object_unref(playback_menu);
     playback_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "playback-menu"));
 
 
@@ -1118,6 +1116,9 @@ update_plugin_actions() {
 
     gtk_menu_button_set_menu_model (GTK_MENU_BUTTON(headerbar_add_menu_btn), file_menu);
     gtk_menu_button_set_menu_model (GTK_MENU_BUTTON(headerbar_playback_menu_btn), playback_menu);
+
+    g_object_unref(builder);
+
 }
 
 void window_init_hook (void *userdata) {
@@ -1154,8 +1155,8 @@ void window_init_hook (void *userdata) {
     headerbar_playback_button_box = GTK_BUILDER_GET_WIDGET(builder, "playback_button_box");
     headerbar_add_menu_btn = GTK_BUILDER_GET_WIDGET(builder, "file_menu_btn");
     headerbar_playback_menu_btn = GTK_BUILDER_GET_WIDGET(builder, "playback_menu_btn");
-    file_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
-    playback_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "playback-menu"));
+    // file_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
+    // playback_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "playback-menu"));
 
     GActionGroup *group = create_action_group();
     gtk_widget_insert_action_group (headerbar, "win", group);
