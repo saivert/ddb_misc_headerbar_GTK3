@@ -40,24 +40,64 @@
     </section>
   </menu>
 
-  <menu id="order-menu">
+  <menu id="playback-menu">
     <section>
-      <attribute name="label">Order</attribute>
+      <attribute name="label">Shuffle</attribute>
       <item>
-        <attribute name="label">Linear</attribute>
-        <attribute name="action">db.order_linear</attribute>
+        <attribute name="label">Off</attribute>
+        <attribute name="action">win.shufflemode</attribute>
+        <attribute name="target">off</attribute>
       </item>
       <item>
-        <attribute name="label">Shuffle tracks</attribute>
-        <attribute name="action">db.order_shuffle</attribute>
+        <attribute name="label">Tracks</attribute>
+        <attribute name="action">win.shufflemode</attribute>
+        <attribute name="target">tracks</attribute>
       </item>
       <item>
-        <attribute name="label">Shuffle albums</attribute>
-        <attribute name="action">db.order_shuffle_albums</attribute>
+        <attribute name="label">Albums</attribute>
+        <attribute name="action">win.shufflemode</attribute>
+        <attribute name="target">albums</attribute>
       </item>
       <item>
-        <attribute name="label">Random</attribute>
-        <attribute name="action">db.order_random</attribute>
+        <attribute name="label">Random tracks</attribute>
+        <attribute name="action">win.shufflemode</attribute>
+        <attribute name="target">random</attribute>
+      </item>
+    </section>
+    <section>
+      <attribute name="label">Repeat</attribute>
+      <item>
+        <attribute name="label">All tracks</attribute>
+        <attribute name="action">win.repeatmode</attribute>
+        <attribute name="target">all</attribute>
+      </item>
+      <item>
+        <attribute name="label">One track</attribute>
+        <attribute name="action">win.repeatmode</attribute>
+        <attribute name="target">single</attribute>
+      </item>
+      <item>
+        <attribute name="label">Off</attribute>
+        <attribute name="action">win.repeatmode</attribute>
+        <attribute name="target">off</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label">Scroll follows playback</attribute>
+        <attribute name="action">win.scroll_follows_playback</attribute>
+      </item>
+      <item>
+        <attribute name="label">Cursor follows playback</attribute>
+        <attribute name="action">win.cursor_follows_playback</attribute>
+      </item>
+      <item>
+        <attribute name="label">Stop after current track</attribute>
+        <attribute name="action">win.stop_after_current</attribute>
+      </item>
+      <item>
+        <attribute name="label">Stop after current album</attribute>
+        <attribute name="action">win.stop_after_album</attribute>
       </item>
     </section>
   </menu>

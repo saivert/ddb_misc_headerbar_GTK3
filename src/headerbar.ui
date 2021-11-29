@@ -125,7 +125,7 @@ Author: Nicolai Syvertsen
               </packing>
             </child>
             <child>
-              <object class="GtkEventBox">
+              <object class="GtkEventBox" id="durationeventbox">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <property name="events">GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
@@ -366,6 +366,24 @@ audio-volume-medium-symbolic</property>
       </object>
       <packing>
         <property name="position">6</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkMenuButton" id="playback_menu_btn">
+        <property name="visible">True</property>
+        <property name="can-focus">True</property>
+        <property name="receives-default">True</property>
+        <child>
+          <object class="GtkImage">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="icon-name">media-playlist-shuffle-symbolic</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="pack-type">end</property>
+        <property name="position">7</property>
       </packing>
     </child>
   </object>

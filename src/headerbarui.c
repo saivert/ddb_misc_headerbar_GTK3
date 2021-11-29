@@ -17,12 +17,16 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <gio/gio.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 #include <deadbeef/deadbeef.h>
 #include <deadbeef/gtkui_api.h>
+#include "gio/gmenu.h"
+#include "gio/gmenumodel.h"
 #include "resources.h"
 #include "headerbarui.h"
 #include <math.h>
@@ -52,6 +56,7 @@ GtkWidget *headerbar_nextbtn;
 GtkWidget *headerbar_playback_button_box;
 GtkWidget *headerbar_app_menu_btn;
 GtkWidget *headerbar_add_menu_btn;
+GtkWidget *headerbar_playback_menu_btn;
 
 #define GTK_BUILDER_GET_WIDGET(builder, name) (GtkWidget *)gtk_builder_get_object(builder, name)
 
@@ -794,6 +799,327 @@ hookup_action_to_radio_menu_item(GActionMap *map, const gchar *action_name, GCal
     g_signal_connect_after (G_OBJECT (lookup_widget (mainwin, glade_id)), "activate", event_handler, action);
 }
 
+
+struct plugin_action_item {
+    int levels;
+    char *menus[16]; //Max 16 levels deep for now.
+    char *action;
+};
+
+static int
+plugin_action_compare(gconstpointer a, gconstpointer b)
+{
+    const struct plugin_action_item *item_a = a;
+    const struct plugin_action_item *item_b = b;
+
+    if (item_a->levels != item_b->levels)
+        return -1;
+
+    char *itembufa;
+    size_t itembufa_size;
+    char *itembufb;
+    size_t itembufb_size;
+
+    FILE *streama = open_memstream(&itembufa, &itembufa_size);
+    FILE *streamb = open_memstream(&itembufb, &itembufb_size);
+
+    int i, y;
+    for (i=0; i < item_a->levels; i++) {
+        fprintf(streama, "%s|", item_a->menus[i]);
+    }
+    fclose(streama);
+
+    for (y=0; y < item_b->levels; y++) {
+        fprintf(streamb, "%s|", item_b->menus[y]);
+    }
+    fclose(streamb);
+
+    int res = strcmp(itembufa, itembufb);
+    free(itembufa);
+    free(itembufb);
+
+    return res;
+}
+
+static void
+print_actions_foreach(gpointer data, gpointer user_data)
+{
+    const struct plugin_action_item *item = data;
+    printf("Item level = %d, ", item->levels);
+    for (int i=0; i< item->levels; i++) {
+        printf("%s|", item->menus[i]);
+    }
+    printf("%s\n", item->action ? item->action : "");
+}
+
+static void
+add_file_action_menuitems(GSList **plist, GMenuModel *menumodel)
+{
+    const struct plugin_action_item *plugin_item;
+    const struct plugin_action_item *prev_plugin_item;
+    int curlevel=1;
+    GMenuModel *curmenu=menumodel;
+    GMenuModel *prevmenu;
+
+    for (GSList *item = *plist; item; item = item->next) {
+
+        plugin_item = (struct plugin_action_item *)item->data;
+
+        if (!strcmp(plugin_item->menus[0], "File")) {
+
+            if (plugin_item->levels-1 > curlevel) {
+                // We have gone up a level, create a new submenu
+                prevmenu = curmenu;
+                prev_plugin_item = plugin_item;
+                curmenu = G_MENU_MODEL(g_menu_new());
+                curlevel = plugin_item->levels-1;
+            } else if (plugin_item->levels-1 < curlevel) {
+                // We have gone down a level, now insert the submenu
+                curlevel = plugin_item->levels-1;
+                g_menu_insert_submenu(G_MENU(menumodel), 1, prev_plugin_item->menus[curlevel], G_MENU_MODEL(curmenu));
+                curmenu = prevmenu;
+            }
+            if (plugin_item->action) {            
+                char s[256];
+                snprintf(s, sizeof(s), "plg.%s", plugin_item->action);
+                g_menu_insert(G_MENU(curmenu), 2, plugin_item->menus[curlevel], s);
+            }
+
+            curlevel = plugin_item->levels-1;
+
+        }
+
+    }
+}
+
+static void
+add_playback_action_menuitems(GSList **plist, GMenuModel *menumodel)
+{
+    const struct plugin_action_item *plugin_item;
+    const struct plugin_action_item *prev_plugin_item;
+    int curlevel=1;
+    GMenuModel *curmenu=menumodel;
+    GMenuModel *prevmenu;
+
+    for (GSList *item = *plist; item; item = item->next) {
+
+        plugin_item = (struct plugin_action_item *)item->data;
+
+        if (!strcmp(plugin_item->menus[0], "Playback") || !strcmp(plugin_item->menus[0], "Edit")) {
+
+            if (plugin_item->levels-1 > curlevel) {
+                // We have gone up a level, create a new submenu
+                prevmenu = curmenu;
+                prev_plugin_item = plugin_item;
+                curmenu = G_MENU_MODEL(g_menu_new());
+                curlevel = plugin_item->levels-1;
+            } else if (plugin_item->levels-1 < curlevel) {
+                // We have gone down a level, now insert the submenu
+                curlevel = plugin_item->levels-1;
+                g_menu_insert_submenu(G_MENU(menumodel), 1, prev_plugin_item->menus[curlevel], G_MENU_MODEL(curmenu));
+                curmenu = prevmenu;
+            }
+            if (plugin_item->action) {            
+                char s[256];
+                snprintf(s, sizeof(s), "plg.%s", plugin_item->action);
+                g_menu_insert(G_MENU(curmenu), 1, plugin_item->menus[curlevel], s);
+            }
+            curlevel = plugin_item->levels-1;
+
+        }
+
+    }
+}
+
+static int
+menu_add_action_items(GSList **plist, GSimpleActionGroup *actiongroup) {
+    ddb_playItem_t *selected_track = NULL;
+    ddb_action_context_t action_context = DDB_ACTION_CTX_MAIN;
+    int hide_remove_from_disk = deadbeef->conf_get_int ("gtkui.hide_remove_from_disk", 0);
+    DB_plugin_t **plugins = deadbeef->plug_get_list();
+    int i;
+    int added_entries = 0;
+
+
+
+    for (i = 0; plugins[i]; i++)
+    {
+        if (!plugins[i]->get_actions)
+            continue;
+
+        DB_plugin_action_t *actions = plugins[i]->get_actions (selected_track);
+        DB_plugin_action_t *action;
+
+        int count = 0;
+        for (action = actions; action; action = action->next)
+        {
+            if (action->name && !strcmp (action->name, "delete_from_disk") && hide_remove_from_disk) {
+                continue;
+            }
+
+            if (action->flags&DB_ACTION_DISABLED) {
+                continue;
+            }
+
+            if (!((action->callback2 && (action->flags & DB_ACTION_ADD_MENU)) || action->callback)) {
+                continue;
+            }
+
+            if (action_context == DDB_ACTION_CTX_SELECTION) {
+                if ((action->flags & DB_ACTION_COMMON)
+                    || !(action->flags & (DB_ACTION_MULTIPLE_TRACKS | DB_ACTION_SINGLE_TRACK))) {
+                    continue;
+                }
+            }
+
+            if (action_context == DDB_ACTION_CTX_PLAYLIST) {
+                if (action->flags & DB_ACTION_EXCLUDE_FROM_CTX_PLAYLIST) {
+                    continue;
+                }
+                if (action->flags & DB_ACTION_COMMON) {
+                    continue;
+                }
+            }
+            else if (action_context == DDB_ACTION_CTX_MAIN) {
+                if (!((action->flags & (DB_ACTION_COMMON|DB_ACTION_ADD_MENU)) == (DB_ACTION_COMMON|DB_ACTION_ADD_MENU))) {
+                    continue;
+                }
+                const char *slash_test = action->title;
+                while (NULL != (slash_test = strchr (slash_test, '/'))) {
+                    if (slash_test && slash_test > action->title && *(slash_test-1) == '\\') {
+                        slash_test++;
+                        continue;
+                    }
+                    break;
+                }
+
+                if (slash_test == NULL) {
+                    continue;
+                }
+            }
+
+
+            // create submenus (separated with '/')
+            const char *prev = action->title;
+            while (*prev && *prev == '/') {
+                prev++;
+            }
+
+            int levels = 0;
+            struct plugin_action_item *item;
+            item = malloc(sizeof(struct plugin_action_item));
+
+            *plist = g_slist_append(*plist, item);
+
+            for (;;) {
+                const char *slash = strchr (prev, '/');
+                char name[slash-prev+1];
+                if (slash && *(slash-1) != '\\') {
+                    // replace \/ with /
+                    const char *p = prev;
+                    char *t = name;
+                    while (*p && p < slash) {
+                        if (*p == '\\' && *(p+1) == '/') {
+                            *t++ = '/';
+                            p += 2;
+                        }
+                        else {
+                            *t++ = *p++;
+                        }
+                    }
+                    *t = 0;
+
+                    item->menus[levels++] = strdup(name);
+                }
+                else {
+                    break;
+                }
+                prev = slash+1;
+            }
+
+
+            count++;
+            added_entries++;
+
+            // replace \/ with /
+            const char *p = /* current */1 ? prev : action->title;
+            char title[strlen (p)+1];
+            char *t = title;
+            while (*p) {
+                if (*p == '\\' && *(p+1) == '/') {
+                    *t++ = '/';
+                    p += 2;
+                }
+                else {
+                    *t++ = *p++;
+                }
+            }
+            *t = 0;
+
+            item->menus[levels++] = strdup(title);
+            item->action = strdup(action->name);
+            item->levels = levels;
+
+            if (!g_action_map_lookup_action(G_ACTION_MAP (actiongroup), action->name)) {
+                GSimpleAction *simpleaction;
+
+                simpleaction = g_simple_action_new (action->name, (action->flags & DB_ACTION_MULTIPLE_TRACKS) ? G_VARIANT_TYPE_INT32 : NULL);
+                g_object_set_data (G_OBJECT (simpleaction), "deadbeefaction", action);
+                g_signal_connect (simpleaction, "activate", G_CALLBACK (action_activate), NULL);
+                g_action_map_add_action (G_ACTION_MAP (actiongroup), G_ACTION (simpleaction));
+            }
+
+        }
+    }
+    return added_entries;
+}
+
+static void
+item_free(void *data)
+{
+    struct plugin_action_item *item = data;
+    for (int i = 0; i < item->levels; i++) {
+        free(item->menus[i]);
+    }
+}
+
+GMenuModel *file_menu;
+GMenuModel *playback_menu;
+
+static void
+update_plugin_actions() {
+    GActionGroup *actiongroup;// = gtk_widget_get_action_group(headerbar, "plg");
+
+    actiongroup = G_ACTION_GROUP(g_simple_action_group_new());
+    gtk_widget_insert_action_group(headerbar, "plg", actiongroup);
+
+    GMenuModel *plugin_actions_section = G_MENU_MODEL(g_menu_new());
+
+    GSList *list = NULL;
+
+    GtkBuilder *builder = gtk_builder_new_from_resource("/org/deadbeef/headerbarui/menu.ui");
+    g_object_unref(file_menu);
+    file_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
+
+    g_object_unref(playback_menu);
+    playback_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "playback-menu"));
+
+
+    if (menu_add_action_items(&list, G_SIMPLE_ACTION_GROUP(actiongroup)) > 0) {
+        list = g_slist_sort(list, plugin_action_compare);
+        // g_slist_foreach(list, print_actions_foreach, NULL); //DEBUG
+        add_file_action_menuitems(&list, file_menu);
+
+        add_playback_action_menuitems(&list, plugin_actions_section);
+        g_menu_insert_section(G_MENU(playback_menu), 3, "Plugin actions", plugin_actions_section);
+        g_object_unref(plugin_actions_section);
+        g_slist_free_full (list, item_free);
+    }
+
+    gtk_menu_button_set_menu_model (GTK_MENU_BUTTON(headerbar_add_menu_btn), file_menu);
+    gtk_menu_button_set_menu_model (GTK_MENU_BUTTON(headerbar_playback_menu_btn), playback_menu);
+}
+
 void window_init_hook (void *userdata) {
     GtkWidget *menubar;
     GtkBuilder *builder;
@@ -827,17 +1153,17 @@ void window_init_hook (void *userdata) {
     headerbar_nextbtn = GTK_BUILDER_GET_WIDGET(builder, "nextbtn");
     headerbar_playback_button_box = GTK_BUILDER_GET_WIDGET(builder, "playback_button_box");
     headerbar_add_menu_btn = GTK_BUILDER_GET_WIDGET(builder, "file_menu_btn");
-
-    GMenuModel *menumodel = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
-
-    GMenuItem *cd_add = g_menu_item_new("Add Audio CD", "db.cd_add");
-    g_menu_insert_item(G_MENU(menumodel), 2, cd_add);
-    g_object_unref(cd_add);
-
-    gtk_menu_button_set_menu_model (GTK_MENU_BUTTON(headerbar_add_menu_btn), menumodel);
+    headerbar_playback_menu_btn = GTK_BUILDER_GET_WIDGET(builder, "playback_menu_btn");
+    file_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
+    playback_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "playback-menu"));
 
     GActionGroup *group = create_action_group();
     gtk_widget_insert_action_group (headerbar, "win", group);
+
+    GActionGroup *deadbeef_action_group = create_action_group_deadbeef();    
+    gtk_widget_insert_action_group (headerbar, "db", deadbeef_action_group);
+
+    update_plugin_actions();
 
     GtkWidget *app_menu = GTK_WIDGET(gtk_builder_get_object (builder, "app_menu"));
     gtk_menu_button_set_popover(GTK_MENU_BUTTON(headerbar_app_menu_btn), app_menu);
@@ -860,8 +1186,6 @@ void window_init_hook (void *userdata) {
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "repeatmode", G_CALLBACK(loop_single_activate), "loop_single");
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "repeatmode", G_CALLBACK(loop_all_albums_activate), "loop_all");
 
-    GActionGroup *deadbeef_action_group = create_action_group_deadbeef();    
-    gtk_widget_insert_action_group (headerbar, "db", deadbeef_action_group);
 
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     gtk_widget_show(headerbar);
@@ -1029,6 +1353,14 @@ headerbarui_configchanged_cb(gpointer user_data)
     return FALSE;
 }
 
+static
+gboolean
+headerbarui_actionschanged_cb(gpointer user_data)
+{
+    update_plugin_actions();
+    return FALSE;
+}
+
 static int
 headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     if (id != DB_EV_CONFIGCHANGED && headerbarui_flags.disable) return 0;
@@ -1039,6 +1371,9 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
         break;
     case DB_EV_SONGFINISHED:
         headerbar_stoptimer = 1;
+        break;
+    case DB_EV_ACTIONSCHANGED:
+        g_idle_add (headerbarui_actionschanged_cb, NULL);
         break;
     case DB_EV_CONFIGCHANGED:
         headerbarui_getconfig();

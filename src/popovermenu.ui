@@ -2,7 +2,7 @@
 <!-- Generated with glade 3.38.2 -->
 <!-- Glade cannot handle this! -->
 <interface>
-  <requires lib="gtk+" version="3.22"/>
+  <requires lib="gtk+" version="3.24"/>
   <object class="GtkPopoverMenu" id="app_menu">
     <property name="can-focus">False</property>
     <child>
@@ -21,10 +21,12 @@
             <property name="margin-top">6</property>
             <property name="margin-bottom">6</property>
             <property name="spacing">6</property>
+            <property name="homogeneous">True</property>
             <child>
               <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
+                <property name="halign">start</property>
                 <property name="hexpand">True</property>
                 <property name="label" translatable="yes">Playlist</property>
               </object>
@@ -126,17 +128,16 @@
         <child>
           <object class="GtkBox">
             <property name="can-focus">False</property>
-            <property name="margin-left">6</property>
             <property name="margin-start">6</property>
             <property name="margin-top">6</property>
             <property name="margin-bottom">6</property>
             <property name="spacing">6</property>
+            <property name="homogeneous">True</property>
             <child>
               <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="margin-right">24</property>
-                <property name="margin-end">24</property>
+                <property name="halign">start</property>
                 <property name="hexpand">True</property>
                 <property name="label" translatable="yes">File</property>
               </object>
@@ -241,11 +242,12 @@
             <property name="margin-top">6</property>
             <property name="margin-bottom">6</property>
             <property name="spacing">6</property>
+            <property name="homogeneous">True</property>
             <child>
               <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="margin-end">24</property>
+                <property name="halign">start</property>
                 <property name="hexpand">True</property>
                 <property name="label" translatable="yes">Edit</property>
               </object>
@@ -432,6 +434,20 @@
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="action-name">db.jump_to_current_track</property>
+            <property name="text" translatable="yes">Jump to current track</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">12</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
             <property name="margin-bottom">6</property>
             <property name="action-name">db.find</property>
             <property name="text" translatable="yes">Find</property>
@@ -439,7 +455,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">12</property>
+            <property name="position">13</property>
           </packing>
         </child>
         <child>
@@ -450,7 +466,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">13</property>
+            <property name="position">14</property>
           </packing>
         </child>
         <child>
@@ -465,7 +481,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">14</property>
+            <property name="position">15</property>
           </packing>
         </child>
         <child>
@@ -479,7 +495,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">15</property>
+            <property name="position">16</property>
           </packing>
         </child>
         <child>
@@ -493,7 +509,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">16</property>
+            <property name="position">17</property>
           </packing>
         </child>
       </object>
