@@ -3,7 +3,7 @@
 <!-- Glade cannot handle this! -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
-  <object class="GtkPopoverMenu" id="app_menu">
+  <object class="GtkPopoverMenu" id="app_menu_popover">
     <property name="can-focus">False</property>
     <child>
       <object class="GtkBox">
@@ -16,230 +16,9 @@
         <property name="orientation">vertical</property>
         <child>
           <object class="GtkBox">
-            <property name="can-focus">False</property>
-            <property name="margin-start">6</property>
-            <property name="margin-top">6</property>
-            <property name="margin-bottom">6</property>
-            <property name="spacing">6</property>
-            <property name="homogeneous">True</property>
-            <child>
-              <object class="GtkLabel">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="halign">start</property>
-                <property name="hexpand">True</property>
-                <property name="label" translatable="yes">Playlist</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton">
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-                <property name="tooltip-text" translatable="yes">New playlist</property>
-                <property name="halign">center</property>
-                <property name="valign">center</property>
-                <property name="hexpand">True</property>
-                <property name="action-name">db.new_playlist</property>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="icon-name">tab-new-symbolic</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton">
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-                <property name="tooltip-text" translatable="yes">Load playlist</property>
-                <property name="halign">center</property>
-                <property name="valign">center</property>
-                <property name="hexpand">True</property>
-                <property name="action-name">db.load_playlist</property>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="icon-name">document-open-symbolic</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton">
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-                <property name="tooltip-text" translatable="yes">Save playlist</property>
-                <property name="halign">center</property>
-                <property name="valign">center</property>
-                <property name="hexpand">True</property>
-                <property name="action-name">db.save_playlist</property>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="icon-name">document-save-as-symbolic</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">3</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkSeparator">
-            <property name="can-focus">False</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkBox">
-            <property name="can-focus">False</property>
-            <property name="margin-start">6</property>
-            <property name="margin-top">6</property>
-            <property name="margin-bottom">6</property>
-            <property name="spacing">6</property>
-            <property name="homogeneous">True</property>
-            <child>
-              <object class="GtkLabel">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="halign">start</property>
-                <property name="hexpand">True</property>
-                <property name="label" translatable="yes">File</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton">
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-                <property name="tooltip-text" translatable="yes">Open file(s)</property>
-                <property name="halign">center</property>
-                <property name="valign">center</property>
-                <property name="hexpand">True</property>
-                <property name="action-name">db.open_files</property>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="icon-name">document-open-symbolic</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton">
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-                <property name="tooltip-text" translatable="yes" comments="Translators: This is a verb">Add file(s)</property>
-                <property name="halign">center</property>
-                <property name="hexpand">True</property>
-                <property name="action-name">db.add_files</property>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="icon-name">document-new-symbolic</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton">
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-                <property name="tooltip-text" translatable="yes">Add folder(s)</property>
-                <property name="halign">center</property>
-                <property name="hexpand">True</property>
-                <property name="action-name">db.add_folders</property>
-                <child>
-                  <object class="GtkImage">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="icon-name">folder-new-symbolic</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">3</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">2</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkSeparator">
-            <property name="can-focus">False</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">3</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkBox">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <property name="margin-start">6</property>
-            <property name="margin-top">6</property>
             <property name="margin-bottom">6</property>
             <property name="spacing">6</property>
             <property name="homogeneous">True</property>
@@ -331,6 +110,61 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkSeparator">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="margin-top">6</property>
+            <property name="action-name">db.select_all</property>
+            <property name="text" translatable="yes">Select All</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="action-name">db.deselect_all</property>
+            <property name="text" translatable="yes">Select None</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkModelButton">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="margin-bottom">6</property>
+            <property name="action-name">db.invert_selection</property>
+            <property name="text" translatable="yes">Invert Selection</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
             <property name="position">4</property>
           </packing>
         </child>
@@ -349,61 +183,6 @@
           <object class="GtkModelButton">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
-            <property name="receives-default">True</property>
-            <property name="margin-top">6</property>
-            <property name="action-name">db.select_all</property>
-            <property name="text" translatable="yes">Select All</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">6</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkModelButton">
-            <property name="visible">True</property>
-            <property name="can-focus">True</property>
-            <property name="receives-default">True</property>
-            <property name="action-name">db.deselect_all</property>
-            <property name="text" translatable="yes">Select None</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">7</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkModelButton">
-            <property name="visible">True</property>
-            <property name="can-focus">True</property>
-            <property name="receives-default">True</property>
-            <property name="margin-bottom">6</property>
-            <property name="action-name">db.invert_selection</property>
-            <property name="text" translatable="yes">Invert Selection</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">8</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkSeparator">
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">9</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkModelButton">
-            <property name="visible">True</property>
-            <property name="can-focus">True</property>
             <property name="receives-default">False</property>
             <property name="margin-top">6</property>
             <property name="text" translatable="yes">View</property>
@@ -412,7 +191,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">10</property>
+            <property name="position">6</property>
           </packing>
         </child>
         <child>
@@ -426,7 +205,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">11</property>
+            <property name="position">7</property>
           </packing>
         </child>
         <child>
@@ -440,7 +219,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">12</property>
+            <property name="position">8</property>
           </packing>
         </child>
         <child>
@@ -455,7 +234,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">13</property>
+            <property name="position">9</property>
           </packing>
         </child>
         <child>
@@ -466,7 +245,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">14</property>
+            <property name="position">10</property>
           </packing>
         </child>
         <child>
@@ -481,7 +260,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">15</property>
+            <property name="position">11</property>
           </packing>
         </child>
         <child>
@@ -495,7 +274,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">16</property>
+            <property name="position">12</property>
           </packing>
         </child>
         <child>
@@ -509,7 +288,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">17</property>
+            <property name="position">13</property>
           </packing>
         </child>
       </object>

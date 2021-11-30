@@ -102,5 +102,88 @@
     </section>
   </menu>
 
+  <menu id="app-menu">
+    <section>
+      <attribute name="display-hint">horizontal-buttons</attribute>
+      <item>
+        <attribute name="label">Cut</attribute>
+        <attribute name="action">win.cut_item</attribute>
+        <attribute name="verb-icon">edit-cut-symbolic</attribute>
+      </item>
+      <item>
+        <attribute name="label">Copy</attribute>
+        <attribute name="action">win.copy_item</attribute>
+        <attribute name="verb-icon">edit-copy-symbolic</attribute>
+      </item>
+      <item>
+        <attribute name="label">Paste</attribute>
+        <attribute name="action">win.paste_item</attribute>
+        <attribute name="verb-icon">edit-paste-symbolic</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label">Select All</attribute>
+        <attribute name="action">db.select_all</attribute>
+      </item>
+      <item>
+        <attribute name="label">Select None</attribute>
+        <attribute name="action">db.deselect_all</attribute>
+      </item>
+      <item>
+        <attribute name="label">Invert Selection</attribute>
+        <attribute name="action">db.invert_selection</attribute>
+      </item>
+    </section>
+    <section>
+      <submenu id="view-menu">
+        <attribute name="label">View</attribute>
+        <item>
+          <attribute name="label">Design mode</attribute>
+          <attribute name="action">win.designmode</attribute>
+        </item>
+        <item>
+          <attribute name="label">Status bar</attribute>
+          <attribute name="action">win.toggle_statusbar</attribute>
+        </item>
+        <item>
+          <attribute name="label">Equalizer</attribute>
+          <attribute name="action">win.toggle_eq</attribute>
+        </item>
+        <item>
+          <attribute name="label">Menu</attribute>
+          <attribute name="action">win.toggle_menu</attribute>
+        </item>
+        <item>
+          <attribute name="label">Log</attribute>
+          <attribute name="action">win.toggle_log</attribute>
+        </item>
+      </submenu>
+    </section>
+    <item>
+      <attribute name="label">Jump to current track</attribute>
+      <attribute name="action">db.jump_to_current_track</attribute>
+    </item>
+    <item>
+      <attribute name="label">Find</attribute>
+      <attribute name="action">db.find</attribute>
+    </item>
 
+    <!-- Playback options submenu gets inserted here -->
+
+    <section>
+      <item>
+        <attribute name="label">_Preferences</attribute>
+        <attribute name="action">db.preferences</attribute>
+      </item>
+      <item>
+        <attribute name="label">_Help</attribute>
+        <attribute name="action">db.help</attribute>
+      </item>
+      <item>
+        <attribute name="label">_About DeaDBeeF</attribute>
+        <attribute name="action">win.about</attribute>
+      </item>
+    </section>
+  </menu>
 </interface>

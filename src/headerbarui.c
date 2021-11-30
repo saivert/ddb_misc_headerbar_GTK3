@@ -902,7 +902,7 @@ add_file_action_menuitems(GSList **plist, GMenuModel *menumodel)
 }
 
 static void
-add_playback_action_menuitems(GSList **plist, GMenuModel *menumodel)
+add_playback_action_menuitems(GSList **plist, GMenuModel *menumodel, const char *menu_to_add_to)
 {
     const struct plugin_action_item *plugin_item;
     const struct plugin_action_item *prev_plugin_item;
@@ -914,7 +914,7 @@ add_playback_action_menuitems(GSList **plist, GMenuModel *menumodel)
 
         plugin_item = (struct plugin_action_item *)item->data;
 
-        if (!strcmp(plugin_item->menus[0], "Playback") || !strcmp(plugin_item->menus[0], "Edit")) {
+        if (!strcmp(plugin_item->menus[0], menu_to_add_to)) {
 
             if (plugin_item->levels-1 > curlevel) {
                 // We have gone up a level, create a new submenu
@@ -1090,10 +1090,12 @@ item_free(void *data)
     for (int i = 0; i < item->levels; i++) {
         free(item->menus[i]);
     }
+    free(item->action);
 }
 
 GMenuModel *file_menu;
 GMenuModel *playback_menu;
+GMenuModel *app_menu;
 
 static void
 update_plugin_actions() {
@@ -1102,17 +1104,18 @@ update_plugin_actions() {
     actiongroup = G_ACTION_GROUP(g_simple_action_group_new());
     gtk_widget_insert_action_group(headerbar, "plg", actiongroup);
 
-    GMenuModel *plugin_actions_section = G_MENU_MODEL(g_menu_new());
-
     GSList *list = NULL;
 
     GtkBuilder *builder = gtk_builder_new_from_resource("/org/deadbeef/headerbarui/menu.ui");
     file_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
 
     playback_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "playback-menu"));
+    app_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "app-menu"));
 
 
     if (menu_add_action_items(&list, G_SIMPLE_ACTION_GROUP(actiongroup)) > 0) {
+        GMenuModel *tmpsection;
+
         list = g_slist_sort(list, plugin_action_compare);
 #ifdef DEBUG
         g_slist_foreach(list, print_actions_foreach, NULL);
@@ -1120,14 +1123,26 @@ update_plugin_actions() {
 
         add_file_action_menuitems(&list, file_menu);
 
-        add_playback_action_menuitems(&list, plugin_actions_section);
-        g_menu_insert_section(G_MENU(playback_menu), 3, "Plugin actions", plugin_actions_section);
-        g_object_unref(plugin_actions_section);
+        tmpsection = G_MENU_MODEL(g_menu_new());
+        add_playback_action_menuitems(&list, tmpsection, "Playback");
+        g_menu_append_section(G_MENU(playback_menu), "Plugin actions", tmpsection);
+        g_object_unref(tmpsection);
+
+        tmpsection = G_MENU_MODEL(g_menu_new());
+        add_playback_action_menuitems(&list, tmpsection, "Edit");
+        g_menu_insert_section(G_MENU(app_menu), 5, "Plugin actions", tmpsection);
+        g_object_unref(tmpsection);
+
         g_slist_free_full (list, item_free);
     }
 
     gtk_menu_button_set_menu_model (GTK_MENU_BUTTON(headerbar_add_menu_btn), file_menu);
     gtk_menu_button_set_menu_model (GTK_MENU_BUTTON(headerbar_playback_menu_btn), playback_menu);
+    gtk_menu_button_set_menu_model (GTK_MENU_BUTTON(headerbar_app_menu_btn), app_menu);
+
+    if (!headerbarui_flags.show_playback_button) {
+        g_menu_insert_submenu(G_MENU(app_menu), 3, "Playback options", playback_menu);
+    }
 
     g_object_unref(builder);
 
@@ -1145,7 +1160,6 @@ void window_init_hook (void *userdata) {
 
     builder = gtk_builder_new_from_resource("/org/deadbeef/headerbarui/headerbar.ui");
     gtk_builder_add_from_resource (builder, "/org/deadbeef/headerbarui/menu.ui", NULL);
-    gtk_builder_add_from_resource (builder, "/org/deadbeef/headerbarui/popovermenu.ui", NULL);
     headerbar = GTK_BUILDER_GET_WIDGET(builder, "headerbar1");
     volbutton = GTK_BUILDER_GET_WIDGET(builder, "volumebutton1");
     GtkStyleContext *volctx = gtk_widget_get_style_context(volbutton);
@@ -1176,8 +1190,6 @@ void window_init_hook (void *userdata) {
 
     update_plugin_actions();
 
-    GtkWidget *app_menu = GTK_WIDGET(gtk_builder_get_object (builder, "app_menu"));
-    gtk_menu_button_set_popover(GTK_MENU_BUTTON(headerbar_app_menu_btn), app_menu);
 
     hookup_action_to_menu_item(G_ACTION_MAP(group), "designmode", "design_mode1");
     hookup_action_to_menu_item(G_ACTION_MAP(group), "toggle_log", "view_log");
@@ -1361,6 +1373,8 @@ headerbarui_configchanged_cb(gpointer user_data)
 
     gtk_widget_set_visible(headerbar_add_menu_btn, headerbarui_flags.show_add_button);
     gtk_widget_set_visible(headerbar_playback_menu_btn, headerbarui_flags.show_playback_button);
+
+    update_plugin_actions();
 
     return FALSE;
 }
