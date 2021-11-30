@@ -1,7 +1,7 @@
 /*
     Headerbar UI plugin for the DeaDBeeF audio player
 
-    Copyright (C) 2015 Nicolai Syvertsen <saivert@gmail.com>
+    Copyright (C) 2015-2021 Nicolai Syvertsen <saivert@gmail.com>
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
