@@ -1300,11 +1300,10 @@ headerbarui_volume_changed(gpointer user_data)
 {
     float volume = cbrt(deadbeef->volume_get_amp());
 
-    GSignalMatchType mask = (GSignalMatchType)(G_SIGNAL_MATCH_DETAIL | G_SIGNAL_MATCH_DATA);
-    GQuark detail = g_quark_from_static_string("value_changed");
-    g_signal_handlers_block_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, NULL);
+    GSignalMatchType mask = (GSignalMatchType)(G_SIGNAL_MATCH_FUNC);
+    g_signal_handlers_block_matched ((gpointer)volbutton, mask, 0, 0, NULL, on_volbutton_value_changed, NULL);
     gtk_scale_button_set_value( GTK_SCALE_BUTTON (volbutton), volume);
-    g_signal_handlers_unblock_matched ((gpointer)volbutton, mask, detail, 0, NULL, NULL, NULL);
+    g_signal_handlers_unblock_matched ((gpointer)volbutton, mask, 0, 0, NULL, on_volbutton_value_changed, NULL);
     return FALSE;
 }
 
