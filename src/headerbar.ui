@@ -168,6 +168,7 @@ Author: Nicolai Syvertsen
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="receives-default">True</property>
+        <property name="tooltip-text" translatable="yes">File actions</property>
         <child>
           <object class="GtkImage" id="file_menu_btn_image">
             <property name="visible">True</property>
@@ -373,6 +374,7 @@ audio-volume-medium-symbolic</property>
         <property name="visible">True</property>
         <property name="can-focus">True</property>
         <property name="receives-default">True</property>
+        <property name="tooltip-text" translatable="yes">Playback options</property>
         <child>
           <object class="GtkImage">
             <property name="visible">True</property>
