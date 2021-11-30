@@ -146,7 +146,7 @@ on_seekbar_value_changed (GtkRange *range,
     if (seekbar_ismoving) {
         gtk_label_set_text (GTK_LABEL (headerbar_playbacktimelabel), format_time(value, buf, sizeof(buf)));
         return;
-}
+    }
     deadbeef_seek((int)gtk_range_get_value(range));
 }
 
