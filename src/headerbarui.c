@@ -81,6 +81,7 @@ static struct headerbarui_flag_s {
     gboolean hide_playback_buttons:1;
     gboolean new_app_menu:1;
     gboolean show_add_button:1;
+    gboolean show_playback_button:1;
     int button_spacing;
 } headerbarui_flags;
 
@@ -377,6 +378,12 @@ seekbar_collapsed (int width) {
         min_size_fixed_content += button_size;
     }
     if (!headerbarui_flags.combined_playpause) {
+        min_size_fixed_content += button_size;
+    }
+    if (headerbarui_flags.show_add_button) {
+        min_size_fixed_content += button_size;
+    }
+    if (headerbarui_flags.show_playback_button) {
         min_size_fixed_content += button_size;
     }
     int min_size_seekbar = 200;
@@ -1270,6 +1277,7 @@ void headerbarui_getconfig()
     headerbarui_flags.hide_playback_buttons = deadbeef->conf_get_int ("headerbarui.hide_playback_buttons", 0);
     headerbarui_flags.new_app_menu = deadbeef->conf_get_int ("headerbarui.new_app_menu", 0);
     headerbarui_flags.show_add_button = deadbeef->conf_get_int ("headerbarui.show_add_button", 0);
+    headerbarui_flags.show_playback_button = deadbeef->conf_get_int ("headerbarui.show_playback_button", 0);
 }
 
 static
@@ -1349,6 +1357,7 @@ headerbarui_configchanged_cb(gpointer user_data)
     gtk_widget_set_visible(headerbar_menubtn, !headerbarui_flags.new_app_menu);
 
     gtk_widget_set_visible(headerbar_add_menu_btn, headerbarui_flags.show_add_button);
+    gtk_widget_set_visible(headerbar_playback_menu_btn, headerbarui_flags.show_playback_button);
 
     return FALSE;
 }
@@ -1409,6 +1418,7 @@ static const char settings_dlg[] =
     "property \"Show design mode button\" checkbox headerbarui.show_designmode_button 0;\n"
     "property \"Hide playback buttons\" checkbox headerbarui.hide_playback_buttons 0;\n"
     "property \"Show add (file/playlist) button\" checkbox headerbarui.show_add_button 0;\n"
+    "property \"Show playback options (shuffle/repeat) button\" checkbox headerbarui.show_playback_button 0;\n"
 ;
 
 static DB_misc_t plugin = {
