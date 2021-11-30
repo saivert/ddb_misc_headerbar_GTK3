@@ -848,6 +848,7 @@ plugin_action_compare(gconstpointer a, gconstpointer b)
     return res;
 }
 
+#ifdef DEBUG
 static void
 print_actions_foreach(gpointer data, gpointer user_data)
 {
@@ -858,6 +859,7 @@ print_actions_foreach(gpointer data, gpointer user_data)
     }
     printf("%s\n", item->action ? item->action : "");
 }
+#endif
 
 static void
 add_file_action_menuitems(GSList **plist, GMenuModel *menumodel)
@@ -1112,7 +1114,10 @@ update_plugin_actions() {
 
     if (menu_add_action_items(&list, G_SIMPLE_ACTION_GROUP(actiongroup)) > 0) {
         list = g_slist_sort(list, plugin_action_compare);
-        // g_slist_foreach(list, print_actions_foreach, NULL); //DEBUG
+#ifdef DEBUG
+        g_slist_foreach(list, print_actions_foreach, NULL);
+#endif
+
         add_file_action_menuitems(&list, file_menu);
 
         add_playback_action_menuitems(&list, plugin_actions_section);
