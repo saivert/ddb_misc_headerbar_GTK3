@@ -885,7 +885,7 @@ add_file_action_menuitems(GSList **plist, GMenuModel *menumodel)
             } else if (plugin_item->levels-1 < curlevel) {
                 // We have gone down a level, now insert the submenu
                 curlevel = plugin_item->levels-1;
-                g_menu_insert_submenu(G_MENU(menumodel), 1, prev_plugin_item->menus[curlevel], G_MENU_MODEL(curmenu));
+                g_menu_insert_submenu(G_MENU(menumodel), 2, prev_plugin_item->menus[curlevel], G_MENU_MODEL(curmenu));
                 curmenu = prevmenu;
             }
             if (plugin_item->action) {            
@@ -925,13 +925,13 @@ add_playback_action_menuitems(GSList **plist, GMenuModel *menumodel)
             } else if (plugin_item->levels-1 < curlevel) {
                 // We have gone down a level, now insert the submenu
                 curlevel = plugin_item->levels-1;
-                g_menu_insert_submenu(G_MENU(menumodel), 1, prev_plugin_item->menus[curlevel], G_MENU_MODEL(curmenu));
+                g_menu_append_submenu(G_MENU(menumodel), prev_plugin_item->menus[curlevel], G_MENU_MODEL(curmenu));
                 curmenu = prevmenu;
             }
             if (plugin_item->action) {            
                 char s[256];
                 snprintf(s, sizeof(s), "plg.%s", plugin_item->action);
-                g_menu_insert(G_MENU(curmenu), 1, plugin_item->menus[curlevel], s);
+                g_menu_append(G_MENU(curmenu), plugin_item->menus[curlevel], s);
             }
             curlevel = plugin_item->levels-1;
 
