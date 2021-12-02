@@ -819,9 +819,6 @@ plugin_action_compare(gconstpointer a, gconstpointer b)
     const struct plugin_action_item *item_a = a;
     const struct plugin_action_item *item_b = b;
 
-    if (item_a->levels != item_b->levels)
-        return -1;
-
     char *itembufa;
     size_t itembufa_size;
     char *itembufb;
