@@ -859,81 +859,41 @@ print_actions_foreach(gpointer data, gpointer user_data)
 #endif
 
 static void
-add_file_action_menuitems(GSList **plist, GMenuModel *menumodel)
+add_action_menuitems(GSList **plist, GMenuModel *menumodel, int startlevel, int rootlevel, const char *menu_to_add_to)
 {
     const struct plugin_action_item *plugin_item;
-    const struct plugin_action_item *prev_plugin_item;
-    int curlevel=1;
+    int curlevel=startlevel;
     GMenuModel *curmenu=menumodel;
-    GMenuModel *prevmenu;
+    GMenuModel *prevmenu=NULL;
 
     for (GSList *item = *plist; item; item = item->next) {
 
         plugin_item = (struct plugin_action_item *)item->data;
 
-        if (!strcmp(plugin_item->menus[0], "File")) {
-
-            if (plugin_item->levels-1 > curlevel) {
-                // We have gone up a level, create a new submenu
-                prevmenu = curmenu;
-                prev_plugin_item = plugin_item;
-                curmenu = G_MENU_MODEL(g_menu_new());
-                curlevel = plugin_item->levels-1;
-            } else if (plugin_item->levels-1 < curlevel) {
-                // We have gone down a level, now insert the submenu
-                curlevel = plugin_item->levels-1;
-                g_menu_insert_submenu(G_MENU(menumodel), 2, prev_plugin_item->menus[curlevel], G_MENU_MODEL(curmenu));
-                curmenu = prevmenu;
-            }
-            if (plugin_item->action) {            
-                char s[256];
-                snprintf(s, sizeof(s), "plg.%s", plugin_item->action);
-                g_menu_insert(G_MENU(curmenu), 2, plugin_item->menus[curlevel], s);
-            }
-
-            curlevel = plugin_item->levels-1;
-
+        if (0 != strcmp(plugin_item->menus[rootlevel], menu_to_add_to)) {
+            continue;
         }
 
-    }
-}
-
-static void
-add_playback_action_menuitems(GSList **plist, GMenuModel *menumodel, const char *menu_to_add_to)
-{
-    const struct plugin_action_item *plugin_item;
-    const struct plugin_action_item *prev_plugin_item;
-    int curlevel=1;
-    GMenuModel *curmenu=menumodel;
-    GMenuModel *prevmenu;
-
-    for (GSList *item = *plist; item; item = item->next) {
-
-        plugin_item = (struct plugin_action_item *)item->data;
-
-        if (!strcmp(plugin_item->menus[0], menu_to_add_to)) {
-
-            if (plugin_item->levels-1 > curlevel) {
-                // We have gone up a level, create a new submenu
-                prevmenu = curmenu;
-                prev_plugin_item = plugin_item;
-                curmenu = G_MENU_MODEL(g_menu_new());
-                curlevel = plugin_item->levels-1;
-            } else if (plugin_item->levels-1 < curlevel) {
-                // We have gone down a level, now insert the submenu
-                curlevel = plugin_item->levels-1;
-                g_menu_append_submenu(G_MENU(menumodel), prev_plugin_item->menus[curlevel], G_MENU_MODEL(curmenu));
-                curmenu = prevmenu;
-            }
-            if (plugin_item->action) {            
-                char s[256];
-                snprintf(s, sizeof(s), "plg.%s", plugin_item->action);
-                g_menu_append(G_MENU(curmenu), plugin_item->menus[curlevel], s);
-            }
+        if ((plugin_item->levels-1) > curlevel) {
             curlevel = plugin_item->levels-1;
-
+            if (0 == strcmp(plugin_item->menus[curlevel-1], menu_to_add_to)) {
+                continue;
+            }
+            prevmenu = curmenu;
+            curmenu = G_MENU_MODEL(g_menu_new());
+            add_action_menuitems (plist, curmenu, curlevel, curlevel-1, plugin_item->menus[curlevel-1]);
+            g_menu_append_submenu(G_MENU(prevmenu), plugin_item->menus[curlevel-1], G_MENU_MODEL(curmenu));
+        } else if ((plugin_item->levels-1 < curlevel)) {
+            curlevel = plugin_item->levels-1;
+            if (prevmenu)
+                curmenu = prevmenu;
+            prevmenu = NULL;
         }
-
+        if (plugin_item->action && !prevmenu) {     
+            char s[256];
+            snprintf(s, sizeof(s), "plg.%s", plugin_item->action);
+            g_menu_append(G_MENU(curmenu), plugin_item->menus[curlevel], s);
+        }
     }
 }
 
@@ -1118,15 +1078,18 @@ update_plugin_actions() {
         g_slist_foreach(list, print_actions_foreach, NULL);
 #endif
 
-        add_file_action_menuitems(&list, file_menu);
+        tmpsection = G_MENU_MODEL(g_menu_new());
+        add_action_menuitems(&list, tmpsection, 1, 0, "File");
+        g_menu_insert_section(G_MENU(file_menu), 2, "Plugin actions", tmpsection);
+        g_object_unref(tmpsection);
 
         tmpsection = G_MENU_MODEL(g_menu_new());
-        add_playback_action_menuitems(&list, tmpsection, "Playback");
+        add_action_menuitems(&list, tmpsection, 1, 0, "Playback");
         g_menu_append_section(G_MENU(playback_menu), "Plugin actions", tmpsection);
         g_object_unref(tmpsection);
 
         tmpsection = G_MENU_MODEL(g_menu_new());
-        add_playback_action_menuitems(&list, tmpsection, "Edit");
+        add_action_menuitems(&list, tmpsection, 1, 0, "Edit");
         g_menu_insert_section(G_MENU(app_menu), 5, "Plugin actions", tmpsection);
         g_object_unref(tmpsection);
 
