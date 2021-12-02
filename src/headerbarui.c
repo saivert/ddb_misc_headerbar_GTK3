@@ -1350,6 +1350,9 @@ playpause_update(int state) {
     }
 }
 
+static int actions_changed_source;
+static int config_changed_source;
+
 static
 gboolean
 headerbarui_configchanged_cb(gpointer user_data)
@@ -1372,7 +1375,7 @@ headerbarui_configchanged_cb(gpointer user_data)
     gtk_widget_set_visible(headerbar_playback_menu_btn, headerbarui_flags.show_playback_button);
 
     update_plugin_actions();
-
+    config_changed_source = 0;
     return FALSE;
 }
 
@@ -1381,6 +1384,7 @@ gboolean
 headerbarui_actionschanged_cb(gpointer user_data)
 {
     update_plugin_actions();
+    actions_changed_source = 0;
     return FALSE;
 }
 
@@ -1396,15 +1400,29 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
         headerbar_stoptimer = 1;
         break;
     case DB_EV_ACTIONSCHANGED:
-        g_idle_add (headerbarui_actionschanged_cb, NULL);
+        if (actions_changed_source) {
+            g_source_remove(actions_changed_source);
+        }
+        actions_changed_source = g_idle_add (headerbarui_actionschanged_cb, NULL);
         break;
     case DB_EV_CONFIGCHANGED:
         headerbarui_getconfig();
-        g_idle_add (headerbarui_configchanged_cb, NULL);
+        if (config_changed_source) {
+            g_source_remove(config_changed_source);
+        }
+        config_changed_source = g_idle_add (headerbarui_configchanged_cb, NULL);
         g_idle_add (headerbarui_volume_changed, NULL);
         break;
     case DB_EV_VOLUMECHANGED:
         g_idle_add (headerbarui_volume_changed, NULL);
+        break;
+    case DB_EV_TERMINATE:
+        if (actions_changed_source) {
+            g_source_remove(actions_changed_source);
+        }
+        if (config_changed_source) {
+            g_source_remove(config_changed_source);
+        }
         break;
     }
     return 0;
