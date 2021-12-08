@@ -806,106 +806,179 @@ hookup_action_to_radio_menu_item(GActionMap *map, const gchar *action_name, GCal
     g_signal_connect_after (G_OBJECT (lookup_widget (mainwin, glade_id)), "activate", event_handler, action);
 }
 
-
-struct plugin_action_item {
-    int levels;
-    char *menus[16]; //Max 16 levels deep for now.
-    char *action;
-};
-
-static int
-plugin_action_compare(gconstpointer a, gconstpointer b)
-{
-    const struct plugin_action_item *item_a = a;
-    const struct plugin_action_item *item_b = b;
-
-    char *itembufa;
-    size_t itembufa_size;
-    char *itembufb;
-    size_t itembufb_size;
-
-    FILE *streama = open_memstream(&itembufa, &itembufa_size);
-    FILE *streamb = open_memstream(&itembufb, &itembufb_size);
-
-    int i, y;
-    for (i=0; i < item_a->levels; i++) {
-        fprintf(streama, "%s|", item_a->menus[i]);
-    }
-    fclose(streama);
-
-    for (y=0; y < item_b->levels; y++) {
-        fprintf(streamb, "%s|", item_b->menus[y]);
-    }
-    fclose(streamb);
-
-    int res = strcmp(itembufa, itembufb);
-    free(itembufa);
-    free(itembufb);
-
-    return res;
-}
-
 #ifdef DEBUG
-static void
-print_actions_foreach(gpointer data, gpointer user_data)
+gboolean treemodelprintforeach(GtkTreeModel* model,
+                                    GtkTreePath* path,
+                                    GtkTreeIter* iter,
+                                    gpointer data)
 {
-    const struct plugin_action_item *item = data;
-    printf("Item level = %d, ", item->levels);
-    for (int i=0; i< item->levels; i++) {
-        printf("%s|", item->menus[i]);
-    }
-    printf("%s\n", item->action ? item->action : "");
+    GValue val = {0,};
+    gtk_tree_model_get_value (GTK_TREE_MODEL (model), iter, 0, &val);
+    const char *n = g_value_get_string (&val);
+    gchar *pathstring = gtk_tree_path_to_string(path);
+    trace ("Current iter %s %s\n", n, pathstring);
+    g_free(pathstring);
+    return FALSE;
 }
 #endif
 
 static void
-add_action_menuitems(GSList **plist, GMenuModel *menumodel, int startlevel, int rootlevel, const char *menu_to_add_to)
+construct_menu(GtkTreeStore *store, GMenuModel *menumodel, GtkTreeIter *root)
 {
-    const struct plugin_action_item *plugin_item;
-    int curlevel=startlevel;
-    GMenuModel *curmenu=menumodel;
-    GMenuModel *prevmenu=NULL;
-
-    for (GSList *item = *plist; item; item = item->next) {
-
-        plugin_item = (struct plugin_action_item *)item->data;
-
-        if (0 != strcmp(plugin_item->menus[rootlevel], menu_to_add_to)) {
-            continue;
+    GtkTreeIter i;
+    gboolean res = gtk_tree_model_iter_children(GTK_TREE_MODEL (store), &i, root);
+    if (!res) return;
+    do {
+        GValue titleval = {0,};
+        GValue actionval = {0,};
+        gtk_tree_model_get_value (GTK_TREE_MODEL (store), &i, 0, &titleval);
+        gtk_tree_model_get_value (GTK_TREE_MODEL (store), &i, 1, &actionval);
+        const gchar *t = g_value_get_string (&titleval);
+        const gchar *a = g_value_get_string (&actionval);
+        if (a != NULL) {
+            trace ("Found menu item %s, %s\n", t, a);
+            char act[100];
+            snprintf(act, sizeof(act), "plg.%s", a);
+            g_menu_append(G_MENU(menumodel), t, act);
         }
+        if (gtk_tree_model_iter_has_child(GTK_TREE_MODEL (store), &i)) {
+            GMenu *submenu = g_menu_new();
+            construct_menu(store, G_MENU_MODEL(submenu), &i);
+            g_menu_append_submenu(G_MENU(menumodel), t, G_MENU_MODEL(submenu));
+            g_object_unref (submenu);
+        }
+    } while (gtk_tree_model_iter_next (GTK_TREE_MODEL (store), &i));
+}
 
-        if ((plugin_item->levels-1) > curlevel) {
-            curlevel = plugin_item->levels-1;
-            if (0 == strcmp(plugin_item->menus[curlevel-1], menu_to_add_to)) {
-                continue;
+static void
+add_action_menuitems(GtkTreeStore *store, GMenuModel *menumodel, const char *menu_to_add_to)
+{
+    GtkTreeIter i;
+
+    gboolean res = gtk_tree_model_iter_children (GTK_TREE_MODEL (store), &i, NULL);
+    if (res) {
+        do {
+            GValue val = {0,};
+            gtk_tree_model_get_value (GTK_TREE_MODEL (store), &i, 0, &val);
+            const gchar *n = g_value_get_string (&val);
+            if (!strcmp(n, menu_to_add_to)) {
+                trace ("Found menu %s\n", n);
+                construct_menu(store, menumodel, &i);
             }
-            prevmenu = curmenu;
-            curmenu = G_MENU_MODEL(g_menu_new());
-            add_action_menuitems (plist, curmenu, curlevel, curlevel-1, plugin_item->menus[curlevel-1]);
-            g_menu_append_submenu(G_MENU(prevmenu), plugin_item->menus[curlevel-1], G_MENU_MODEL(curmenu));
-        } else if ((plugin_item->levels-1 < curlevel)) {
-            curlevel = plugin_item->levels-1;
-            if (prevmenu)
-                curmenu = prevmenu;
-            prevmenu = NULL;
-        }
-        if (plugin_item->action && !prevmenu) {     
-            char s[256];
-            snprintf(s, sizeof(s), "plg.%s", plugin_item->action);
-            g_menu_append(G_MENU(curmenu), plugin_item->menus[curlevel], s);
-        }
+        } while (gtk_tree_model_iter_next (GTK_TREE_MODEL (store), &i));
     }
 }
 
+static const char *
+get_display_action_title (const char *title) {
+    const char *t = title + strlen (title) - 1;
+    while (t > title) {
+        if (*t != '/' || *(t-1) == '\\') {
+            t--;
+            continue;
+        }
+        t++;
+        break;
+    }
+    return t;
+}
+
+#ifndef strdupa
+# define strdupa(s)							      \
+    ({									      \
+      const char *old = (s);					      \
+      size_t len = strlen (old) + 1;				      \
+      char *newstr = (char *) alloca (len);			      \
+      (char *) memcpy (newstr, old, len);				      \
+    })
+#endif
+
+static const char *
+action_tree_append (const char *title, GtkTreeStore *store, GtkTreeIter *root_iter, GtkTreeIter *iter) {
+    char *t = strdupa (title);
+    char *p = t;
+    GtkTreeIter i;
+    GtkTreeIter newroot;
+    for (;;) {
+        char *s = strchr (p, '/');
+        // find unescaped forward slash
+        if (s == p) {
+            p++;
+            continue;
+        }
+        if (s && s > p && *(s-1) == '\\') {
+            p = s + 1;
+            continue;
+        }
+        if (!s) {
+            break;
+        }
+        *s = 0;
+        // find iter in the current root with name==p
+        gboolean res = gtk_tree_model_iter_children (GTK_TREE_MODEL (store), &i, root_iter);
+        if (!res) {
+            gtk_tree_store_append (store, &i, root_iter);
+            gtk_tree_store_set (store, &i, 0, p, 1, NULL, 2, -1, -1);
+            memcpy (&newroot, &i, sizeof (GtkTreeIter));
+            root_iter = &newroot;
+        }
+        else {
+            int found = 0;
+            do {
+                GValue val = {0,};
+                gtk_tree_model_get_value (GTK_TREE_MODEL (store), &i, 0, &val);
+                const char *n = g_value_get_string (&val);
+                if (n && !strcmp (n, p)) {
+                    memcpy (&newroot, &i, sizeof (GtkTreeIter));
+                    root_iter = &newroot;
+                    found = 1;
+                    break;
+                }
+            } while (gtk_tree_model_iter_next (GTK_TREE_MODEL (store), &i));
+            if (!found) {
+                gtk_tree_store_append (store, &i, root_iter);
+                gtk_tree_store_set (store, &i, 0, p, 1, NULL, 2, -1, -1);
+                memcpy (&newroot, &i, sizeof (GtkTreeIter));
+                root_iter = &newroot;
+            }
+        }
+
+        p = s+1;
+    }
+    gtk_tree_store_append (store, iter, root_iter);
+    return get_display_action_title (title);
+}
+
+
+static void
+unescape_forward_slash (const char *src, char *dst, int size) {
+    char *start = dst;
+    while (*src) {
+        if (dst - start >= size - 1) {
+            break;
+        }
+        if (*src == '\\' && *(src+1) == '/') {
+            src++;
+        }
+        *dst++ = *src++;
+    }
+    *dst = 0;
+}
+
 static int
-menu_add_action_items(GSList **plist, GSimpleActionGroup *actiongroup) {
-    ddb_playItem_t *selected_track = NULL;
+menu_add_action_items(GSimpleActionGroup *actiongroup, GtkTreeStore **actions_store_out) {
     ddb_action_context_t action_context = DDB_ACTION_CTX_MAIN;
     int hide_remove_from_disk = deadbeef->conf_get_int ("gtkui.hide_remove_from_disk", 0);
     DB_plugin_t **plugins = deadbeef->plug_get_list();
     int i;
     int added_entries = 0;
 
+    // traverse all plugins and collect all exported actions to treeview
+    // column0: title
+    // column1: ID (invisible)
+    // column2: ctx (invisible
+    GtkTreeStore *actions_store = gtk_tree_store_new (3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
+    GtkTreeIter *rootiter=NULL;
 
 
     for (i = 0; plugins[i]; i++)
@@ -913,12 +986,15 @@ menu_add_action_items(GSList **plist, GSimpleActionGroup *actiongroup) {
         if (!plugins[i]->get_actions)
             continue;
 
-        DB_plugin_action_t *actions = plugins[i]->get_actions (selected_track);
+        DB_plugin_action_t *actions = plugins[i]->get_actions (NULL);
         DB_plugin_action_t *action;
 
-        int count = 0;
         for (action = actions; action; action = action->next)
         {
+            // if (!action->name || !action->title) {
+            //     continue;
+            // }
+
             if (action->name && !strcmp (action->name, "delete_from_disk") && hide_remove_from_disk) {
                 continue;
             }
@@ -964,67 +1040,17 @@ menu_add_action_items(GSList **plist, GSimpleActionGroup *actiongroup) {
                 }
             }
 
+            trace ("Got action #%d %s [%s]\n", added_entries, action->title, action->name);
 
-            // create submenus (separated with '/')
-            const char *prev = action->title;
-            while (*prev && *prev == '/') {
-                prev++;
-            }
+            char title[100];
 
-            int levels = 0;
-            struct plugin_action_item *item;
-            item = malloc(sizeof(struct plugin_action_item));
+            GtkTreeIter iter;
+            const char *t;
+            t = action_tree_append (action->title, actions_store, rootiter, &iter);
+            unescape_forward_slash (t, title, sizeof (title));
+            gtk_tree_store_set (actions_store, &iter, 0, title, 1, action->name, 2, DDB_ACTION_CTX_MAIN, -1);
 
-            *plist = g_slist_append(*plist, item);
-
-            for (;;) {
-                const char *slash = strchr (prev, '/');
-                char name[slash-prev+1];
-                if (slash && *(slash-1) != '\\') {
-                    // replace \/ with /
-                    const char *p = prev;
-                    char *t = name;
-                    while (*p && p < slash) {
-                        if (*p == '\\' && *(p+1) == '/') {
-                            *t++ = '/';
-                            p += 2;
-                        }
-                        else {
-                            *t++ = *p++;
-                        }
-                    }
-                    *t = 0;
-
-                    item->menus[levels++] = strdup(name);
-                }
-                else {
-                    break;
-                }
-                prev = slash+1;
-            }
-
-
-            count++;
             added_entries++;
-
-            // replace \/ with /
-            const char *p = /* current */1 ? prev : action->title;
-            char title[strlen (p)+1];
-            char *t = title;
-            while (*p) {
-                if (*p == '\\' && *(p+1) == '/') {
-                    *t++ = '/';
-                    p += 2;
-                }
-                else {
-                    *t++ = *p++;
-                }
-            }
-            *t = 0;
-
-            item->menus[levels++] = strdup(title);
-            item->action = strdup(action->name);
-            item->levels = levels;
 
             if (!g_action_map_lookup_action(G_ACTION_MAP (actiongroup), action->name)) {
                 GSimpleAction *simpleaction;
@@ -1037,17 +1063,8 @@ menu_add_action_items(GSList **plist, GSimpleActionGroup *actiongroup) {
 
         }
     }
+    *actions_store_out = actions_store;
     return added_entries;
-}
-
-static void
-item_free(void *data)
-{
-    struct plugin_action_item *item = data;
-    for (int i = 0; i < item->levels; i++) {
-        free(item->menus[i]);
-    }
-    free(item->action);
 }
 
 GMenuModel *file_menu;
@@ -1061,7 +1078,7 @@ update_plugin_actions() {
     actiongroup = G_ACTION_GROUP(g_simple_action_group_new());
     gtk_widget_insert_action_group(headerbar, "plg", actiongroup);
 
-    GSList *list = NULL;
+    GtkTreeStore *treestore=NULL;
 
     GtkBuilder *builder = gtk_builder_new_from_resource("/org/deadbeef/headerbarui/menu.ui");
     file_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "file-menu"));
@@ -1070,30 +1087,30 @@ update_plugin_actions() {
     app_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "app-menu"));
 
 
-    if (menu_add_action_items(&list, G_SIMPLE_ACTION_GROUP(actiongroup)) > 0) {
+    if (menu_add_action_items(G_SIMPLE_ACTION_GROUP(actiongroup), &treestore) > 0) {
         GMenuModel *tmpsection;
 
-        list = g_slist_sort(list, plugin_action_compare);
 #ifdef DEBUG
-        g_slist_foreach(list, print_actions_foreach, NULL);
+        // gtk_tree_model_foreach (GTK_TREE_MODEL (treestore), treemodelprintforeach, NULL);
 #endif
 
         tmpsection = G_MENU_MODEL(g_menu_new());
-        add_action_menuitems(&list, tmpsection, 1, 0, "File");
+        add_action_menuitems(treestore, tmpsection, "File");
         g_menu_insert_section(G_MENU(file_menu), 2, "Plugin actions", tmpsection);
         g_object_unref(tmpsection);
 
         tmpsection = G_MENU_MODEL(g_menu_new());
-        add_action_menuitems(&list, tmpsection, 1, 0, "Playback");
+        add_action_menuitems(treestore, tmpsection, "Playback");
         g_menu_append_section(G_MENU(playback_menu), "Plugin actions", tmpsection);
         g_object_unref(tmpsection);
 
         tmpsection = G_MENU_MODEL(g_menu_new());
-        add_action_menuitems(&list, tmpsection, 1, 0, "Edit");
+        add_action_menuitems(treestore, tmpsection, "Edit");
         g_menu_insert_section(G_MENU(app_menu), 5, "Plugin actions", tmpsection);
         g_object_unref(tmpsection);
 
-        g_slist_free_full (list, item_free);
+        g_object_unref (treestore);
+
     }
 
     gtk_menu_button_set_menu_model (GTK_MENU_BUTTON(headerbar_add_menu_btn), file_menu);
@@ -1337,7 +1354,9 @@ headerbarui_configchanged_cb(gpointer user_data)
     gtk_widget_set_visible(headerbar_add_menu_btn, headerbarui_flags.show_add_button);
     gtk_widget_set_visible(headerbar_playback_menu_btn, headerbarui_flags.show_playback_button);
 
-    update_plugin_actions();
+    // cannot do this here as it causes menus to be dismissed
+    // update_plugin_actions();
+
     config_changed_source = 0;
     return FALSE;
 }
