@@ -1096,17 +1096,17 @@ update_plugin_actions() {
 
         tmpsection = G_MENU_MODEL(g_menu_new());
         add_action_menuitems(treestore, tmpsection, "File");
-        g_menu_insert_section(G_MENU(file_menu), 2, "Plugin actions", tmpsection);
+        g_menu_insert_section(G_MENU(file_menu), 2, NULL, tmpsection);
         g_object_unref(tmpsection);
 
         tmpsection = G_MENU_MODEL(g_menu_new());
         add_action_menuitems(treestore, tmpsection, "Playback");
-        g_menu_append_section(G_MENU(playback_menu), "Plugin actions", tmpsection);
+        g_menu_append_section(G_MENU(playback_menu), NULL, tmpsection);
         g_object_unref(tmpsection);
 
         tmpsection = G_MENU_MODEL(g_menu_new());
         add_action_menuitems(treestore, tmpsection, "Edit");
-        g_menu_insert_section(G_MENU(app_menu), 5, "Plugin actions", tmpsection);
+        g_menu_insert_section(G_MENU(app_menu), 5, NULL, tmpsection);
         g_object_unref(tmpsection);
 
         g_object_unref (treestore);
