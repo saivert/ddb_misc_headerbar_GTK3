@@ -82,6 +82,7 @@ static struct headerbarui_flag_s {
     gboolean new_app_menu:1;
     gboolean show_add_button:1;
     gboolean show_playback_button:1;
+    gboolean show_playback_button_prev:1;
     int button_spacing;
 } headerbarui_flags;
 
@@ -1354,8 +1355,11 @@ headerbarui_configchanged_cb(gpointer user_data)
     gtk_widget_set_visible(headerbar_add_menu_btn, headerbarui_flags.show_add_button);
     gtk_widget_set_visible(headerbar_playback_menu_btn, headerbarui_flags.show_playback_button);
 
-    // cannot do this here as it causes menus to be dismissed
-    // update_plugin_actions();
+    // Only regenerate the menus if required
+    if (headerbarui_flags.show_playback_button_prev != headerbarui_flags.show_playback_button) {
+        update_plugin_actions();
+        headerbarui_flags.show_playback_button_prev = headerbarui_flags.show_playback_button;
+    }
 
     config_changed_source = 0;
     return FALSE;
