@@ -6,9 +6,12 @@ Requirements
 * Version 0.7 or higher of DeaDBeeF.
 * GTK3
 
-Screenshot
-----------
+Screenshots
+-----------
+![Screenshot](screenshots/ddb-app-menu.png "New app menu")
+
 ![Screenshot](https://imgur.com/8ZG6bbc.png "Screenshot")
+
 
 Installation
 ------------
