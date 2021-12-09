@@ -9,6 +9,8 @@ Requirements
 Screenshots
 -----------
 ![Screenshot](screenshots/ddb-app-menu.png "New app menu")
+![Screenshot](screenshots/ddb-file-popover.png "New file popover")
+
 
 ![Screenshot](https://imgur.com/8ZG6bbc.png "Screenshot")
 
