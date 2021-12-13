@@ -341,6 +341,8 @@ headerbarui_update_menubutton()
     GtkWidget *menubar;
     static GtkMenu *menu;
 
+    if (menu) return;
+
     menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
 
     menu = GTK_MENU (gtk_menu_new ());
@@ -1155,7 +1157,8 @@ void window_init_hook (void *userdata) {
         gtk_widget_hide(menubar);
         deadbeef->conf_set_int ("gtkui.show_menu", 0);
 
-        headerbarui_update_menubutton();
+        if (!headerbarui_flags.new_app_menu)
+            headerbarui_update_menubutton();
 
         gtk_widget_set_can_focus(headerbar_menubtn, FALSE);
         gtk_widget_show (headerbar_menubtn);
@@ -1318,6 +1321,10 @@ headerbarui_configchanged_cb(gpointer user_data)
         update_plugin_actions();
         headerbarui_flags.show_playback_button_prev = headerbarui_flags.show_playback_button;
     }
+
+    if (!headerbarui_flags.new_app_menu)
+        headerbarui_update_menubutton();
+
 
     config_changed_source = 0;
     return FALSE;
