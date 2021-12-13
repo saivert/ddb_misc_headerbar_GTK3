@@ -35,7 +35,6 @@ DB_functions_t *deadbeef;
 static DB_misc_t plugin;
 
 static ddb_gtkui_t *gtkui_plugin;
-static gint mainwin_width;
 
 GtkWidget *mainwin;
 GtkWidget *headerbar;
@@ -360,61 +359,19 @@ headerbarui_update_menubutton()
     gtk_menu_button_set_popup(GTK_MENU_BUTTON (headerbar_menubtn), GTK_WIDGET(menu));
 }
 
-static gboolean
-seekbar_collapsed (int width) {
-    int button_size = 38; // can maybe be read dynamic, depending on padding of theme
-    // Min size calculated by basic static elements (prev, play/pause, next, menu) including 3 possible window decoration buttons
-    // For every optional button extra width is added.
-    int min_size_fixed_content = button_size * 9;
-    if (headerbarui_flags.show_stop_button) {
-        min_size_fixed_content += button_size;
-    }
-    if (headerbarui_flags.show_volume_button) {
-        min_size_fixed_content += button_size;
-    }
-    if (headerbarui_flags.show_preferences_button) {
-        min_size_fixed_content += button_size;
-    }
-    if (headerbarui_flags.show_designmode_button) {
-        min_size_fixed_content += button_size;
-    }
-    if (!headerbarui_flags.combined_playpause) {
-        min_size_fixed_content += button_size;
-    }
-    if (headerbarui_flags.show_add_button) {
-        min_size_fixed_content += button_size;
-    }
-    if (headerbarui_flags.show_playback_button) {
-        min_size_fixed_content += button_size;
-    }
-    int min_size_seekbar = 200;
-    int min_size_title = 120;
-    int required_width = min_size_fixed_content + min_size_title + min_size_seekbar;
-
-    if (width < required_width) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-}
-
-static gboolean
-mainwindow_resize (GtkWindow *mainwindow,
-                   GdkEventConfigure *event,
-                   gpointer pointer) {
-    if (headerbarui_flags.show_seek_bar && seekbar_isvisible && event->width != mainwin_width) {
-        mainwin_width = event->width;
-
-        if (seekbar_collapsed(mainwin_width)) {
+static
+void
+on_title_child_size_allocate (GtkWidget* self, GtkAllocation* allocation, gpointer user_data)
+{
+    if (headerbarui_flags.show_seek_bar && seekbar_isvisible ) {
+        if (allocation->width < 400) {
             headerbarui_flags.seekbar_minimized = TRUE;
             gtk_widget_hide (headerbar_seekbarbox);
         } else {
             headerbarui_flags.seekbar_minimized = FALSE;
             gtk_widget_show (headerbar_seekbarbox);
         }
-
     }
-    return FALSE;
 }
 
 static void
@@ -1238,9 +1195,10 @@ void window_init_hook (void *userdata) {
         NULL);
     gtk_builder_connect_signals(builder, NULL);
 
-    g_signal_connect (G_OBJECT(mainwin),
-        "configure-event",
-        G_CALLBACK(mainwindow_resize),
+    GtkWidget *titlechild = gtk_header_bar_get_custom_title (GTK_HEADER_BAR (headerbar));
+    g_signal_connect (G_OBJECT(titlechild),
+        "size-allocate",
+        G_CALLBACK(on_title_child_size_allocate),
         NULL);
 
     g_signal_connect (G_OBJECT(mainwin),
