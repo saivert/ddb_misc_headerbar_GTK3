@@ -159,6 +159,39 @@
           <attribute name="action">win.toggle_log</attribute>
         </item>
       </submenu>
+
+      <submenu id="sort-menu">
+        <attribute name="label" translatable="yes">Sort by</attribute>
+        <item>
+          <attribute name="label" translatable="yes">Title</attribute>
+          <attribute name="action">db.sort_title</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Track number</attribute>
+          <attribute name="action">db.sort_tracknr</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Album</attribute>
+          <attribute name="action">db.sort_album</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Artist</attribute>
+          <attribute name="action">db.sort_artist</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Date</attribute>
+          <attribute name="action">db.sort_date</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Random</attribute>
+          <attribute name="action">db.sort_randomize</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Custom</attribute>
+          <attribute name="action">db.sort_custom</attribute>
+        </item>
+      </submenu>
+
     </section>
     <item>
       <attribute name="label">Jump to current track</attribute>
