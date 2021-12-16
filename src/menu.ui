@@ -4,37 +4,37 @@
   <menu id="file-menu">
     <section>
       <item>
-        <attribute name="label">Open file(s)</attribute>
+        <attribute name="label" translatable="yes">Open File(s)</attribute>
         <attribute name="action">db.open_files</attribute>
       </item>
     </section>
     <section>
       <attribute name="display-hint">vertical-buttons</attribute>
       <item>
-        <attribute name="label">Add file(s)</attribute>
+        <attribute name="label" translatable="yes">Add file(s)</attribute>
         <attribute name="action">db.add_files</attribute>
       </item>
       <item>
-        <attribute name="label">Add folder(s)</attribute>
+        <attribute name="label" translatable="yes">Add folder(s)</attribute>
         <attribute name="action">db.add_folders</attribute>
       </item>
       <item>
-        <attribute name="label">Add location</attribute>
+        <attribute name="label" translatable="yes">Add location</attribute>
         <attribute name="action">db.add_location</attribute>
       </item>
     </section>
     <section>
     <attribute name="display-hint">vertical-buttons</attribute>
       <item>
-        <attribute name="label">New playlist</attribute>
+        <attribute name="label" translatable="yes">New playlist</attribute>
         <attribute name="action">db.new_playlist</attribute>
       </item>
       <item>
-        <attribute name="label">Load playlist</attribute>
+        <attribute name="label" translatable="yes">Load playlist</attribute>
         <attribute name="action">db.load_playlist</attribute>
       </item>
       <item>
-        <attribute name="label">Save playlist</attribute>
+        <attribute name="label" translatable="yes">Save playlist</attribute>
         <attribute name="action">db.save_playlist</attribute>
       </item>
     </section>
@@ -42,61 +42,61 @@
 
   <menu id="playback-menu">
     <section>
-      <attribute name="label">Shuffle</attribute>
+      <attribute name="label" translatable="yes">Shuffle</attribute>
       <item>
-        <attribute name="label">Off</attribute>
+        <attribute name="label" translatable="yes">Off</attribute>
         <attribute name="action">win.shufflemode</attribute>
         <attribute name="target">off</attribute>
       </item>
       <item>
-        <attribute name="label">Tracks</attribute>
+        <attribute name="label" translatable="yes">Tracks</attribute>
         <attribute name="action">win.shufflemode</attribute>
         <attribute name="target">tracks</attribute>
       </item>
       <item>
-        <attribute name="label">Albums</attribute>
+        <attribute name="label" translatable="yes">Albums</attribute>
         <attribute name="action">win.shufflemode</attribute>
         <attribute name="target">albums</attribute>
       </item>
       <item>
-        <attribute name="label">Random tracks</attribute>
+        <attribute name="label" translatable="yes">Random Tracks</attribute>
         <attribute name="action">win.shufflemode</attribute>
         <attribute name="target">random</attribute>
       </item>
     </section>
     <section>
-      <attribute name="label">Repeat</attribute>
+      <attribute name="label" translatable="yes">Repeat</attribute>
       <item>
-        <attribute name="label">All tracks</attribute>
+        <attribute name="label" translatable="yes">All Tracks</attribute>
         <attribute name="action">win.repeatmode</attribute>
         <attribute name="target">all</attribute>
       </item>
       <item>
-        <attribute name="label">One track</attribute>
+        <attribute name="label" translatable="yes">One Track</attribute>
         <attribute name="action">win.repeatmode</attribute>
         <attribute name="target">single</attribute>
       </item>
       <item>
-        <attribute name="label">Off</attribute>
+        <attribute name="label" translatable="yes">Off</attribute>
         <attribute name="action">win.repeatmode</attribute>
         <attribute name="target">off</attribute>
       </item>
     </section>
     <section>
       <item>
-        <attribute name="label">Scroll follows playback</attribute>
+        <attribute name="label" translatable="yes">Scroll follows playback</attribute>
         <attribute name="action">win.scroll_follows_playback</attribute>
       </item>
       <item>
-        <attribute name="label">Cursor follows playback</attribute>
+        <attribute name="label" translatable="yes">Cursor follows playback</attribute>
         <attribute name="action">win.cursor_follows_playback</attribute>
       </item>
       <item>
-        <attribute name="label">Stop after current track</attribute>
+        <attribute name="label" translatable="yes">Stop after current track</attribute>
         <attribute name="action">win.stop_after_current</attribute>
       </item>
       <item>
-        <attribute name="label">Stop after current album</attribute>
+        <attribute name="label" translatable="yes">Stop after current album</attribute>
         <attribute name="action">win.stop_after_album</attribute>
       </item>
     </section>
@@ -106,56 +106,56 @@
     <section>
       <attribute name="display-hint">horizontal-buttons</attribute>
       <item>
-        <attribute name="label">Cut</attribute>
+        <attribute name="label" translatable="yes">Cut</attribute>
         <attribute name="action">win.cut_item</attribute>
         <attribute name="verb-icon">edit-cut-symbolic</attribute>
       </item>
       <item>
-        <attribute name="label">Copy</attribute>
+        <attribute name="label" translatable="yes">Copy</attribute>
         <attribute name="action">win.copy_item</attribute>
         <attribute name="verb-icon">edit-copy-symbolic</attribute>
       </item>
       <item>
-        <attribute name="label">Paste</attribute>
+        <attribute name="label" translatable="yes">Paste</attribute>
         <attribute name="action">win.paste_item</attribute>
         <attribute name="verb-icon">edit-paste-symbolic</attribute>
       </item>
     </section>
     <section>
       <item>
-        <attribute name="label">Select All</attribute>
+        <attribute name="label" translatable="yes">Select All</attribute>
         <attribute name="action">db.select_all</attribute>
       </item>
       <item>
-        <attribute name="label">Select None</attribute>
+        <attribute name="label" translatable="yes">Deselect All</attribute>
         <attribute name="action">db.deselect_all</attribute>
       </item>
       <item>
-        <attribute name="label">Invert Selection</attribute>
+        <attribute name="label" translatable="yes">Invert Selection</attribute>
         <attribute name="action">db.invert_selection</attribute>
       </item>
     </section>
     <section>
       <submenu id="view-menu">
-        <attribute name="label">View</attribute>
+        <attribute name="label" translatable="yes">View</attribute>
         <item>
-          <attribute name="label">Design mode</attribute>
+          <attribute name="label" translatable="yes">Design mode</attribute>
           <attribute name="action">win.designmode</attribute>
         </item>
         <item>
-          <attribute name="label">Status bar</attribute>
+          <attribute name="label" translatable="yes">Status bar</attribute>
           <attribute name="action">win.toggle_statusbar</attribute>
         </item>
         <item>
-          <attribute name="label">Equalizer</attribute>
+          <attribute name="label" translatable="yes">Equalizer</attribute>
           <attribute name="action">win.toggle_eq</attribute>
         </item>
         <item>
-          <attribute name="label">Menu</attribute>
+          <attribute name="label" translatable="yes">Menu</attribute>
           <attribute name="action">win.toggle_menu</attribute>
         </item>
         <item>
-          <attribute name="label">Log</attribute>
+          <attribute name="label" translatable="yes">Log</attribute>
           <attribute name="action">win.toggle_log</attribute>
         </item>
       </submenu>
@@ -194,11 +194,11 @@
 
     </section>
     <item>
-      <attribute name="label">Jump to current track</attribute>
+      <attribute name="label" translatable="yes">Jump to current track</attribute>
       <attribute name="action">db.jump_to_current_track</attribute>
     </item>
     <item>
-      <attribute name="label">Find</attribute>
+      <attribute name="label" translatable="yes">Find</attribute>
       <attribute name="action">db.find</attribute>
     </item>
 
@@ -206,15 +206,15 @@
 
     <section>
       <item>
-        <attribute name="label">_Preferences</attribute>
+        <attribute name="label" translatable="yes">Preferences</attribute>
         <attribute name="action">db.preferences</attribute>
       </item>
       <item>
-        <attribute name="label">_Help</attribute>
+        <attribute name="label" translatable="yes">Help</attribute>
         <attribute name="action">db.help</attribute>
       </item>
       <item>
-        <attribute name="label">_About DeaDBeeF</attribute>
+        <attribute name="label" translatable="yes">About DeaDBeeF</attribute>
         <attribute name="action">win.about</attribute>
       </item>
     </section>
