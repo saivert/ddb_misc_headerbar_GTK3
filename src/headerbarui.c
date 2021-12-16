@@ -30,6 +30,7 @@
 #include "resources.h"
 #include "headerbarui.h"
 #include <math.h>
+#include <glib/gi18n.h>
 
 DB_functions_t *deadbeef;
 static DB_misc_t plugin;
@@ -799,12 +800,12 @@ construct_menu(GtkTreeStore *store, GMenuModel *menumodel, GtkTreeIter *root)
             trace ("Found menu item %s, %s\n", t, a);
             char act[100];
             snprintf(act, sizeof(act), "plg.%s", a);
-            g_menu_append(G_MENU(menumodel), t, act);
+            g_menu_append(G_MENU(menumodel), gettext(t), act);
         }
         if (gtk_tree_model_iter_has_child(GTK_TREE_MODEL (store), &i)) {
             GMenu *submenu = g_menu_new();
             construct_menu(store, G_MENU_MODEL(submenu), &i);
-            g_menu_append_submenu(G_MENU(menumodel), t, G_MENU_MODEL(submenu));
+            g_menu_append_submenu(G_MENU(menumodel), gettext(t), G_MENU_MODEL(submenu));
             g_object_unref (submenu);
         }
     } while (gtk_tree_model_iter_next (GTK_TREE_MODEL (store), &i));
