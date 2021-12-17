@@ -57,6 +57,7 @@ GtkWidget *headerbar_playback_button_box;
 GtkWidget *headerbar_app_menu_btn;
 GtkWidget *headerbar_add_menu_btn;
 GtkWidget *headerbar_playback_menu_btn;
+GtkWidget *headerbar_titlebox;
 
 #define GTK_BUILDER_GET_WIDGET(builder, name) (GtkWidget *)gtk_builder_get_object(builder, name)
 
@@ -83,11 +84,19 @@ static struct headerbarui_flag_s {
     gboolean show_add_button:1;
     gboolean show_playback_button:1;
     gboolean show_playback_button_prev:1;
+    gboolean disable_prev:1;
     int button_spacing;
 } headerbarui_flags;
 
 static char *
 format_time (float t, char *dur, int size);
+
+static
+gboolean
+headerbarui_configchanged_cb(gpointer user_data);
+
+static
+void headerbarui_getconfig();
 
 static
 GtkWidget*
@@ -274,6 +283,8 @@ headerbarui_update_seekbar_cb(gpointer user_data)
     DB_playItem_t *trk;
     DB_output_t *out;
     seekbar_isvisible = TRUE;
+
+    if (headerbarui_flags.disable) return FALSE;
 
     trk = deadbeef->streamer_get_playing_track ();
     if (!trk) {
@@ -1086,6 +1097,55 @@ update_plugin_actions() {
 
 }
 
+static void set_menubar_visibility(gboolean visible)
+{
+    gtk_widget_set_visible (lookup_widget (GTK_WIDGET(mainwin), "menubar"), visible);
+    deadbeef->conf_set_int ("gtkui.show_menu", (int)visible);
+}
+
+// In order to support runtime enabling/disabling of the headerbar we hide all headerbar elements,
+// and revert the style back to a titlebar variant of the headerbar.
+
+static void revert_to_titlebar(void)
+{
+    headerbarui_flags.disable = 1;
+    headerbarui_flags.disable_prev = 1;
+    gtk_widget_hide (headerbar_menubtn);
+    gtk_widget_hide (headerbar_app_menu_btn);
+    gtk_widget_hide (headerbar_seekbarbox);
+    gtk_widget_hide (headerbar_playback_button_box);
+    gtk_widget_hide (headerbar_prefsbtn);
+    gtk_widget_hide (headerbar_add_menu_btn);
+    gtk_widget_hide (headerbar_playback_menu_btn);
+    gtk_widget_hide (headerbar_designmodebtn);
+    gtk_widget_hide (volbutton);
+    gtk_header_bar_set_custom_title(GTK_HEADER_BAR (headerbar), NULL);
+    set_menubar_visibility (TRUE);
+
+    GtkStyleContext *ctx = gtk_widget_get_style_context(headerbar);
+    gtk_style_context_add_class(ctx, "default-decoration");
+}
+
+static void enable_headerbar(void)
+{
+    headerbarui_flags.disable = 0;
+    headerbarui_flags.disable_prev = 0;
+    gtk_header_bar_set_custom_title(GTK_HEADER_BAR (headerbar), headerbar_titlebox);
+    set_menubar_visibility (FALSE);
+
+    GtkStyleContext *ctx = gtk_widget_get_style_context(headerbar);
+    gtk_style_context_remove_class(ctx, "default-decoration");
+
+    headerbarui_getconfig();
+    g_idle_add (headerbarui_configchanged_cb, NULL);
+
+    if (deadbeef->streamer_get_playing_track()) {
+        headerbar_stoptimer = 0;
+        headerbar_timer = g_timeout_add (1000/gtkui_get_gui_refresh_rate (), headerbarui_update_seekbar_cb, NULL);
+    }
+
+}
+
 void window_init_hook (void *userdata) {
     GtkWidget *menubar;
     GtkBuilder *builder;
@@ -1095,6 +1155,8 @@ void window_init_hook (void *userdata) {
     menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
     g_assert_nonnull(mainwin);
     g_assert_nonnull(menubar);
+
+    headerbarui_flags.disable_prev = headerbarui_flags.disable;
 
     builder = gtk_builder_new_from_resource("/org/deadbeef/headerbarui/headerbar.ui");
     gtk_builder_add_from_resource (builder, "/org/deadbeef/headerbarui/menu.ui", NULL);
@@ -1119,6 +1181,7 @@ void window_init_hook (void *userdata) {
     headerbar_playback_button_box = GTK_BUILDER_GET_WIDGET(builder, "playback_button_box");
     headerbar_add_menu_btn = GTK_BUILDER_GET_WIDGET(builder, "file_menu_btn");
     headerbar_playback_menu_btn = GTK_BUILDER_GET_WIDGET(builder, "playback_menu_btn");
+    headerbar_titlebox = GTK_BUILDER_GET_WIDGET(builder, "titlebox");
 
     GActionGroup *group = create_action_group();
     gtk_widget_insert_action_group (headerbar, "win", group);
@@ -1155,8 +1218,7 @@ void window_init_hook (void *userdata) {
 
     if (!headerbarui_flags.embed_menubar)
     {
-        gtk_widget_hide(menubar);
-        deadbeef->conf_set_int ("gtkui.show_menu", 0);
+        set_menubar_visibility (FALSE);
 
         if (!headerbarui_flags.new_app_menu)
             headerbarui_update_menubutton();
@@ -1209,6 +1271,8 @@ void window_init_hook (void *userdata) {
         "notify::title",
         G_CALLBACK(mainwindow_settitle),
         NULL);
+
+    if (headerbarui_flags.disable) revert_to_titlebar();
 }
 
 
@@ -1238,7 +1302,6 @@ void headerbarui_getconfig()
 static
 int headerbarui_connect() {
     headerbarui_getconfig();
-    if (headerbarui_flags.disable) return 1;
     gtkui_plugin = (ddb_gtkui_t *) deadbeef->plug_get_for_id (DDB_GTKUI_PLUGIN_ID);
     if (gtkui_plugin) {
         if (gtkui_plugin->gui.plugin.version_major >= 2) {
@@ -1300,32 +1363,41 @@ static
 gboolean
 headerbarui_configchanged_cb(gpointer user_data)
 {
-    gtk_widget_set_visible(headerbar_seekbarbox, headerbarui_flags.show_seek_bar && !headerbarui_flags.seekbar_minimized && seekbar_isvisible);
-    gtk_widget_set_visible(headerbar_stopbtn, headerbarui_flags.show_stop_button);
-    gtk_widget_set_visible(volbutton, headerbarui_flags.show_volume_button);
-    gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
-    gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
-    gtk_widget_set_visible(headerbar_designmodebtn, headerbarui_flags.show_designmode_button);
-    g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
-    playpause_update(OUTPUT_STATE_STOPPED);
-
-    gtk_widget_set_visible(headerbar_playback_button_box, !headerbarui_flags.hide_playback_buttons);
-
-    gtk_widget_set_visible(headerbar_app_menu_btn, headerbarui_flags.new_app_menu);
-    gtk_widget_set_visible(headerbar_menubtn, !headerbarui_flags.new_app_menu);
-
-    gtk_widget_set_visible(headerbar_add_menu_btn, headerbarui_flags.show_add_button);
-    gtk_widget_set_visible(headerbar_playback_menu_btn, headerbarui_flags.show_playback_button);
-
-    // Only regenerate the menus if required
-    if (headerbarui_flags.show_playback_button_prev != headerbarui_flags.show_playback_button) {
-        update_plugin_actions();
-        headerbarui_flags.show_playback_button_prev = headerbarui_flags.show_playback_button;
+    if (headerbarui_flags.disable_prev != headerbarui_flags.disable) {
+        if (headerbarui_flags.disable) {
+            revert_to_titlebar();
+        } else {
+            enable_headerbar();
+        }
     }
 
-    if (!headerbarui_flags.new_app_menu)
-        headerbarui_update_menubutton();
+    if (!headerbarui_flags.disable) {
+        gtk_widget_set_visible(headerbar_seekbarbox, headerbarui_flags.show_seek_bar && !headerbarui_flags.seekbar_minimized && seekbar_isvisible);
+        gtk_widget_set_visible(headerbar_stopbtn, headerbarui_flags.show_stop_button);
+        gtk_widget_set_visible(volbutton, headerbarui_flags.show_volume_button);
+        gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
+        gtk_widget_set_visible(headerbar_prefsbtn, headerbarui_flags.show_preferences_button);
+        gtk_widget_set_visible(headerbar_designmodebtn, headerbarui_flags.show_designmode_button);
+        g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
+        playpause_update(OUTPUT_STATE_STOPPED);
 
+        gtk_widget_set_visible(headerbar_playback_button_box, !headerbarui_flags.hide_playback_buttons);
+
+        gtk_widget_set_visible(headerbar_app_menu_btn, headerbarui_flags.new_app_menu);
+        gtk_widget_set_visible(headerbar_menubtn, !headerbarui_flags.new_app_menu);
+
+        gtk_widget_set_visible(headerbar_add_menu_btn, headerbarui_flags.show_add_button);
+        gtk_widget_set_visible(headerbar_playback_menu_btn, headerbarui_flags.show_playback_button);
+
+        // Only regenerate the menus if required
+        if (headerbarui_flags.show_playback_button_prev != headerbarui_flags.show_playback_button) {
+            update_plugin_actions();
+            headerbarui_flags.show_playback_button_prev = headerbarui_flags.show_playback_button;
+        }
+
+        if (!headerbarui_flags.new_app_menu)
+            headerbarui_update_menubutton();
+    }
 
     config_changed_source = 0;
     return FALSE;
@@ -1345,8 +1417,10 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     if (id != DB_EV_CONFIGCHANGED && headerbarui_flags.disable) return 0;
     switch (id) {
     case DB_EV_SONGSTARTED:
-        headerbar_stoptimer = 0;
-        headerbar_timer = g_timeout_add (1000/gtkui_get_gui_refresh_rate (), headerbarui_update_seekbar_cb, NULL);
+        if (!headerbarui_flags.disable) {
+            headerbar_stoptimer = 0;
+            headerbar_timer = g_timeout_add (1000/gtkui_get_gui_refresh_rate (), headerbarui_update_seekbar_cb, NULL);
+        }
         break;
     case DB_EV_SONGFINISHED:
         headerbar_stoptimer = 1;
@@ -1389,7 +1463,7 @@ int headerbarui_disconnect(void)
 }
 
 static const char settings_dlg[] =
-    "property \"Disable plugin (requires restart)\" checkbox headerbarui.disable 0;\n"
+    "property \"Disable plugin\" checkbox headerbarui.disable 0;\n"
     "property \"Embed menubar instead of showing hamburger button (requires restart)\" checkbox headerbarui.embed_menubar 0;\n"
     "property \"Show new popover menu instead of traditional\ncontext menu on hamburger button\" checkbox headerbarui.new_app_menu 0;\n"
     "property \"Button spacing (pixels)\" spinbtn[0,100,1] headerbarui.button_spacing 6;\n"

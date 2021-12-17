@@ -60,9 +60,10 @@ Author: Nicolai Syvertsen
   <object class="GtkHeaderBar" id="headerbar1">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
+    <property name="has-subtitle">False</property>
     <property name="show-close-button">True</property>
     <child type="title">
-      <object class="GtkBox">
+      <object class="GtkBox" id="titlebox">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="hexpand">True</property>
