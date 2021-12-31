@@ -31,11 +31,14 @@
 #include "headerbarui.h"
 #include <math.h>
 #include <glib/gi18n.h>
+#include <handy.h>
 
 DB_functions_t *deadbeef;
 static DB_misc_t plugin;
 
 static ddb_gtkui_t *gtkui_plugin;
+
+static uintptr_t mutex;
 
 GtkWidget *mainwin;
 GtkWidget *headerbar;
@@ -1090,6 +1093,8 @@ void window_init_hook (void *userdata) {
     GtkWidget *menubar;
     GtkBuilder *builder;
 
+    hdy_init();
+
     mainwin = gtkui_plugin->get_mainwin ();
 
     menubar = lookup_widget (GTK_WIDGET(mainwin), "menubar");
@@ -1235,6 +1240,246 @@ void headerbarui_getconfig()
     headerbarui_flags.show_playback_button = deadbeef->conf_get_int ("headerbarui.show_playback_button", 0);
 }
 
+typedef struct {
+    ddb_gtkui_widget_t base;
+    HdyTabBar *bar;
+    HdyTabView *view;
+} w_modern_playlist_t;
+
+
+static gboolean
+button_pressed(
+  GtkWidget* self,
+  GdkEventButton *event,
+  gpointer user_data
+)
+{
+    if (event->button == 3) {
+        GtkWidget *menu = gtkui_plugin->create_pltmenu (1);
+        gtk_menu_attach_to_widget (GTK_MENU (menu), mainwin, NULL);
+        gtk_menu_popup_at_pointer(GTK_MENU (menu), gtk_get_current_event());
+        return FALSE;
+    }
+    return FALSE;
+}
+
+static void
+menu_item_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+    GtkMenuItem *item = user_data;
+    gtk_menu_item_activate(item);
+}
+
+GMenuModel * convert_menu_to_model(GtkMenu *menu, GMenuModel *model, GSimpleActionGroup *actiongroup)
+{
+    GMenu *gmenu = G_MENU(model);
+    GMenu *curmenu = g_menu_new();
+    g_menu_remove_all(gmenu);
+    GList *children = gtk_container_get_children(GTK_CONTAINER(menu));
+    for (GList *item = children; item; item = item->next) {
+        if (GTK_IS_MENU_ITEM(item->data)) {
+            const gchar *label;
+            if (GTK_IS_SEPARATOR_MENU_ITEM(item->data)) {
+                g_menu_append_section(gmenu, NULL, G_MENU_MODEL (curmenu));
+                curmenu = g_menu_new();
+            } else {
+                label = gtk_menu_item_get_label(GTK_MENU_ITEM (item->data));
+
+            GString *action = g_string_new(label);
+            g_string_ascii_down(action);
+            g_string_replace(action, " ", "_", 0);
+            // g_string_prepend(action, "plt_");
+
+            if (!g_action_map_lookup_action(G_ACTION_MAP (actiongroup), action->str)) {
+                GSimpleAction *simpleaction;
+
+                if (GTK_IS_CHECK_MENU_ITEM(item->data)) {
+                    gboolean checked = gtk_check_menu_item_get_active(item->data);
+                    simpleaction = g_simple_action_new_stateful(action->str, NULL, g_variant_new_boolean(checked));
+                } else {
+                    simpleaction = g_simple_action_new (action->str, NULL);
+                }
+                g_simple_action_set_enabled(simpleaction, gtk_widget_get_sensitive(item->data));
+                // g_object_set_data (G_OBJECT (simpleaction), "menuitem", item->data);
+                g_signal_connect (simpleaction, "activate", G_CALLBACK (menu_item_activate),  item->data);
+                g_action_map_add_action (G_ACTION_MAP (actiongroup), G_ACTION (simpleaction));
+            }
+            // printf ("Added menu %s\n", action->str);
+            char act[100];
+            snprintf(act, sizeof(act), "plt.%s", action->str);
+            g_menu_append (curmenu, label, act);
+            g_string_free(action, TRUE);
+
+            }
+
+        }
+    }
+    g_menu_append_section(gmenu, NULL, G_MENU_MODEL (curmenu));
+    g_list_free(children);
+    return G_MENU_MODEL (gmenu);
+}
+
+static GSimpleActionGroup *tab_action_group;
+
+static void
+view_setup_menu (HdyTabView *self,
+                 HdyTabPage *page,
+                 gpointer    user_data)
+{
+    if (page) {
+        ddb_playlist_t *plt = g_object_get_data(G_OBJECT (page), "playlist");
+        if (plt) {
+        int id = deadbeef->plt_get_idx(plt);
+        printf ("id is %d\n", id);
+        GMenuModel *model = hdy_tab_view_get_menu_model(self);
+        convert_menu_to_model(GTK_MENU (gtkui_plugin->create_pltmenu((id))), model, tab_action_group);
+        }
+    }
+}
+
+static void tab_activated(
+  GObject* self,
+  GParamSpec *pspec,
+  gpointer user_data
+)
+{
+    GValue val = G_VALUE_INIT;
+    g_object_get_property(self, pspec->name, &val);
+  
+    if (g_value_get_boolean(&val)) {
+        const char *title = hdy_tab_page_get_title(HDY_TAB_PAGE (self));
+        ddb_playlist_t *plt = g_object_get_data(G_OBJECT (self), "playlist");
+        printf ("Selected tab ¤%d %s\n", deadbeef->plt_get_idx(plt), title);
+        deadbeef->plt_set_curr_idx (deadbeef->plt_get_idx(plt));
+    }
+}
+
+static void
+remove_playlist_dialog_response(GtkWidget *dialog, gint response_id, gpointer user_data)
+{
+    HdyTabView *view = g_object_get_data (G_OBJECT (dialog), "hdyview");
+    HdyTabPage *page = g_object_get_data (G_OBJECT (dialog), "hdypage");
+
+    hdy_tab_view_close_page_finish (view, HDY_TAB_PAGE (page), response_id == GTK_RESPONSE_YES);
+    gtk_widget_destroy (dialog);
+}
+
+static gboolean
+close_page_cb (HdyTabView *view,
+               HdyTabPage *page,
+               gpointer    user_data)
+{
+    GtkWidget *dialog;
+
+    dialog = gtk_message_dialog_new (GTK_WINDOW (mainwin), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING, GTK_BUTTONS_YES_NO, _("Remove playlist"));
+    const char *title = hdy_tab_page_get_title(page);
+    gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog), _("Do you really want to remove the playlist '%s'?"), title);
+
+    g_object_set_data (G_OBJECT (dialog), "hdyview", view);
+    g_object_set_data (G_OBJECT (dialog), "hdypage", page);
+
+    g_signal_connect (dialog,
+                      "response",
+                      G_CALLBACK (remove_playlist_dialog_response),
+                      NULL);
+    gtk_widget_show_all (dialog);
+
+
+  return GDK_EVENT_STOP;
+}
+
+void
+page_reordered_cb (HdyTabView *self,
+                   HdyTabPage *page,
+                   gint        position,
+                   gpointer    user_data)
+{
+    if (page) {
+        ddb_playlist_t *plt = g_object_get_data(G_OBJECT (page), "playlist");
+        deadbeef->plt_move (deadbeef->plt_get_idx(plt), position);
+    }
+}
+
+void
+page_detached_cb (HdyTabView *self,
+               HdyTabPage *page,
+               gint        position,
+               gpointer    user_data)
+{
+    ddb_playlist_t *plt = g_object_get_data(G_OBJECT (page), "playlist");
+    // deadbeef->plt_unref (plt);
+}
+
+static HdyTabView *tabview=NULL;
+static HdyTabBar *tabbar=NULL;
+static int tabsready=0;
+
+static HdyTabView *
+create_tab_view (HdyTabBar *bar)
+{
+    tabsready=0;
+    gtk_widget_hide (GTK_WIDGET (tabbar)); //HACK! stops animations which cause crash when view is changed rapidly
+    HdyTabView *view = hdy_tab_view_new();
+    g_object_ref_sink(view);
+    int count = deadbeef->plt_get_count();
+
+    for (int i=0; i < count; i++) {
+        ddb_playlist_t *plt = deadbeef->plt_get_for_idx (i);
+        char title[256];
+        deadbeef->plt_get_title (plt, title, sizeof(title));
+        deadbeef->plt_unref (plt);
+
+        HdyTabPage *page = hdy_tab_view_append(view, gtk_label_new(""));
+        g_signal_connect (page, "notify::selected", G_CALLBACK (tab_activated), NULL);
+        hdy_tab_page_set_title(page, title);
+        g_object_set_data (G_OBJECT (page), "playlist", plt);
+    }
+
+    GMenu *dummymenu = g_menu_new();
+    hdy_tab_view_set_menu_model(view, G_MENU_MODEL (dummymenu));
+
+    g_signal_connect(view, "setup-menu", G_CALLBACK (view_setup_menu), NULL);
+    g_signal_connect(view, "close-page", G_CALLBACK (close_page_cb), NULL);
+    g_signal_connect(view, "page-reordered", G_CALLBACK (page_reordered_cb), NULL);
+    g_signal_connect(view, "page-detached", G_CALLBACK (page_detached_cb), NULL);
+    gtk_widget_show (GTK_WIDGET (view));
+
+    hdy_tab_bar_set_view(bar, view);
+    gtk_widget_show (GTK_WIDGET (tabbar));
+    tabsready=1;
+    return view;
+}
+
+ddb_gtkui_widget_t *
+tabs_create (void) {
+    w_modern_playlist_t *w = malloc (sizeof (w_modern_playlist_t));
+    memset (w, 0, sizeof (w_modern_playlist_t));
+
+    w->base.widget = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+
+    tabbar = w->bar = hdy_tab_bar_new();
+
+    tab_action_group = g_simple_action_group_new();
+    gtk_widget_insert_action_group(GTK_WIDGET (w->bar), "plt", G_ACTION_GROUP (tab_action_group));
+
+    gtk_container_add_with_properties (GTK_CONTAINER (w->base.widget), GTK_WIDGET (w->bar), "expand", TRUE, NULL);
+
+    // tabview = w->view = create_tab_view(w->bar);
+    
+    hdy_tab_bar_set_expand_tabs(w->bar, FALSE);
+    
+    hdy_tab_bar_set_autohide(w->bar, FALSE);
+
+    gtk_widget_show (w->base.widget);
+    gtk_widget_show (GTK_WIDGET (w->bar));
+    gtk_widget_show (GTK_WIDGET (w->view));
+
+    gtkui_plugin->w_override_signals (w->base.widget, w);
+
+    tabsready=1;
+    return (ddb_gtkui_widget_t*)w;
+}
+
 static
 int headerbarui_connect() {
     headerbarui_getconfig();
@@ -1249,6 +1494,7 @@ int headerbarui_connect() {
             }
 
             gtkui_plugin->add_window_init_hook (window_init_hook, NULL);
+            gtkui_plugin->w_reg_widget ("Modern playlist tabs", DDB_WF_SINGLE_INSTANCE, tabs_create, "modern_playlist_tabs", NULL);
             return 0;
         } else {
             fprintf (stderr, "Headerbar plugin failure: DeaDBeeF version 1.7 or higher is required!\n");
@@ -1340,6 +1586,26 @@ headerbarui_actionschanged_cb(gpointer user_data)
     return FALSE;
 }
 
+static
+gboolean
+refresh_tabs(gpointer user_data)
+{
+    deadbeef->mutex_lock(mutex);
+    tabview = create_tab_view(tabbar);
+    deadbeef->mutex_unlock(mutex);
+    return FALSE;
+}
+
+static
+gboolean
+select_tab(gpointer user_data)
+{
+    deadbeef->mutex_lock(mutex);
+    hdy_tab_view_set_selected_page(tabview, hdy_tab_view_get_nth_page(tabview, deadbeef->plt_get_curr_idx()) );
+    deadbeef->mutex_unlock(mutex);
+    return FALSE;
+}
+
 static int
 headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     if (id != DB_EV_CONFIGCHANGED && headerbarui_flags.disable) return 0;
@@ -1376,6 +1642,14 @@ headerbarui_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
             g_source_remove(config_changed_source);
         }
         break;
+    case DB_EV_PLAYLISTCHANGED:
+        if (tabsready)
+            g_idle_add (refresh_tabs, NULL);
+        break;
+    case DB_EV_PLAYLISTSWITCHED:
+        if (tabsready)
+            g_idle_add (select_tab, NULL);
+        break;
     }
     return 0;
 }
@@ -1385,6 +1659,20 @@ int headerbarui_disconnect(void)
     // HACK, need to reset this so users are not stuck without menubar when uninstalling this plugin
     deadbeef->conf_set_int ("gtkui.show_menu", 1);
 
+    return 0;
+}
+
+int
+headerbarui_start(void)
+{
+    mutex = deadbeef->mutex_create();
+    return 0;
+}
+
+int
+headerbarui_stop(void)
+{
+    deadbeef->mutex_free(mutex);
     return 0;
 }
 
@@ -1436,6 +1724,8 @@ static DB_misc_t plugin = {
         "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\n",
     .plugin.website = "https://github.com/saivert/ddb_misc_headerbar_GTK3",
     .plugin.configdialog = settings_dlg,
+    .plugin.start = headerbarui_start,
+    .plugin.stop = headerbarui_stop,
     .plugin.connect = headerbarui_connect,
     .plugin.message = headerbarui_message,
     .plugin.disconnect = headerbarui_disconnect
