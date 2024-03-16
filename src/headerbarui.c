@@ -481,6 +481,28 @@ toggle_and_get_active_menu_item(const gchar *glade_id)
 // Shuffle mode
 
 static void
+action_shuffle_mode_init(GSimpleAction *action)
+{
+    ddb_shuffle_t shuffle = deadbeef->streamer_get_shuffle();
+    switch (shuffle)
+    {
+        case DDB_SHUFFLE_OFF:
+        g_simple_action_set_state (action, g_variant_new_string("off"));
+        break;
+        case DDB_SHUFFLE_TRACKS:
+        g_simple_action_set_state (action, g_variant_new_string("tracks"));
+        break;
+        case DDB_SHUFFLE_RANDOM:
+        g_simple_action_set_state (action, g_variant_new_string("random"));
+        break;
+        case DDB_SHUFFLE_ALBUMS:
+        g_simple_action_set_state (action, g_variant_new_string("albums"));
+        break;
+    }
+
+}
+
+static void
 action_shuffle_mode_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
     const gchar *mode = g_variant_get_string (parameter, NULL);
@@ -529,6 +551,25 @@ order_random_activate(GtkMenuItem *menuitem, gpointer user_data)
 }
 
 // Repeat mode
+
+static void
+action_repeat_mode_init(GSimpleAction *action)
+{
+    ddb_repeat_t repeat = deadbeef->streamer_get_repeat();
+    switch (repeat)
+    {
+        case DDB_REPEAT_OFF:
+        g_simple_action_set_state (action, g_variant_new_string("off"));
+        break;
+        case DDB_REPEAT_SINGLE:
+        g_simple_action_set_state (action, g_variant_new_string("single"));
+        break;
+        case DDB_REPEAT_ALL:
+        g_simple_action_set_state (action, g_variant_new_string("all"));
+        break;
+    }
+
+}
 
 static void
 action_repeat_mode_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data)
@@ -845,12 +886,12 @@ get_display_action_title (const char *title) {
 }
 
 #ifndef strdupa
-# define strdupa(s)							      \
-    ({									      \
-      const char *old = (s);					      \
-      size_t len = strlen (old) + 1;				      \
-      char *newstr = (char *) alloca (len);			      \
-      (char *) memcpy (newstr, old, len);				      \
+# define strdupa(s)                             \
+    ({                                          \
+      const char *old = (s);                    \
+      size_t len = strlen (old) + 1;            \
+      char *newstr = (char *) alloca (len);     \
+      (char *) memcpy (newstr, old, len);       \
     })
 #endif
 
@@ -1142,10 +1183,12 @@ void window_init_hook (void *userdata) {
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "shufflemode", G_CALLBACK(order_shuffle_activate), "order_shuffle");
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "shufflemode", G_CALLBACK(order_shuffle_albums_activate), "order_shuffle_albums");
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "shufflemode", G_CALLBACK(order_random_activate), "order_random");
+    action_shuffle_mode_init (g_action_map_lookup_action (G_ACTION_MAP (group), "shufflemode"));
 
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "repeatmode", G_CALLBACK(loop_disable_activate), "loop_disable");
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "repeatmode", G_CALLBACK(loop_single_activate), "loop_single");
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "repeatmode", G_CALLBACK(loop_all_albums_activate), "loop_all");
+    action_repeat_mode_init (g_action_map_lookup_action (G_ACTION_MAP (group), "repeatmode"));
 
 
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
