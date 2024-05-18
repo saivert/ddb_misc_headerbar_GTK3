@@ -285,7 +285,7 @@ headerbarui_update_seekbar_cb(gpointer user_data)
     out = deadbeef->get_output();
     if (out) {
         playpause_update(out->state());
-        if (out->state() == OUTPUT_STATE_STOPPED) {
+        if (out->state() == DDB_PLAYBACK_STATE_STOPPED) {
             seekbar_isvisible = FALSE;
             goto END;
         }
@@ -1183,12 +1183,12 @@ void window_init_hook (void *userdata) {
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "shufflemode", G_CALLBACK(order_shuffle_activate), "order_shuffle");
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "shufflemode", G_CALLBACK(order_shuffle_albums_activate), "order_shuffle_albums");
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "shufflemode", G_CALLBACK(order_random_activate), "order_random");
-    action_shuffle_mode_init (g_action_map_lookup_action (G_ACTION_MAP (group), "shufflemode"));
+    action_shuffle_mode_init (G_SIMPLE_ACTION (g_action_map_lookup_action (G_ACTION_MAP (group), "shufflemode")));
 
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "repeatmode", G_CALLBACK(loop_disable_activate), "loop_disable");
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "repeatmode", G_CALLBACK(loop_single_activate), "loop_single");
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "repeatmode", G_CALLBACK(loop_all_albums_activate), "loop_all");
-    action_repeat_mode_init (g_action_map_lookup_action (G_ACTION_MAP (group), "repeatmode"));
+    action_repeat_mode_init (G_SIMPLE_ACTION (g_action_map_lookup_action (G_ACTION_MAP (group), "repeatmode")));
 
 
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
