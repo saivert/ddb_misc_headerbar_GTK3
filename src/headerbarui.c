@@ -1152,10 +1152,14 @@ static void init_refresh_undo_redo_menu () {
 
     refresh_undo_redo.undo_action = g_action_map_lookup_action (G_ACTION_MAP (db_action_group), "undo");
     refresh_undo_redo.redo_action = g_action_map_lookup_action (G_ACTION_MAP (db_action_group), "redo");
-
-    g_idle_add_full (G_PRIORITY_LOW, G_SOURCE_FUNC (refresh_undo_redo_menu), NULL, NULL);
 }
 
+static void
+on_app_menu_button_clicked (GtkWidget *self,
+                      gpointer *data)
+{
+  refresh_undo_redo_menu ();
+}
 
 void window_init_hook (void *userdata) {
     GtkWidget *menubar;
@@ -1220,6 +1224,13 @@ void window_init_hook (void *userdata) {
     hookup_action_to_radio_menu_item(G_ACTION_MAP(group), "repeatmode", G_CALLBACK(loop_all_albums_activate), "loop_all");
     action_repeat_mode_init (G_SIMPLE_ACTION (g_action_map_lookup_action (G_ACTION_MAP (group), "repeatmode")));
 
+    g_signal_connect (G_OBJECT(headerbar_app_menu_btn),
+        "clicked",
+        G_CALLBACK(on_app_menu_button_clicked),
+        NULL);
+
+    init_refresh_undo_redo_menu ();
+    refresh_undo_redo_menu ();
 
     g_object_set(G_OBJECT(headerbar), "spacing", headerbarui_flags.button_spacing, NULL);
     gtk_widget_show(headerbar);
@@ -1283,7 +1294,6 @@ void window_init_hook (void *userdata) {
         G_CALLBACK(mainwindow_settitle),
         NULL);
 
-    init_refresh_undo_redo_menu ();
 }
 
 
