@@ -1127,6 +1127,36 @@ update_plugin_actions() {
 
 }
 
+struct refresh_undo_redo_s {
+    GtkWidget *undo_menu_item;
+    GtkWidget *redo_menu_item;
+    GAction *undo_action;
+    GAction *redo_action;
+} refresh_undo_redo;
+
+// TODO: Need to figure out how to hook undo operations from gtkui other than using an idle func.
+static gboolean
+refresh_undo_redo_menu () {
+    g_simple_action_set_enabled (G_SIMPLE_ACTION (refresh_undo_redo.undo_action), gtk_widget_get_sensitive (refresh_undo_redo.undo_menu_item));
+    g_simple_action_set_enabled (G_SIMPLE_ACTION (refresh_undo_redo.redo_action), gtk_widget_get_sensitive (refresh_undo_redo.redo_menu_item));
+
+    return G_SOURCE_CONTINUE;
+}
+
+static void init_refresh_undo_redo_menu () {
+    GActionGroup *db_action_group = gtk_widget_get_action_group (headerbar, "db");
+
+    // Use the menu items
+    refresh_undo_redo.undo_menu_item = lookup_widget (GTK_WIDGET(mainwin), "undo");
+    refresh_undo_redo.redo_menu_item = lookup_widget (GTK_WIDGET(mainwin), "redo");
+
+    refresh_undo_redo.undo_action = g_action_map_lookup_action (G_ACTION_MAP (db_action_group), "undo");
+    refresh_undo_redo.redo_action = g_action_map_lookup_action (G_ACTION_MAP (db_action_group), "redo");
+
+    g_idle_add_full (G_PRIORITY_LOW, G_SOURCE_FUNC (refresh_undo_redo_menu), NULL, NULL);
+}
+
+
 void window_init_hook (void *userdata) {
     GtkWidget *menubar;
     GtkBuilder *builder;
@@ -1252,6 +1282,8 @@ void window_init_hook (void *userdata) {
         "notify::title",
         G_CALLBACK(mainwindow_settitle),
         NULL);
+
+    init_refresh_undo_redo_menu ();
 }
 
 
